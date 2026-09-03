@@ -1203,6 +1203,51 @@ bool DcLeaderSignal::GetLeaderScoutTrailPoint(Player* bot, float lag, Position& 
             return true;
         }
     }
+
+    // MEASUREMENT (Dragonmaw 2026-08-31). Three explanations for stranded
+    // followers have now been measured and dropped, and every one of them was a
+    // guess about WHERE the follower is relative to the trail. This is that
+    // number, taken at the only place that knows it.
+    //
+    //   nearest small  -> the trail runs right past the bot and the reachability
+    //                     probe is what refuses it.
+    //   nearest large  -> the bot is not on the tank's path at all, and no trail
+    //                     logic can reach it.
+    //
+    // Rate-limited per bot: this failure path runs ~13x a second across ten
+    // parties, and journal volume has starved this server before. No extra
+    // PathGenerator build here either - the nearest-crumb distance is arithmetic.
+    if (bot->GetExactDist(leader) > 60.0f)
+    {
+        static std::mutex s_nearLogLock;
+        static std::unordered_map<ObjectGuid, uint32> s_nearLogAt;
+        uint32 const now = getMSTime();
+        bool speak = false;
+        {
+            std::lock_guard<std::mutex> lock(s_nearLogLock);
+            uint32& last = s_nearLogAt[bot->GetObjectGuid()];
+            if (!last || getMSTimeDiff(last, now) > 10000)
+            {
+                last = now;
+                speak = true;
+            }
+        }
+        if (speak)
+        {
+            float nearest = 1e9f;
+            std::size_t nearestIdx = 0;
+            for (std::size_t i = 0; i < crumbs.size(); ++i)
+            {
+                float const d = bot->GetExactDist(&crumbs[i]);
+                if (d < nearest) { nearest = d; nearestIdx = i; }
+            }
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC:{}] trail join failed: {}yd behind the tank, nearest crumb "
+                     "{}yd away (#{} of {})",
+                     bot->GetName(), int(bot->GetExactDist(leader)), int(nearest),
+                     int(nearestIdx), int(crumbs.size()));
+        }
+    }
     return false;
 }
 bool DcLeaderSignal::GetLeaderScoutTrail(Player* bot, float lag, std::vector<Position>& out)
@@ -1270,7 +1315,7 @@ bool DcLeaderSignal::GetLeaderScoutTrail(Player* bot, float lag, std::vector<Pos
     // Follower too far off the trail for a safe straight entry leg to the nearest
     // crumb — fall back to the point step, whose PathGenerator build routes the
     // off-trail approach properly instead of straight-lining it.
-    if (nearDist > DungeonClearMath::TrailJumpGuard)
+    if (nearDist > DungeonClearMath::TrailEntryReach)
         return false;
 
     // Build the forward window: live follower position, then the contiguous

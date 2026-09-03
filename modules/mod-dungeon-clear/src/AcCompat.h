@@ -89,6 +89,9 @@
 #include <mutex>
 #include <queue>
 #include <condition_variable>
+#include <iomanip>
+#include <cstring>
+#include <cstdlib>
 #include "LockedQueue.h"
 
 // --- AzerothCore spellings for things this core already has ---------------
@@ -389,23 +392,63 @@ namespace Acore
     // would print the braces literally and drop every argument. Each argument
     // is rendered through an ostringstream, so strings need no .c_str() and
     // numbers need no format letter - which is exactly what makes the 27 call
-    // sites compile unchanged. Positional/format-spec braces ({0}, {:.1f}) are
-    // NOT understood; none of the call sites use them.
+    // sites compile unchanged. Format-spec braces ({:.1f}) ARE
+    // understood - see DcFormatOne. They have to be: ignoring them did not
+    // merely drop the number, it SHIFTED every argument after it. A skipped
+    // spec left its argument unconsumed, so the next plain {} rendered that
+    // one instead of its own - "boss {} at {:.1f}yd, next {}" printed the
+    // distance where the next boss's name belonged. Live on 2026-08-31 that
+    // was 4503 {:.1f} and 909 {:.0f} occurrences in a single afternoon's log,
+    // which is a lot of quietly wrong output to debug against. Positional
+    // braces ({0}) are still not understood; no call site uses them.
     inline void DcFormatStep(std::string& out, char const*& p) { out += p; p += std::string(p).size(); }
+
+    // Render one argument, honouring the one spec family the module uses: the
+    // fixed-precision form {:.Nf}. Anything else falls back to the stream's
+    // default rather than guessing at a meaning.
+    template<class A>
+    inline void DcFormatOne(std::string& out, std::string const& spec, A const& a)
+    {
+        std::ostringstream os;
+        if (spec.size() >= 2 && spec[0] == '.' && spec.back() == 'f')
+            os << std::fixed << std::setprecision(std::atoi(spec.c_str() + 1));
+        os << a;
+        out += os.str();
+    }
+
+    // Is this brace group a placeholder we own? Deliberately narrow: only an
+    // empty group, or a short ':'-led spec of digits, '.', 'f'/'d'. Without the
+    // guard a stray '{' in a message would swallow everything up to the next
+    // '}' somewhere far away.
+    inline bool DcFormatSpec(char const* p, char const* close, std::string& spec)
+    {
+        std::string const inner(p + 1, close);
+        if (inner.empty()) { spec.clear(); return true; }
+        if (inner.size() > 8 || inner[0] != ':')
+            return false;
+        for (char const c : inner)
+            if (c != ':' && c != '.' && c != 'f' && c != 'd' && !(c >= '0' && c <= '9'))
+                return false;
+        spec = inner.substr(1);
+        return true;
+    }
 
     template<class A, class... Rest>
     inline void DcFormatStep(std::string& out, char const*& p, A const& a, Rest const&... rest)
     {
         while (*p)
         {
-            if (p[0] == '{' && p[1] == '}')
+            if (p[0] == '{')
             {
-                std::ostringstream os;
-                os << a;
-                out += os.str();
-                p += 2;
-                DcFormatStep(out, p, rest...);
-                return;
+                char const* const close = std::strchr(p, '}');
+                std::string spec;
+                if (close && DcFormatSpec(p, close, spec))
+                {
+                    DcFormatOne(out, spec, a);
+                    p = close + 1;
+                    DcFormatStep(out, p, rest...);
+                    return;
+                }
             }
             out += *p++;
         }
@@ -436,7 +479,13 @@ namespace Acore
 
 // Conditional info log - same formatting path as LOG_INFO, but only when
 // `cond` holds (throttled diagnostics that must not spam the journal).
-#define LOG_INFO_IF(cond, ...) do { if (cond) LOG_INFO(__VA_ARGS__); } while (0)
+// MSVC's traditional preprocessor hands __VA_ARGS__ to a NESTED macro as a
+// single token, so LOG_INFO saw one argument and StringFormat none:
+//   error C2672: Acore::StringFormat: expected 2 arguments, given 0
+// The extra expansion pass is the standard workaround and is a no-op for a
+// conforming preprocessor. Reported from a Windows build 2026-09-02.
+#define DC_MSVC_EXPAND(x) x
+#define LOG_INFO_IF(cond, ...) do { if (cond) DC_MSVC_EXPAND(LOG_INFO(__VA_ARGS__)); } while (0)
 
 #endif
 

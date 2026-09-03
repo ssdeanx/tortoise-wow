@@ -153,8 +153,21 @@ endif()
 #
 # Upstream this module sits next to mod-playerbots, both of them AzerothCore
 # modules compiled into the same `modules` library, so its includes resolve by
-# themselves. Here the bot tree is a separate library under
-# src/modules/PlayerBots, so the paths and the link have to be stated.
+# themselves. That is now true here too - but the paths still have to be stated,
+# and they have to be stated HERE rather than inherited.
+#
+# Why: mod-playerbots contributes its include paths only when BUILD_PLAYERBOTS
+# is ON, and that option defaults to OFF. AcCompat.h below is force-included
+# into every dungeon-clear translation unit and pulls cmangos-compat-shim.h out
+# of the bot tree unconditionally, so a default-options build of THIS module
+# needs the bot tree on its compile line whether or not the bots are built.
+#
+# These paths pointed at src/modules/PlayerBots until the bots moved into the
+# module system on 2026-09-01, and the move did not update them. The directory
+# had existed either way before, so the stale paths kept working for
+# BUILD_PLAYERBOTS=OFF builds and the breakage only surfaced for someone
+# building a fresh clone with default options:
+#   AcCompat.h:72: fatal error: cmangos-compat-shim.h: No such file or directory
 #
 # The directory list mirrors what the bot module puts on its own compile line:
 # its root, plus the three Penqle paths its headers reach through
@@ -167,32 +180,46 @@ endif()
 if(TORTOISE_MODULE_CMAKE_PHASE STREQUAL "POST_TARGETS")
   target_include_directories(modules
     PUBLIC
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/actions
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/triggers
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/values
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/generic
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/deathknight
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/druid
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/hunter
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/mage
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/paladin
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/priest
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/rogue
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/shaman
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/warlock
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/playerbot/strategy/warrior
-      ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/ahbot
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/cmangos-compat-stubs
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/actions
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/triggers
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/values
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/generic
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/deathknight
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/druid
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/hunter
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/mage
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/paladin
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/priest
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/rogue
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/shaman
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/warlock
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/playerbot/strategy/warrior
+      ${CMAKE_SOURCE_DIR}/modules/mod-playerbots/src/ahbot
       ${CMAKE_SOURCE_DIR}/src/game/MapNodes
       ${CMAKE_SOURCE_DIR}/src/framework/Network
       ${CMAKE_SOURCE_DIR}/dep/recastnavigation
       ${CMAKE_CURRENT_LIST_DIR}/src
       ${CMAKE_CURRENT_LIST_DIR}/src/compat)
 
-  target_link_libraries(modules PUBLIC playerbots)
+  # playerbots used to be its own library; both modules share the `modules`
+  # target now, so there is nothing left to link against.
 
-  target_compile_options(modules PRIVATE
-    -include ${CMAKE_CURRENT_LIST_DIR}/src/AcCompat.h)
+  # AcCompat.h has to be forced ahead of every translation unit: NONE of this
+  # module's 234 sources include it, and 47 of them use the LOG_* macros that
+  # only exist there. The flag for that is compiler-specific, and getting it
+  # wrong is silent - MSVC does not know `-include`, drops it with at most a
+  # D9002, and every one of those 47 files then fails on undefined macros.
+  # Reported from a Windows build on 2026-09-02 with both modules static.
+  if(MSVC)
+    target_compile_options(modules PRIVATE
+      "/FI${CMAKE_CURRENT_LIST_DIR}/src/AcCompat.h")
+  else()
+    target_compile_options(modules PRIVATE
+      -include ${CMAKE_CURRENT_LIST_DIR}/src/AcCompat.h)
+  endif()
 endif()

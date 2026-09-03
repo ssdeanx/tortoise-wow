@@ -35,12 +35,51 @@
 #include "Playerbots.h"
 #include "Timer.h"
 
+#include <mutex>
+#include <unordered_map>
+
 namespace
 {
     // Progress epsilon (yards): the tank must close on the next anchor by at least
     // this much versus its closest-ever approach to count as progress. Matches the
     // harness livelock net so the two agree on what "closing distance" means.
     constexpr float DC_STRANDED_PROGRESS_EPSILON_YD = 1.0f;
+
+    // How many rescues one member may burn before the run stops pretending a
+    // walk will fix it. "Sent running to the tank" is the right answer for a
+    // straggler that merely fell behind; it is no answer at all for one wedged
+    // in geometry, and live that difference showed up as the SAME name coming
+    // back again and again - Dragonmaw Retreat 2026-08-31: Lorelina 14x,
+    // Mannaal 10x, Verinarina 9x, 168 rescues against 22 boss kills, every run
+    // capped at 2 of 11 bosses. On the Nth strike the member is put back onto
+    // the mesh where it already stands.
+    constexpr uint32 DC_STRANDED_WALK_STRIKES = 3;
+
+    // Lateral extraction radius. The altitude snap further down answers a
+    // member parked far off VERTICALLY; this answers one wedged INSIDE the
+    // geometry at roughly the right height, where the column search has
+    // nothing to find. Deliberately small: this returns a bot to walkable
+    // ground where it is, it never carries it toward the objective.
+    constexpr float DC_STRANDED_UNWEDGE_RADIUS = 15.0f;
+
+    // Consecutive failed walk-rescues per member. Reset the moment the member
+    // is back in range - only an unbroken streak means "walking cannot fix
+    // this". Guarded: Recover runs per leader, and leaders on different maps
+    // run on different threads.
+    std::mutex g_strandedStrikesLock;
+    std::unordered_map<ObjectGuid, uint32> g_strandedStrikes;
+
+    uint32 BumpStrandedStrikes(ObjectGuid guid)
+    {
+        std::lock_guard<std::mutex> lock(g_strandedStrikesLock);
+        return ++g_strandedStrikes[guid];
+    }
+
+    void ClearStrandedStrikes(ObjectGuid guid)
+    {
+        std::lock_guard<std::mutex> lock(g_strandedStrikesLock);
+        g_strandedStrikes.erase(guid);
+    }
 
     // Walk the leader's same-map group into kernel rows and report whether the
     // party is FIGHTING. Recover re-walks the live group itself, so a plain value
@@ -222,8 +261,8 @@ namespace DcStrandedRecovery
                                        /*casting*/ false, /*vehicle*/ false,
                                        /*withPet*/ true);
                 LOG_INFO("playerbots.dungeonclear",
-                         "[DC:{}] altitude sanity: column-snapped {:.0f}y back onto the mesh",
-                         leader->GetName(), std::fabs(column.z - lz));
+                         "[DC:{}] altitude sanity: column-snapped {}y back onto the mesh",
+                         leader->GetName(), int(std::fabs(column.z - lz)));
                 return;
             }
         }
@@ -254,15 +293,65 @@ namespace DcStrandedRecovery
                                            /*casting*/ false, /*vehicle*/ false,
                                            /*withPet*/ true);
                     LOG_INFO("playerbots.dungeonclear",
-                             "[DC:{}] altitude sanity: column-snapped {} {:.0f}y onto the mesh",
-                             leader->GetName(), member->GetName(), std::fabs(column.z - mz));
+                             "[DC:{}] altitude sanity: column-snapped {} {}y onto the mesh",
+                             leader->GetName(), member->GetName(), int(std::fabs(column.z - mz)));
                     continue;
                 }
             }
 
             float const strandedDist = leader->GetDistance(member);
             if (strandedDist <= maxSpread)
+            {
+                ClearStrandedStrikes(member->GetObjectGuid());
                 continue;                       // in range — not stranded
+            }
+
+            // Third strike: walking has now failed this member three times in a
+            // row, so it is not slow - it is stuck. Put it back on the mesh
+            // WHERE IT STANDS (the one sanctioned relocation: no ground is
+            // skipped, no route the recorder captures is poisoned) and let the
+            // walk below start from footing it can actually leave.
+            if (BumpStrandedStrikes(member->GetObjectGuid()) >= DC_STRANDED_WALK_STRIKES)
+            {
+                NavmeshSnap::Result const mesh = NavmeshSnap::Snap(
+                    member->GetMap(), member->GetPositionX(), member->GetPositionY(),
+                    member->GetPositionZ(), DC_STRANDED_UNWEDGE_RADIUS);
+                // Only when it actually MOVES the bot. Measured live: 63 of 65
+                // snaps returned distance 0 - the member was already standing on
+                // the mesh, so the premise (wedged in geometry) was simply wrong
+                // there and the teleport was a no-op with a packet attached.
+                if (mesh.ok && mesh.distance > 1.0f)
+                {
+                    member->GetMotionMaster()->Clear();
+                    member->NearTeleportTo(mesh.x, mesh.y, mesh.z, member->GetOrientation(),
+                                           /*casting*/ false, /*vehicle*/ false,
+                                           /*withPet*/ true);
+                    LOG_INFO("playerbots.dungeonclear",
+                             "[DC:{}] stranded-recovery: {} still stuck after {} walks -> "
+                             "unwedged {}yd onto the mesh where it stood",
+                             leader->GetName(), member->GetName(),
+                             DC_STRANDED_WALK_STRIKES, int(mesh.distance));
+                }
+                else if (!mesh.ok)
+                {
+                    LOG_INFO("playerbots.dungeonclear",
+                             "[DC:{}] stranded-recovery: {} still stuck after {} walks and "
+                             "there is no walkable ground within {}yd of it",
+                             leader->GetName(), member->GetName(),
+                             DC_STRANDED_WALK_STRIKES, int(DC_STRANDED_UNWEDGE_RADIUS));
+                }
+                else
+                {
+                    // On the mesh already, just far behind. This is the case that
+                    // dominated live, and it is NOT a wedge - say so plainly rather
+                    // than claiming a rescue that did nothing.
+                    LOG_INFO("playerbots.dungeonclear",
+                             "[DC:{}] stranded-recovery: {} is {}yd back but standing on "
+                             "good ground - not wedged, it simply cannot follow",
+                             leader->GetName(), member->GetName(), int(strandedDist));
+                }
+                ClearStrandedStrikes(member->GetObjectGuid());
+            }
 
             // Fan the strays out a little around the tank so they don't stack on
             // one point, and drop any stale follow spline that would otherwise drag
@@ -283,8 +372,8 @@ namespace DcStrandedRecovery
 
             LOG_INFO("playerbots.dungeonclear",
                      "[DC:{}] stranded-recovery: no progress past the timeout with {} out of "
-                     "range ({:.0f}yd) -> sent running to the tank",
-                     leader->GetName(), member->GetName(), strandedDist);
+                     "range ({}yd) -> sent running to the tank",
+                     leader->GetName(), member->GetName(), int(strandedDist));
         }
 
         if (moved == 0)

@@ -127,7 +127,8 @@ endif()
 
 # playerbots library link gated by BUILD_PLAYERBOTS.
 if(BUILD_PLAYERBOTS)
-  target_link_libraries(${EXECUTABLE_NAME} playerbots)
+  # playerbots is part of the `modules` library now (modules/mod-playerbots),
+  # which this executable already links.
 endif()
 
 target_link_libraries(${EXECUTABLE_NAME}

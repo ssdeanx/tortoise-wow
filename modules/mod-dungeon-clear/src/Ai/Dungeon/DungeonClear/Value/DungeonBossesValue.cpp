@@ -3,6 +3,8 @@
  * and/or modify it under version 3 of the License, or (at your option), any later version.
  */
 
+#include <unordered_map>
+#include <mutex>
 #include "DungeonBossesValue.h"
 
 #include <limits>
@@ -236,5 +238,42 @@ std::vector<DungeonBossInfo> DungeonBossesValue::Calculate()
     // opposing faction's creature (The Nexus' Frozen Commander).
     roster = ApplyFactionEntrySwaps(bot, mapId, std::move(roster));
 
-    return SnapAll(map, FilterToCurrentWing(bot, mapId, std::move(roster)));
+    std::vector<DungeonBossInfo> finalList =
+        SnapAll(map, FilterToCurrentWing(bot, mapId, std::move(roster)));
+
+    // MEASUREMENT (Dragonmaw 2026-08-31). A travel objective was added for map
+    // 816 and the parties never target it - they go straight for the boss on
+    // the far side of the ledge. Apply/SnapAll/FilterToCurrentWing were all
+    // read and none of them drops it, so print the list the picker actually
+    // sees rather than reasoning about it further. Once per map per minute.
+    {
+        static std::mutex s_dumpLock;
+        static std::unordered_map<uint32, uint32> s_dumpAt;
+        uint32 const now = getMSTime();
+        bool speak = false;
+        {
+            std::lock_guard<std::mutex> lock(s_dumpLock);
+            uint32& last = s_dumpAt[mapId];
+            if (!last || getMSTimeDiff(last, now) > 60000)
+            {
+                last = now;
+                speak = true;
+            }
+        }
+        if (speak)
+        {
+            std::string line;
+            for (DungeonBossInfo const& b : finalList)
+            {
+                line += (line.empty() ? "" : " | ");
+                line += std::to_string(BossOrderKey(b));
+                line += (b.kind == DungeonAnchorKind::Objective ? ":OBJ " : ":BOSS ");
+                line += b.name;
+            }
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC] roster for map {} ({} anchors): {}",
+                     mapId, int(finalList.size()), line);
+        }
+    }
+    return finalList;
 }

@@ -66,6 +66,13 @@ namespace DcTestRun
         bool disableAllCleared = false;
         bool abortRequested = false;
         bool leaderMissing = false;
+        // TRUE when the Player object is gone from the world; FALSE when it is
+        // still online and only its PlayerbotAI went away. Both used to report
+        // as "leader tank vanished", which is a claim about the first case and
+        // was never checked against the second - 31 of 96 runs died on this
+        // message overnight 2026-08-31 while the character count on the map
+        // stayed flat, which fits the AI case, not a logout.
+        bool leaderGoneFromWorld = false;
         bool gmOnline = true;
         bool partyWiped = false;
         bool paused = false;

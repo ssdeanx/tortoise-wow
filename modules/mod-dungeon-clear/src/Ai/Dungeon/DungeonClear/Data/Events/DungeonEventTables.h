@@ -64,6 +64,8 @@ void RegisterRazorfenDownsEvents(std::vector<DungeonEvent>& out);
 void RegisterBlackrockDepthsEvents(std::vector<DungeonEvent>& out);
 void RegisterDeadminesEvents(std::vector<DungeonEvent>& out);
 void RegisterWailingCavernsEvents(std::vector<DungeonEvent>& out);
+// Dragonmaw Retreat (map 816) - the one-way ledge into the lower cave.
+void RegisterDragonmawEvents(std::vector<DungeonEvent>& out);
 void RegisterStratholmeEvents(std::vector<DungeonEvent>& out);
 void RegisterUldamanEvents(std::vector<DungeonEvent>& out);
 void RegisterScholomanceEvents(std::vector<DungeonEvent>& out);
@@ -134,6 +136,7 @@ void RegisterZulFarrakRoster(std::vector<BossRosterPatch>& t);
 void RegisterBlackrockDepthsRoster(std::vector<BossRosterPatch>& t);
 void RegisterDeadminesRoster(std::vector<BossRosterPatch>& t);
 void RegisterWailingCavernsRoster(std::vector<BossRosterPatch>& t);
+void RegisterDragonmawRoster(std::vector<BossRosterPatch>& t);
 void RegisterStratholmeRoster(std::vector<BossRosterPatch>& t);
 void RegisterDireMaulRoster(std::vector<BossRosterPatch>& t);
 void RegisterUldamanRoster(std::vector<BossRosterPatch>& t);

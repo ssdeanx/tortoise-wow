@@ -1,6 +1,7 @@
 #ifndef _RandomPlayerbotMgr_H
 #define _RandomPlayerbotMgr_H
 
+#include <mutex>
 #include "Common.h"
 #include <unordered_set>
 #include "PlayerbotAIBase.h"
@@ -236,8 +237,16 @@ public:
         // as expired strays and reaped them mid-run after the two-minute
         // group grace ("leader tank vanished"). The owner marks each login
         // and clears the mark in its teardown.
+        // Guarded: the DC test harness writes this from the map thread that
+        // owns the run while the rotation reads it from its own update, and an
+        // unordered_set is not safe across that. The same shape unguarded -
+        // Player::m_visibleGUIDs - segfaulted the World thread on 2026-08-31
+        // (crash_2026-08-31_11-01-01, a find() hashing against a set another
+        // thread was writing). Here the damage would be quieter and worse: a
+        // missed lookup silently un-shields a running party's bot.
         void SetExternallyManaged(uint32 lowGuid, bool on)
         {
+            std::lock_guard<std::mutex> lock(m_externallyManagedLock);
             if (on)
                 m_externallyManaged.insert(lowGuid);
             else
@@ -245,10 +254,12 @@ public:
         }
         bool IsExternallyManaged(uint32 lowGuid) const
         {
+            std::lock_guard<std::mutex> lock(m_externallyManagedLock);
             return m_externallyManaged.find(lowGuid) != m_externallyManaged.end();
         }
     private:
         std::unordered_set<uint32> m_externallyManaged;
+        mutable std::mutex m_externallyManagedLock;
     public:
 
         static std::string GetCommandTexts(const std::string& command);

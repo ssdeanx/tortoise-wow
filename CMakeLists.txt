@@ -130,6 +130,15 @@ set(CMAKE_CXX_STANDARD 17)
 add_definitions(-DDT_VIRTUAL_QUERYFILTER=1)
 
 if(MSVC)
+# Do NOT append compiler flags here expecting them to survive. Further down,
+# the WIN32 branch does
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} /wd4996 ... /MP /EHsc")
+# which expands CMAKE_CXX_FLAGS_RELEASE, not CMAKE_CXX_FLAGS, and therefore
+# REPLACES everything set up here. I put /DDT_VIRTUAL_QUERYFILTER=1 on this
+# line on 2026-09-02 and it was silently discarded; gabtorman found the real
+# cause and moved it onto that later assignment, where it belongs. The
+# /std:c++17 below is likewise dropped there - harmless, since
+# CMAKE_CXX_STANDARD 17 above already covers it.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
 endif(MSVC)
 if(NOT MSVC)
@@ -536,7 +545,10 @@ elseif(WIN32)
   # Disable warnings in Visual Studio 8 and above and add /MP
   if(MSVC AND NOT CMAKE_GENERATOR MATCHES "Visual Studio 7")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_RELEASE} /wd4996 /wd4355 /wd4244 /wd4985 /wd4267 /MP /EHsc")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} /wd4996 /wd4355 /wd4244 /wd4267 /MP /EHsc")
+    # This assignment replaces the earlier CMAKE_CXX_FLAGS value. Keep the
+    # virtual-query-filter switch here too, so Detour and every consumer agree
+    # on dtQueryFilter's layout and DcRouteFilter can override getCost.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} /wd4996 /wd4355 /wd4244 /wd4267 /MP /EHsc /DDT_VIRTUAL_QUERYFILTER=1")
   endif()
 endif()
 
@@ -722,75 +734,10 @@ if(TARGET mangosd)
   endif()
 endif()
 
-# cmangos/playerbots vendored module
-if (BUILD_PLAYERBOTS)
-    message(STATUS "BUILD_PLAYERBOTS=ON - adding cmangos/playerbots vendored module at src/modules/PlayerBots/")
-    set(PCH ${USE_PCH})
-    add_subdirectory(src/modules/PlayerBots)
-    # Vendor-tree feature gates the playerbots source expects:
-    #   CMANGOS         - selects the cmangos codepath in vendored headers
-    #                     (vs. TrinityCore / MaNGOS-Zero alternates).
-    #   MANGOSBOT_ZERO  - Classic (1.12). Switches level caps, talent trees,
-    #                     spell ranges. Use MANGOSBOT_ONE for TBC,
-    #                     MANGOSBOT_TWO for WotLK if re-vendoring later.
-    #   ENABLE_PLAYERBOTS - turns the subsystem on inside the vendor tree's
-    #                       own ifdef walls.
-    target_compile_definitions(playerbots PRIVATE CMANGOS MANGOSBOT_ZERO ENABLE_PLAYERBOTS)
-    target_include_directories(playerbots PUBLIC
-        ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots/cmangos-compat-stubs
-        ${CMAKE_SOURCE_DIR}/src/game
-        ${CMAKE_SOURCE_DIR}/src/game/AI
-        ${CMAKE_SOURCE_DIR}/src/game/AuctionHouse
-        ${CMAKE_SOURCE_DIR}/src/game/Battlegrounds
-        ${CMAKE_SOURCE_DIR}/src/game/Chat
-        ${CMAKE_SOURCE_DIR}/src/game/Commands
-        ${CMAKE_SOURCE_DIR}/src/game/Database
-        ${CMAKE_SOURCE_DIR}/src/game/Group
-        ${CMAKE_SOURCE_DIR}/src/game/Guild
-        ${CMAKE_SOURCE_DIR}/src/game/Handlers
-        ${CMAKE_SOURCE_DIR}/src/game/LFG
-        ${CMAKE_SOURCE_DIR}/src/game/Mail
-        ${CMAKE_SOURCE_DIR}/src/game/Maps
-        ${CMAKE_SOURCE_DIR}/src/game/Maps/Pool
-        ${CMAKE_SOURCE_DIR}/src/game/Movement
-        ${CMAKE_SOURCE_DIR}/src/game/Movement/spline
-        ${CMAKE_SOURCE_DIR}/src/game/Objects
-        ${CMAKE_SOURCE_DIR}/src/game/OutdoorPvP
-        ${CMAKE_SOURCE_DIR}/src/game/PacketBroadcast
-        ${CMAKE_SOURCE_DIR}/src/game/Protocol
-        ${CMAKE_SOURCE_DIR}/src/game/Spells
-        ${CMAKE_SOURCE_DIR}/src/game/Threat
-        ${CMAKE_SOURCE_DIR}/src/game/Transports
-        ${CMAKE_SOURCE_DIR}/src/game/vmap
-        ${CMAKE_SOURCE_DIR}/src/shared
-        ${CMAKE_SOURCE_DIR}/src/shared/Config
-        ${CMAKE_SOURCE_DIR}/src/shared/Database
-        ${CMAKE_SOURCE_DIR}/src/shared/Log
-        ${CMAKE_SOURCE_DIR}/src/shared/Util
-        ${CMAKE_SOURCE_DIR}/src/framework
-        ${CMAKE_SOURCE_DIR}/src/framework/Network
-        # ACE_ROOT is only the search hint a builder may pass in; the path that
-        # find_package(ACE) actually resolved is ACE_INCLUDE_DIR, which is what
-        # src/game and src/shared use. Without it this target gets no ACE include
-        # path whenever ACE was found any other way - via the environment, a
-        # system install, or CMake's own search. On Linux that goes unnoticed
-        # because ACE sits in /usr/include; on Windows the build fails outright.
-        ${ACE_ROOT}
-        ${ACE_INCLUDE_DIR}
-        # Same story as ACE above: BOOST_ROOT is the hint, Boost_INCLUDE_DIRS is
-        # what find_package actually resolved.
-        ${BOOST_ROOT}
-        ${Boost_INCLUDE_DIRS}
-        ${CMAKE_SOURCE_DIR}/dep/include/g3dlite
-        ${MYSQL_INCLUDE_DIR}
-    )
-    if (WIN32)
-        target_include_directories(playerbots PUBLIC
-            ${CMAKE_SOURCE_DIR}/dep/windows/include
-            ${CMAKE_SOURCE_DIR}/dep/windows/include/mysql
-        )
-    endif()
-endif()
+# cmangos/playerbots is a MODULE now: modules/mod-playerbots.
+# Its build lives in that module's own CMakeLists.txt and
+# mod-playerbots.cmake. BUILD_PLAYERBOTS still switches it on and off,
+# and still gates src/game/PlayerbotStubs.cpp.
 
 if (USE_EXTRACTORS OR USE_REALMMERGE)
     add_subdirectory(tools)

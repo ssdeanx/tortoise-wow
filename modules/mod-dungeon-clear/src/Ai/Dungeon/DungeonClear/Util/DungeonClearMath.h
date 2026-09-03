@@ -846,7 +846,28 @@ namespace DungeonClearMath
     // this is a trail discontinuity. Was re-declared as a local `kJumpGuard = 12`
     // in each of the four walk-back clones; hoisted here so the four agree by
     // construction.
-    inline constexpr float TrailJumpGuard = 12.0f;
+    //
+    // MUST equal the recorder's relocation bound (DcRecordBreadcrumb). The two
+    // are the same question - "is this stored segment contiguous walkable
+    // ground?" - and when they disagreed the trail was useless: the recorder was
+    // taught (2026-08-31) that a 14-30yd flat run is NOT a break, so trails now
+    // legitimately contain such segments, while every reader still stopped dead
+    // at 12. The backward walk then terminated one segment behind the tank and
+    // never reached the crumbs beside the follower. Measured on Dragonmaw:
+    // 6389 of 6391 follower fall-throughs were "no reachable crumb", median 97yd
+    // behind, while a perfectly good trail ran right past them.
+    //
+    // The recorder guarantees what this now trusts: it already breaks the trail
+    // on a floor change or a relocation, so consecutive stored crumbs are
+    // contiguous by construction.
+    inline constexpr float TrailJumpGuard = 60.0f;
+
+    // NOT the same number as above, which is why it is its own name. This bounds
+    // a STRAIGHT-LINE entry leg from an off-trail follower to the nearest crumb;
+    // the walk-back guard bounds contiguity of ground the tank actually walked.
+    // Sharing one constant for both would have bought the long trail at the price
+    // of 60yd straight lines through walls.
+    inline constexpr float TrailEntryReach = 12.0f;
 }
 
 #endif

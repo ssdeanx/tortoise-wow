@@ -155,7 +155,24 @@ void Camera::UpdateVisibilityForOwner()
 {
     // Temporary hackfix if the camera has no map assigned to it
     // TODO: Find out why/how this happens
-    if (!m_source->FindMap())
+    Map const* const sourceMap = m_source->FindMap();
+    if (!sourceMap)
+        return;
+
+    // Not while the map is being torn down. UnloadAll sets m_unloading and then
+    // deletes objects, and deleting one fires ViewPoint::Event_RemovedFromWorld
+    // -> this function -> Map::UpdateActiveObjectVisibility, which walks
+    // m_activeNonPlayers - a container of RAW pointers the unload is in the
+    // middle of invalidating. The freed entry is then read for its guid.
+    //
+    // Measured, twice: crash_2026-09-01_10-11-49 and crash_2026-08-31_11-01-01,
+    // both SIGSEGV under Player::IsInVisibleList with Map::UnloadAll /
+    // ObjectGridUnloader on the very same stack. Both were first read as a data
+    // race on m_visibleGUIDs - wrongly: the crash dump shows the set intact
+    // (25 elements) and exactly ONE of 52 threads anywhere near visibility. It
+    // is a lifetime bug, not a locking one. Nobody needs a visibility update
+    // for a map that is going away.
+    if (sourceMap->IsUnloading())
         return;
 
     std::shared_lock<std::shared_mutex> lock(GetOwner()->m_visibleGUIDs_lock);

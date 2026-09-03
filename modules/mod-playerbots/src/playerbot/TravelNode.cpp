@@ -1,3 +1,7 @@
+// botpch.h supplied the boost headers; the module build has no precompiled
+// header, so the one use here names its own.
+#include <boost/filesystem.hpp>
+
 #include "TravelNode.h"
 #include "playerbot/TravelMgr.h"
 

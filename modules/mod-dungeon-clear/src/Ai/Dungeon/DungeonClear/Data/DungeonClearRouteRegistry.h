@@ -33,6 +33,21 @@ class DungeonClearRouteRegistry
 {
 public:
     static void Register(uint32 mapId, Difficulty difficulty, uint32 bossEntry, std::vector<WaypointHint> hints);
+
+    // A hand-authored SAFETY NET, kept beside the learned route rather than
+    // instead of it. The recorder owns the primary slot and improves it from
+    // live clears; this one it can neither write nor replace, because it lives
+    // in a .fallback file the recorder never touches.
+    //
+    // Why both: pinning a hand route switches the learning OFF for exactly the
+    // leg that needed it (Dragonmaw's descent - pinned 2026-08-31, still
+    // failing 21 of 37 runs the next morning while every UNPINNED leg on the
+    // same map had quietly taught itself a better line overnight). Dropping the
+    // pin alone would leave nothing to catch a bad learned route. With both,
+    // the recorder is free to learn and a wedge falls back to the known-good
+    // line instead of to no route at all.
+    static void RegisterFallback(uint32 mapId, Difficulty difficulty, uint32 bossEntry,
+                                 std::vector<WaypointHint> hints);
     // Copy, not a pointer. Routes are registered while the server runs now
     // (the recorder enters every leg it closes), so a reader holding a
     // pointer into the table could watch it rehash under him on another map
@@ -82,6 +97,7 @@ private:
     };
 
     static std::unordered_map<Key, std::vector<WaypointHint>, KeyHash>& Store();
+    static std::unordered_map<Key, std::vector<WaypointHint>, KeyHash>& FallbackStore();
     static std::mutex& RegistryLock();
     static std::unordered_set<Key, KeyHash>& PinnedSet();
 };

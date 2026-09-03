@@ -299,12 +299,12 @@ void RegisterUldamanRoster(std::vector<BossRosterPatch>& t)
                           "Altar of the Keepers",
                           104.85f, 272.45f, -26.53f, /*arriveRadius*/ 30.0f,
                           /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 2,
-                          /*orderOverride*/ 8),
+                          /*orderOverride*/ 4),
             MakeObjective(OBJ(2), /*encounterIndex*/ 7, 70,
                           "Altar of Archaedas",
                           96.48f, 269.05f, -52.15f, /*arriveRadius*/ 10.0f,
                           /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 3,
-                          /*orderOverride*/ 9),
+                          /*orderOverride*/ 8),
         };
         t.push_back(std::move(p));
     }

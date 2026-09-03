@@ -20,6 +20,7 @@
  */
 
 #include "Map.h"
+#include <shared_mutex>
 #include "MapManager.h"
 #include "Player.h"
 #include "GridNotifiers.h"
@@ -445,7 +446,10 @@ bool Map::Add(Player *player)
     // one could stay invisible from the other until re-zoning.
     // Inspired from the TrinityCore way.
     if (player->IsBeingTeleportedFar())
+    {
+        std::unique_lock<std::shared_mutex> lock(player->m_visibleGUIDs_lock);
         player->m_visibleGUIDs.clear();
+    }
     NGridType* grid = getNGrid(cell.GridX(), cell.GridY());
     player->GetViewPoint().Event_AddedToWorld(&(*grid)(cell.CellX(), cell.CellY()));
     player->SetIsNewObject(true);
@@ -472,11 +476,26 @@ bool Map::Add(Player *player)
 
 void Map::ExistingPlayerLogin(Player* player)
 {
-    // Reset visibility list
-    for (ObjectGuidSet::const_iterator it = player->m_visibleGUIDs.begin(); it != player->m_visibleGUIDs.end(); ++it)
+    // Reset visibility list.
+    //
+    // Copy under the shared lock and walk the COPY: RemoveListener takes the
+    // broadcaster's own lock, and holding the visibility lock across it would
+    // invert the lock order against every reader. Both the read and the clear
+    // were unguarded before - a concurrent find() in Player::IsInVisibleList,
+    // hashing against a set another thread was erasing from, is what killed
+    // the World thread in crash_2026-08-31_11-01-01.
+    ObjectGuidSet visibleCopy;
+    {
+        std::shared_lock<std::shared_mutex> lock(player->m_visibleGUIDs_lock);
+        visibleCopy = player->m_visibleGUIDs;
+    }
+    for (ObjectGuidSet::const_iterator it = visibleCopy.begin(); it != visibleCopy.end(); ++it)
         if (Player* other = GetPlayer(*it))
             other->m_broadcaster->RemoveListener(player);
-    player->m_visibleGUIDs.clear();
+    {
+        std::unique_lock<std::shared_mutex> lock(player->m_visibleGUIDs_lock);
+        player->m_visibleGUIDs.clear();
+    }
 
     SendInitTransports(player);
     SendInitSelf(player);
@@ -1261,7 +1280,13 @@ void Map::Remove(Player *player, bool remove)
     RemoveUnitFromMovementUpdate(player);
     player->m_needUpdateVisibility = false;
 
-    for (ObjectGuidSet::const_iterator it = player->m_visibleGUIDs.begin(); it != player->m_visibleGUIDs.end(); ++it)
+    // Same copy-then-walk as ExistingPlayerLogin, and for the same reason.
+    ObjectGuidSet visibleCopy;
+    {
+        std::shared_lock<std::shared_mutex> lock(player->m_visibleGUIDs_lock);
+        visibleCopy = player->m_visibleGUIDs;
+    }
+    for (ObjectGuidSet::const_iterator it = visibleCopy.begin(); it != visibleCopy.end(); ++it)
         if (Player* other = GetPlayer(*it))
             other->m_broadcaster->RemoveListener(player);
 
@@ -1666,6 +1691,10 @@ void Map::UpdateActiveObjectVisibility(Player* player, ObjectGuidSet& visibleGui
 // Support for compressed data packet
 void Map::UpdateActiveObjectVisibility(Player *player, ObjectGuidSet &visibleGuids, UpdateData &data, std::set<WorldObject*> &visibleNow)
 {
+    // Belt and braces beside the Camera guard: m_activeNonPlayers holds raw
+    // pointers, and UnloadAll invalidates them as it goes. See Camera.cpp.
+    if (m_unloading)
+        return;
     for (const auto obj : m_activeNonPlayers)
     {
         if (obj->IsInWorld())

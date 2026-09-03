@@ -20,6 +20,9 @@
 // objects. Nothing to register when the module is not there.
 void World::InitPlayerbotsAtStartup()         {}
 
+class Player;
+void Playerbot_OnPlayerDestroyed(Player const*) {}
+
 void BotActionLog_LogCastStart  (WorldObject*, uint32, uint64, uint32)         {}
 void BotActionLog_LogCastResult (WorldObject*, uint32, uint8, const char*)     {}
 void BotActionLog_LogDamage     (Unit*, Unit*, uint32, uint32, const char*)    {}

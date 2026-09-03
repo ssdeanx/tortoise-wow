@@ -1529,7 +1529,12 @@ void DcTestRunJob::SweepPartyGeometry()
                     {
                         uint32 const slotKey = slot.guid.GetCounter();
                         uint32 const nowFar = getMSTime();
-                        bool far = false;
+                        // NOT `far`: windef.h defines `far` and `near` as EMPTY macros, a
+                        // 16-bit leftover, so `bool far = false;` becomes
+                        // `bool = false;` under MSVC. Reported from a Windows
+                        // build 2026-09-02: C2513 here, then C2059 at each
+                        // later use.
+                        bool isFar = false;
                         // A combat FLAG is not a fight. Live: three resurrected
                         // dps stood at the entrance 250yd from the party, all
                         // flagged in combat with no victim at all, so the
@@ -1546,7 +1551,7 @@ void DcTestRunJob::SweepPartyGeometry()
                             !bot->IsBeingTeleported() && tank->FindMap() == botMap &&
                             !reallyFighting && fenceDist > 120.0f)
                         {
-                            far = true;
+                            isFar = true;
                             uint32& since = _farSinceMs[slotKey];
                             if (since == 0)
                                 since = nowFar ? nowFar : 1;
@@ -1573,7 +1578,7 @@ void DcTestRunJob::SweepPartyGeometry()
                                 continue;
                             }
                         }
-                        if (!far)
+                        if (!isFar)
                             _farSinceMs[slotKey] = 0;
                     }
 
@@ -2040,7 +2045,37 @@ void DcTestRunJob::TickMonitoring(uint32 dt)
 
     if (!tank || !tankAI)
     {
-        obs.leaderMissing = true;
+        // A tank BETWEEN MAPS is not a lost tank. FindTank uses
+        // ObjectAccessor::FindPlayer, which returns null for a Player whose
+        // IsInWorld() is false - and that is precisely the state a teleport
+        // passes through. So an ordinary map change read as "the leader
+        // vanished" and killed the run.
+        //
+        // Measured 2026-09-02: 37 Dragonmaw runs died overnight on "leader tank
+        // left the world" while the destruction probe (DC-BOTLIFE, fired from
+        // Player::~Player for any bot still under run protection) reported
+        // ZERO. Nothing was ever destroyed; every one of them was this false
+        // alarm. It is the same mistake a guard of mine made the day before,
+        // from the other direction - asking a registry whether a pointer is
+        // good, when the honest answer during a teleport is "not right now".
+        //
+        // Only FindPlayerNotInWorld coming back empty means the Player is
+        // really gone. A transient absence is left alone: the no-progress
+        // watchdog already ends a run that stops getting anywhere, so this
+        // check does not have to be the safety net as well.
+        Player* const tankAnywhere = ObjectAccessor::FindPlayerNotInWorld(_tankGuid);
+        if (!tankAnywhere)
+        {
+            obs.leaderMissing = true;
+            obs.leaderGoneFromWorld = true;
+        }
+        else if (!GET_PLAYERBOT_AI(tankAnywhere))
+        {
+            // Present but without its AI - a real fault, and a different one.
+            obs.leaderMissing = true;
+            obs.leaderGoneFromWorld = false;
+        }
+        // else: in transit between maps. Say nothing and let the run continue.
     }
     else
     {
@@ -2345,7 +2380,10 @@ void DcTestRunJob::TickMonitoring(uint32 dt)
         case DcTestRun::Verdict::FailAborted:
         {
             std::lock_guard<std::mutex> lock(_obsMutex);
-            failReason = obs.leaderMissing ? "leader tank vanished"
+            failReason = obs.leaderMissing
+                             ? (obs.leaderGoneFromWorld
+                                    ? "leader tank left the world (logged out or removed)"
+                                    : "leader tank lost its bot AI (still online)")
                          : (_abortReason.empty() ? "aborted" : _abortReason);
             break;
         }

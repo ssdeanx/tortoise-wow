@@ -1,3 +1,7 @@
+// See PlayerbotMgr.cpp: botpch.h supplied <regex>, and the module build has
+// no precompiled header.
+#include <regex>
+
 #include "Config/Config.h"
 
 #include "playerbot/playerbot.h"

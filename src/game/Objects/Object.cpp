@@ -20,6 +20,7 @@
  */
 
 #include "Object.h"
+#include <shared_mutex>
 #include "SharedDefines.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
@@ -2734,14 +2735,23 @@ void WorldObject::DestroyForNearbyPlayers()
         if (plr == this)
             continue;
 
-        if (!plr->IsInVisibleList_Unsafe(this))
+        // The locking form, not _Unsafe: nothing up this call chain holds the
+        // visibility lock (callers are Creature.cpp, felwood, alterac), so the
+        // shared_lock is free to take and the racy read is gone.
+        if (!plr->IsInVisibleList(this))
             continue;
 
         if (isType(TYPEMASK_UNIT) && ((Unit*)this)->GetCharmerGuid() == plr->GetObjectGuid()) // TODO: this is for puppet
             continue;
 
         DestroyForPlayer(plr);
-        plr->m_visibleGUIDs.erase(GetGUID());
+        // The unguarded writer that corrupted the buckets. DestroyForPlayer
+        // does network work, so it stays OUTSIDE the lock - only the erase
+        // needs it.
+        {
+            std::unique_lock<std::shared_mutex> lock(plr->m_visibleGUIDs_lock);
+            plr->m_visibleGUIDs.erase(GetGUID());
+        }
 
         if (ToPlayer() && ToPlayer()->m_broadcaster)
             ToPlayer()->m_broadcaster->RemoveListener(plr);

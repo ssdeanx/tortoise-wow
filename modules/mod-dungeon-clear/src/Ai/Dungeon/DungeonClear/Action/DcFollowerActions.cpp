@@ -495,6 +495,12 @@ bool DungeonClearFollowTankAction::Execute(Event& /*event*/)
     // the centering itself (PathCenterEnable): with centering off the tank's
     // crumbs are the wall-hugging line anyway, so there is nothing to inherit
     // and the stock Follow() fan is the right fallback.
+    // MEASUREMENT (Dragonmaw 2026-08-31). Stranded followers sit at a median of
+    // 126yd behind while the run waits on them, and nothing so far has moved
+    // that number. What is NOT known is which branch they actually take, so
+    // record it and report it once they are past the spread limit the tank
+    // enforces. Cheap: a const char* assignment on a path that already runs.
+    char const* trailOutcome = "trail not attempted (inside follow bubble)";
     if (DcSettings::GetBool(ObjectGuid::Empty, "PathCenterEnable"))
     {
         float const toTank = bot->GetExactDist2d(tank);
@@ -515,8 +521,15 @@ bool DungeonClearFollowTankAction::Execute(Event& /*event*/)
             // issuing MoveTo to a point we're basically on micro-steps in place
             // (the scout-lag "two steps forward, two back" dance). Let Follow()
             // take it — it early-outs cleanly when in range.
-            if (DcLeaderSignal::GetLeaderScoutTrailPoint(bot, lag, trailPoint) &&
-                bot->GetExactDist(&trailPoint) > kTrailArrival)
+            bool const gotCrumb =
+                DcLeaderSignal::GetLeaderScoutTrailPoint(bot, lag, trailPoint);
+            bool const crumbAhead =
+                gotCrumb && bot->GetExactDist(&trailPoint) > kTrailArrival;
+            if (!gotCrumb)
+                trailOutcome = "no reachable crumb at lag behind the tank";
+            else if (!crumbAhead)
+                trailOutcome = "already standing on the lag crumb";
+            if (crumbAhead)
             {
                 // Keep the teardown / orphan-reaper bookkeeping live; the point-
                 // move / glide supersedes any MoveFollow a prior tick installed
@@ -552,6 +565,7 @@ bool DungeonClearFollowTankAction::Execute(Event& /*event*/)
                                   bot->GetName(), toTank, lag);
                     return true;
                 }
+                trailOutcome = "crumb found but neither glide nor MoveTo took it";
             }
             // No usable trail yet (tank just moved off / crumb unreachable): fall
             // through to the stock follow so the party never strands.
@@ -573,6 +587,14 @@ bool DungeonClearFollowTankAction::Execute(Event& /*event*/)
     // stock collision shuffle permanently armed). Same deterministic
     // golden-angle fan as ComputeCampSlot, so the cluster spreads evenly and
     // each bot's slot never moves between ticks.
+    // Only for the ones the run is actually waiting on - 60yd is the live
+    // PartyMaxSpread, so the tight cluster never reaches this line.
+    float const behind = bot->GetExactDist(tank);
+    if (behind > 60.0f)
+        LOG_INFO("playerbots.dungeonclear",
+                 "[DC:{}] follow-tank: {}yd behind, falling through to stock Follow() - {}",
+                 bot->GetName(), int(behind), trailOutcome);
+
     uint32 const seed = static_cast<uint32>(bot->GetObjectGuid().GetCounter());
     float const angle =
         Position::NormalizeOrientation(static_cast<float>(seed) * 2.39996323f);

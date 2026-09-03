@@ -23,6 +23,14 @@ public:
     PlayerbotHolder();
     virtual ~PlayerbotHolder();
 
+    // Called from Player::~Player (through the Playerbot_OnPlayerDestroyed
+    // stub seam) for EVERY holder, so no map can outlive the Player it points
+    // at. This is the lifetime end of the stale-pointer problem; the reading
+    // end cannot be fixed by asking a second registry whether the pointer is
+    // still good - that was tried on 2026-09-01 and threw away bots that were
+    // merely mid-teleport, stopping the whole run system for three hours.
+    static void NotePlayerDestroyed(Player const* player);
+
     void AddPlayerBot(uint32 guid, uint32 masterAccountId);
 	void HandlePlayerBotLoginCallback(QueryResult * dummy, SqlQueryHolder * holder);
 

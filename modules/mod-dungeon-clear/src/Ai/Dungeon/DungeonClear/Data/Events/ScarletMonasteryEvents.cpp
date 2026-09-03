@@ -32,49 +32,44 @@ void RegisterScarletMonasteryEvents(std::vector<DungeonEvent>& out)
                       .Conditional(&DcRoomAggroPreClearCondition)
                       .KillCreature(/*room trash*/ 0)
                       .Build());
+
+    // KEIN Tuer-Ereignis fuer die Kathedrale. Eines stand hier am 2026-09-02
+    // und wurde am selben Tag wieder entfernt: die Secret Door (GO 97700) vor
+    // High Inquisitor Fairbanks oeffnet die GENERISCHE Tuerbehandlung des
+    // Moduls von selbst -
+    //     blocking-door: flagged 'Secret Door' (97700) 0.9yd from bot
+    //     door-blocked:  opening 'Secret Door' as a player would (entitled)
+    // - und zwar dieselbe Logik, die nebenbei auch die Chapel Door aufmacht.
+    //
+    // Das Ereignis hat nie gefeuert (0 Ausfuehrungen, Fackel 97701 nie benutzt)
+    // und der Fluegel wurde trotzdem 3 von 3 geraeumt. Wer hier wieder eines
+    // einbaut, sollte zuerst pruefen, ob die Tuer nicht laengst aufgeht.
 }
 
 // --- roster patch (relocated from BossRosterRegistry) --------------------
 void RegisterScarletMonasteryRoster(std::vector<BossRosterPatch>& t)
 {
-    using namespace DcRoster;
-
-    // --- Scarlet Monastery: Cathedral (map 189) ------------------
-    // The derived list ends at High Inquisitor Whitemane (3977), but
-    // she is only attackable AFTER Scarlet Commander Mograine is
-    // engaged (the SmartAI event-resurrect fight). The real pull
-    // target, Mograine (3976), has NO DungeonEncounter row of his own,
-    // so he never appears and has no kill-bit. Targeting Whitemane's
-    // anchor stalls the tank.
+    // Nothing here any more. The whole Cathedral correction moved into
+    // data/dc_roster.txt on 2026-09-02, where the server owner dictates the
+    // walked order for all four wings and it reloads without a build.
     //
-    // Fix: drop Whitemane, add Mograine at his spawn (verified from the
-    // creature table, map 189), and have Mograine borrow Whitemane's
-    // encounterIndex via inheritCompletionFrom — completing the
-    // Cathedral encounter (Whitemane's bit) then drops Mograine from the
-    // list through the existing NextDungeonBossValue mask logic.
-    // RoomAggroRegistry already flags 3976, so the room pre-clear fires.
+    // What used to live here: Whitemane (3977) was REMOVED as event-locked and
+    // Scarlet Commander Mograine (3976) injected in her place, borrowing her
+    // kill-bit through inheritCompletionFrom because he has no DungeonEncounter
+    // row of his own. The reasoning was sound - she is only attackable after
+    // Mograine is engaged, so an anchor on her stalled the tank - but it was a
+    // fix for the ORDER, not for her. Ordered AFTER Mograine, which is the real
+    // fight (he dies, she resurrects him, you kill her, then him again), she is
+    // a perfectly good target and the Cathedral is not actually clear until she
+    // is down.
     //
-    // ORDER FIX. Whitemane's DBC bit (5) sorts Mograine AFTER High
-    // Inquisitor Fairbanks (4542, bit 4), so the auto path was
-    // Fairbanks -> room-clear + Mograine. The run is much smoother the
-    // other way: sweep the Reanimation chamber and kill Mograine FIRST,
-    // then mop up Fairbanks last (he stands off in his own alcove and
-    // pulls nothing of the main hall). Give Mograine orderOverride 3 so
-    // he is picked before Fairbanks while still completing on Whitemane's
-    // real kill-bit 5 (BossOrderKey uses the override; the completion mask
-    // still keys on encounterIndex) — same decoupling as Stratholme's
-    // Barthilas. Net Cathedral order: room-clear + Mograine -> Fairbanks.
-    {
-        BossRosterPatch p;
-        p.mapId = 189;
-        p.remove = { 3977 };
-        p.add = {
-            MakeBoss(3976, 189, "Scarlet Commander Mograine",
-                     1153.9f, 1398.4f, 32.6f, /*completionFrom*/ 3977,
-                     /*orderOverride*/ 3),
-        };
-        t.push_back(std::move(p));
-    }
+    // The file gives both of them their own credit and their own kill-bit
+    // (an `order` line credits its entry; the bit is index-1), so the borrow is
+    // no longer needed. Re-adding Mograine here as well would duplicate him:
+    // DcRosterFile feeds BossSpawnIndex, which is the `base` this patch is
+    // applied ON TOP of.
+    //
+    (void)t;
 }
 
 // --- wing layout (relocated from DungeonWingRegistry) --------------------
@@ -100,19 +95,23 @@ void RegisterScarletMonasteryWings(std::unordered_map<uint32, DungeonWingLayout>
     store[189] = {true, {
         {"Scarlet Monastery (Graveyard)", {
             3983,   // Interrogator Vishas
+            61972,  // Duke Dreadmoore  (Turtle custom)
             4543,   // Bloodmage Thalnos
         }},
         {"Scarlet Monastery (Library)", {
             3974,   // Houndmaster Loksey
+            61983,  // Brother Wystan   (Turtle custom)
             6487,   // Arcanist Doan
         }},
         {"Scarlet Monastery (Armory)", {
+            61982,  // Armory Quartermaster Daghelm  (Turtle custom)
             3975,   // Herod
         }},
         {"Scarlet Monastery (Cathedral)", {
             4542,   // High Inquisitor Fairbanks
-            3976,   // Scarlet Commander Mograine (injected by roster patch)
-            3977,   // High Inquisitor Whitemane (removed by patch; kept for wing detection)
+            3976,   // Scarlet Commander Mograine
+            3977,   // High Inquisitor Whitemane — a real target again since
+                    // 2026-09-02, ordered after Mograine (see dc_roster.txt).
         }},
     }};
 }

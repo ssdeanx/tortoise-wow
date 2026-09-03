@@ -1,3 +1,10 @@
+// std::regex used to arrive through botpch.h (line 57). The module build has
+// no per-module precompiled header - the aggregate `modules` target compiles
+// two modules' sources - so a use has to name its own header.
+#include <set>
+#include <mutex>
+#include <regex>
+
 #include "playerbot/playerbot.h"
 #include "playerbot/PlayerbotAIConfig.h"
 #include "PlayerbotDbStore.h"
@@ -226,8 +233,63 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(QueryResult* /*dummy*/, SqlQu
     OnBotLogin(bot);
 }
 
+// Every live holder: the singleton RandomPlayerbotMgr plus one PlayerbotMgr per
+// session. A destroyed Player has to be cleared from all of them, and there was
+// no way to enumerate them before.
+namespace
+{
+    std::mutex& HolderRegistryLock()
+    {
+        static std::mutex instance;
+        return instance;
+    }
+    std::set<PlayerbotHolder*>& HolderRegistry()
+    {
+        static std::set<PlayerbotHolder*> instance;
+        return instance;
+    }
+}
+
+void PlayerbotHolder::NotePlayerDestroyed(Player const* player)
+{
+    if (!player)
+        return;
+    uint32 const guid = player->GetGUIDLow();
+
+    // MEASUREMENT. 37 Dragonmaw runs overnight 2026-09-01 died on "leader tank
+    // left the world", always that and never "lost its bot AI", after 14-33
+    // minutes (median 22). That window matches the rotation's count-change
+    // interval (RandomBotCountChangeMinInterval 1800), but ProcessBot already
+    // refuses to touch an externally-managed login - so either something else
+    // removes them, or the tank is not among the marked slots. This says which:
+    // it fires at the one moment that is certain, the destructor, and reports
+    // whether the Player being destroyed belonged to a run.
+    //
+    // Quiet by construction: only run bots are marked, so an ordinary rotation
+    // logout says nothing.
+    if (sRandomPlayerbotMgr.IsExternallyManaged(guid))
+        sLog.outString("[DC-BOTLIFE] run bot %s (guid %u) is being DESTROYED — "
+                       "still marked externally-managed, so the run has not torn "
+                       "it down; something else took it",
+                       player->GetName(), guid);
+
+    std::lock_guard<std::mutex> lock(HolderRegistryLock());
+    for (PlayerbotHolder* holder : HolderRegistry())
+    {
+        auto const it = holder->playerBots.find(guid);
+        // Only when it is THIS Player. A slot already refilled by a new login
+        // on the same guid must not be cleared.
+        if (it != holder->playerBots.end() && it->second == player)
+            it->second = nullptr;   // tombstone; Cleanup() sweeps it later
+    }
+}
+
 PlayerbotHolder::PlayerbotHolder() : PlayerbotAIBase()
 {
+    {
+        std::lock_guard<std::mutex> lock(HolderRegistryLock());
+        HolderRegistry().insert(this);
+    }
     m_holderHandlers["list"] = &PlayerbotHolder::HandleList;
     m_holderHandlers["help"] = &PlayerbotHolder::HandleHelp;
     m_holderHandlers["reload"] = &PlayerbotHolder::HandleReload;
@@ -296,6 +358,10 @@ PlayerbotHolder::PlayerbotHolder() : PlayerbotAIBase()
 
 PlayerbotHolder::~PlayerbotHolder()
 {
+    {
+        std::lock_guard<std::mutex> lock(HolderRegistryLock());
+        HolderRegistry().erase(this);
+    }
 }
 
 void PlayerbotHolder::ForEachPlayerbot(std::function<void(Player*)> callback) const
@@ -303,10 +369,11 @@ void PlayerbotHolder::ForEachPlayerbot(std::function<void(Player*)> callback) co
     for (auto& itr : playerBots)
     {
         Player* bot = itr.second;
-        if (bot)
-        {
-            callback(bot);
-        }
+        if (!bot)
+            continue;
+        // See GetPlayerBot above: the GUID cross-check that used to sit here
+        // was an outage, not a fix.
+        callback(bot);
     }
 }
 
@@ -610,7 +677,23 @@ void PlayerbotHolder::DisablePlayerBot(uint32 guid, bool logOutPlayer)
 Player* PlayerbotHolder::GetPlayerBot(uint32 playerGuid) const
 {
     PlayerBotMap::const_iterator it = playerBots.find(playerGuid);
-    return (it == playerBots.end()) ? nullptr : it->second ? it->second : nullptr;
+    // NO GUID CROSS-CHECK HERE. One was added on 2026-09-01 to reject entries
+    // whose Player had been destroyed, and it was measured a total outage: a
+    // Player mid-teleport is briefly not findable through sObjectMgr, so the
+    // check threw away perfectly live bots. 89 bosses died in the two hours
+    // before it and ZERO in the three after, with 188 "tank did not arrive at
+    // the dungeon entrance" and 84 "bot vanished before teleport" - the log
+    // naming the exact window the check was wrong about.
+    //
+    // The stale-pointer crash it aimed at (crash_2026-09-01_08-26-40 and
+    // _14-34-37) is real and still open. The fix has to be a validity test that
+    // does not confuse "between maps" with "destroyed" - the entry's own
+    // lifecycle, not a second registry's opinion of it.
+    Player* const held = (it == playerBots.end()) ? nullptr : it->second;
+    if (!held)
+        return nullptr;
+
+    return held;
 }
 
 void PlayerbotHolder::JoinChatChannels(Player* bot)
@@ -3207,4 +3290,13 @@ std::list<std::string> PlayerbotHolder::HandleSpoof(Player* master, const std::s
     
     messages.push_back("Spoof set to: " + playerName + " (" + std::to_string(guid.GetCounter()) + ")");
     return messages;
+}
+
+
+// Core -> module seam, same shape as the BotActionLog_ probes: the core calls
+// this unconditionally from Player::~Player and PlayerbotStubs.cpp supplies an
+// empty body for BUILD_PLAYERBOTS=OFF builds.
+void Playerbot_OnPlayerDestroyed(Player const* player)
+{
+    PlayerbotHolder::NotePlayerDestroyed(player);
 }

@@ -135,8 +135,8 @@ order 90 7800 4      # Mekgineer Thermaplugg  723yd
 credit 62066 62068
 order 816 62056 1     # Bogpaw Truthsay        - same spot as Gowlfang
 order 816 62057 2     # Gowlfang
-order 816 62066 3     # Cavernweb Broodmother  - after the drop
-order 816 62067 4     # Web Master Torkon
+order 816 62067 3     # Web Master Torkon      - across the gap jump
+order 816 62066 4     # Cavernweb Broodmother
 order 816 62071 5     # Garlok Flamekeeper
 order 816 62068 6     # Slagfist Destroyer
 order 816 62069 7     # Halgan Redbrand
@@ -144,3 +144,66 @@ order 816 62070 8     # Overlord Blackheart
 order 816 62038 9     # Elder Hollowblood
 order 816 62072 10    # Searistrasz
 order 816 62037 11    # Zuluhed the Whacked
+
+# --- Scarlet Monastery (189) -----------------------------------------------
+# Four isolated wings; the order is global per map but the wing filter shows a
+# party only its own wing, so what matters is the sequence WITHIN each wing.
+#
+# Walked and dictated by the server owner 2026-09-02. Three Turtle-custom
+# bosses were missing entirely - the auto-derived list never carried them, and
+# an `order` line credits an entry as well, which is what gives them their
+# kill-bit (index-1) so they can ever count as done:
+#     61972 Duke Dreadmoore              61.7x trash health, single spawn
+#     61983 Brother Wystan               12.7x
+#     61982 Armory Quartermaster Daghelm 16.3x
+#
+# Cathedral: Fairbanks first, then the Mograine/Whitemane fight. Whitemane is
+# listed again here after being removed in code for years - see
+# ScarletMonasteryEvents.cpp for why that removal went away.
+order 189 3983  1     # Interrogator Vishas            Graveyard
+order 189 61972 2     # Duke Dreadmoore                Graveyard  (Turtle custom)
+order 189 4543  3     # Bloodmage Thalnos              Graveyard
+order 189 3974  4     # Houndmaster Loksey             Library
+order 189 61983 5     # Brother Wystan                 Library    (Turtle custom)
+order 189 6487  6     # Arcanist Doan                  Library
+order 189 61982 7     # Armory Quartermaster Daghelm   Armory     (Turtle custom)
+order 189 3975  8     # Herod                          Armory
+order 189 4542  9     # High Inquisitor Fairbanks      Cathedral
+order 189 3976  10    # Scarlet Commander Mograine     Cathedral
+order 189 3977  11    # High Inquisitor Whitemane      Cathedral
+
+# --- Windhorn Canyon (map 820), Turtle custom -------------------------------
+# Boss order read off the in-game Atlas by the server owner on 2026-09-02.
+# Grand Elder Skystrider (62837) is NOT here: he is a FRIENDLY NPC, confirmed
+# by the owner - the green name in the Atlas listing. Champion Rotag (62785)
+# is not here either: Bonespeaker Narlgom summons him mid-fight
+# (SPELL_SUMMON_ROTAG, see windhorn_canyon.h), so he is an add, not a target.
+# The seven below are the only single-spawn 9.9-15.3k creatures on the map;
+# everything else sits at 5.3k or below with multiple spawns.
+order 820 62779 1     # Pathun Duskhide            St 25
+order 820 62778 2     # Ahgk'tos the Pure          St 24
+order 820 62783 3     # Ambassador Vortalus        St 26
+order 820 62784 4     # Walgan Bloodcaller         St 27
+order 820 62780 5     # Bonespeaker Narlgom        St 27
+order 820 62781 6     # Prophet Stormhoof          St 28
+order 820 62782 7     # Chieftain Shalk Blackwind  St 29
+
+# --- Uldaman (map 70) -------------------------------------------------------
+# Order read off the in-game Atlas by the server owner on 2026-09-02.
+# Grimlok was anchor 0 in the compiled roster and belongs SEVENTH; the bots
+# walked 270yd across an unopened dungeon to him, failed, learned a route,
+# and the recorder threw it away again - every run, all day.
+# Baelog (6906) was missing from the roster entirely.
+# NOT targets: Annora (11073) is a friendly enchanter (rank 0, grey in the
+# Atlas), and Eric "The Swift" (6907) / Olaf (6908) stand in Baelog's camp and
+# die with him under the boss-court rule.
+# Numbers skip 5 and 9: those two keys belong to the altar objectives, which
+# UldamanEvents.cpp anchors with orderOverride 4 and 8.
+order 70 6906 1      # Baelog                St 41
+order 70 6910 2      # Revelosh              St 40
+order 70 7228 3      # Ironaya               St 40
+order 70 7023 4      # Obsidian Sentinel     St 42
+order 70 7206 6      # Ancient Stone Keeper  St 44   (nach Altar of The Keepers)
+order 70 7291 7      # Galgann Firehammer    St 45
+order 70 4854 8      # Grimlok               St 45
+order 70 2748 10     # Archaedas             St 47   (nach Altar of Archaedas)
