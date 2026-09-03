@@ -19,6 +19,12 @@ playerbots source edits.
 > Skip, and Pause buttons, a live status readout, a per-boss list, and a settings
 > panel for live tuning. The `dc` chat keywords and `.dc` commands still work, but
 > the addon is easier to use.
+>
+> **On a 1.12 / Turtle WoW client the upstream addon does not load** — it is
+> written for WotLK (`## Interface: 30300`, Lua 5.1) and the 1.12 client's Lua
+> 5.0 stops at the first `%`. Use the port in
+> [`addon/DungeonClear-1.12/`](addon/DungeonClear-1.12/) instead; same protocol,
+> same panel, every Lua-5.1-ism resolved. Its README lists what changed.
 
 ## What it does
 

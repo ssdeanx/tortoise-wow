@@ -162,6 +162,12 @@ struct EventStep
 
     int32  gossipOption{-1}; // Gossip: option index to select (-1 = none)
     uint32 count{1};         // KillCreature: alive-count that still blocks
+    uint32 participants{0};  // UseGameObject on a SUMMONING_RITUAL (GO type 18):
+                             // how many DISTINCT party members must click it.
+                             // The core counts unique users and only fires the
+                             // GO's spell once reqParticipants is reached, so a
+                             // single leader click on such a GO is a permanent
+                             // no-op. 0 or 1 means a plain one-click GO.
     uint32 wantState{0};     // WaitForGameObjectState: target GOState value
     bool   wantAlive{true};  // WaitForSpawn: wait for alive (true) vs gone (false)
 
@@ -527,6 +533,14 @@ public:
     EventBuilder& WhileHolding(uint32 hookId);
     EventBuilder& UseGO(uint32 goEntry, float searchRadius = 0.0f,
                         float x = 0.0f, float y = 0.0f, float z = 0.0f);
+    // UseGO on a SUMMONING_RITUAL (GO type 18), whose `reqParticipants` field
+    // demands that many DISTINCT players click before the core casts its spell.
+    // The step brings party members in until the count is met and reports Done
+    // only once the GO has actually left GO_STATE_READY - i.e. once the ritual
+    // really fired, not merely once somebody clicked.
+    EventBuilder& UseRitualGO(uint32 goEntry, uint32 participants,
+                              float searchRadius = 0.0f,
+                              float x = 0.0f, float y = 0.0f, float z = 0.0f);
     // Leader casts `spellId` on itself (triggered: no cost/cooldown/reagent/cast
     // time). For a scripted "use a quest item" spell whose effect a bot cannot
     // otherwise reach — e.g. Sunken Temple's "Awaken the Soulflayer" (12346),

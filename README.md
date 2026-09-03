@@ -238,6 +238,23 @@ This will be streamlined once the core is more up to date
 > INSERT INTO migrations (Name, Hash, AppliedAt)
 > VALUES ('20260726112016_world', 'manual', NOW());
 > ```
+>
+> **Pulled from Penqle on 2026-09-03** — these five world migrations arrived with
+> that merge and are NOT applied by anything automatic on a fork that keeps the
+> auto-updater off. Apply them in this order, then record each as above:
+>
+> | File | What it does |
+> |------|--------------|
+> | `20260830134658_world.sql` | creates `skill_race_class_info_mod` and adds the Dual Wield trainer override (row 132) |
+> | `20260901101113_world.sql` | the priest rework: `script_name` on 57 spells |
+> | `20260901174017_world.sql` | removes deprecated city NPC spawns (`sql/tools/restore_deprecated_npcs.sql` puts them back) |
+> | `20260901202213_world.sql` | spell coefficient adjustments |
+> | `20260902074750_world.sql` | drops the prerequisite of quest 60007 |
+>
+> Do **not** run `sql/base/tw_world_skill_race_class_info_mod.sql` on an existing
+> database: it begins with `DROP TABLE` and is for fresh installs only. The first
+> migration above creates the table itself. Without these rows the new
+> `SkillRaceClassInfo` override code loads nothing and warriors see no change.
 
 ## Contributing
 

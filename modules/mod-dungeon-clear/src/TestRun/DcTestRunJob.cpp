@@ -2112,13 +2112,18 @@ void DcTestRunJob::TickMonitoring(uint32 dt)
                 DcTestRunRecord::BossKill kill;
                 kill.t = _totalMs / 1000;
                 kill.via = "mask";
-                for (BossRef const& ref : _roster)
-                    if (ref.encounterIndex == bit)
-                    {
-                        kill.entry = ref.entry;
-                        kill.name = ref.name;
-                        break;
-                    }
+                // Prefer a real BOSS for the name. Objectives reuse a boss's
+                // encounterIndex as an ordering hint (Uldaman's two altars both say
+                // 7, Archaedas's bit), and taking the first match labelled a kill
+                // "Altar of the Keepers" in six runs on 2026-09-03.
+                for (int pass = 0; pass < 2 && kill.name.empty(); ++pass)
+                    for (BossRef const& ref : _roster)
+                        if (ref.encounterIndex == bit && (pass == 1 || ref.isBoss))
+                        {
+                            kill.entry = ref.entry;
+                            kill.name = ref.name;
+                            break;
+                        }
                 if (kill.name.empty())
                     kill.name = "encounter #" + std::to_string(bit);
                 _record.bossTimeline.push_back(kill);

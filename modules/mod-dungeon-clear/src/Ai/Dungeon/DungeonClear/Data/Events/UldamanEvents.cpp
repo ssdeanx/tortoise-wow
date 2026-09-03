@@ -77,8 +77,16 @@ namespace
     // proximity to the target / the instance state, so the direct cast is safe.
     constexpr uint32 ULD_STONE_KEEPER       = 4857;    // 4 ring the Keepers altar
     constexpr uint32 ULD_TEMPLE_DOOR        = 124367;  // Hall of the Keepers exit
-    constexpr uint32 SPELL_AWAKEN_KEEPERS   = 11568;   // Altar of The Keepers (GO 130511)
-    constexpr uint32 SPELL_AWAKEN_ARCHAEDAS = 10340;   // Altar of Archaedas  (GO 133234)
+    // Both altars are GAMEOBJECT_TYPE_SUMMONING_RITUAL (18) with data0
+    // (reqParticipants) = 3: THREE distinct players must click before the core
+    // casts the altar's own spell - 11568 for the keepers, 10340 for Archaedas.
+    // These used to be fired with a single triggered self-cast of those spell
+    // ids, copied from Sunken Temple's Soulflayer. That precedent does not
+    // carry: the Soulflayer spell is a plain SEND_EVENT, these two live behind
+    // the core's participant counter. Click the altar the way a party does.
+    constexpr uint32 ULD_KEEPER_ALTAR       = 130511;  // Altar of The Keepers
+    constexpr uint32 ULD_ARCHAEDAS_ALTAR    = 133234;  // Altar of Archaedas
+    constexpr uint32 ULD_RITUAL_CASTERS     = 3;       // data0 on both
 
     // Altar of The Keepers (GO 130511) at the Hall-of-the-Keepers centre. The
     // roster delivers the tank here (objective OBJ(1), ordered after Grimlok /
@@ -226,11 +234,12 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       .Timeout(ULD_KEEPER_TIMEOUT)
                       // 2) centre on the altar (close the last few yards).
                       .MoveTo(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z, /*radius*/ 6.0f)
-                      // 3) fire the altar's ritual SEND_EVENT (11568): wakes the
-                      //    nearest keeper, which "enters combat with the zone" and
-                      //    pulls the party (see the altar comment above for why a
-                      //    direct CastSpell is used instead of UseGO on the ritual).
-                      .CastSpell(SPELL_AWAKEN_KEEPERS)
+                      // 3) work the altar: three of the party click it, the core
+                      //    counts them and casts 11568 itself. That wakes the
+                      //    nearest keeper, which enters combat with the zone and
+                      //    pulls the party.
+                      .UseRitualGO(ULD_KEEPER_ALTAR, ULD_RITUAL_CASTERS,
+                                   /*searchRadius*/ 15.0f)
                       // 4) kill all four. Each keeper's death chain-wakes the next
                       //    (SmartAI SetData) and re-pulls the zone, so a plain-gate
                       //    KillCreature (party auto-aggros; no .engage onto the
@@ -254,9 +263,19 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       // 1) step onto the Altar of Archaedas in his chamber.
                       .MoveTo(ULD_ARCH_ALTAR_X, ULD_ARCH_ALTAR_Y, ULD_ARCH_ALTAR_Z,
                               /*radius*/ 6.0f)
-                      // 2) fire the altar's ritual SEND_EVENT (10340): sets
-                      //    DATA_ARCHAEDAS=IN_PROGRESS and wakes the stoned boss.
-                      .CastSpell(SPELL_AWAKEN_ARCHAEDAS)
+                      // 2) work the altar: three clicks, then the core casts
+                      //    10340, which sets DATA_ARCHAEDAS=IN_PROGRESS and wakes
+                      //    the stoned boss.
+                      .UseRitualGO(ULD_ARCHAEDAS_ALTAR, ULD_RITUAL_CASTERS,
+                                   /*searchRadius*/ 15.0f)
+                      // PERSISTENT, like the keeper altar above, and for the same
+                      // reason: events are driven only while the NEXT anchor is the
+                      // objective that owns them. This objective latches on arrival
+                      // (radius 10), the next anchor becomes Archaedas the BOSS, and
+                      // a non-persistent event is dropped right there - before the
+                      // ritual ever fires. Measured 2026-09-03: six parties reached
+                      // this altar, the event logged nothing, Archaedas fell 0 times.
+                      .Persistent()
                       .Build());
 }
 

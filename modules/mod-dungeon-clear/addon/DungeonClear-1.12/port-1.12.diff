@@ -1,0 +1,446 @@
+--- /tmp/dcaddon/DungeonClear.lua	2026-09-03 13:00:17.484000000 +0200
++++ DungeonClear.lua	2026-09-03 17:13:15.732000000 +0200
+@@ -1,3 +1,37 @@
++-- ---- 1.12-Anpassung (Lua 5.0, Turtle-Client) ---------------------------------
++-- Portiert von der 3.3.5-Fassung (Interface 30300). Unterschiede: kein %-Operator,
++-- kein #-Laengenoperator, kein string.match/gmatch, Handler ohne Argumente
++-- (this / event / arg1..argN), SendAddonMessage ohne WHISPER.
++if not strtrim then
++    strtrim = function(s) return (string.gsub(s or "", "^%s*(.-)%s*$", "%1")) end
++end
++-- Widget-Methoden, die 1.12 fehlen, auf die vorhandenen abbilden. Alle Objekte
++-- einer Art teilen sich in 1.12 eine Metatabelle, darum reicht je ein Muster
++-- (dasselbe Verfahren wie pfUI). SetSize kam mit 3.0, SetNormalFontObject
++-- hiess in 1.12 SetTextFontObject.
++do
++    local function shim(obj)
++        local mt = obj and getmetatable(obj)
++        local idx = mt and mt.__index
++        if type(idx) ~= "table" then return end
++        if not idx.SetSize then
++            idx.SetSize = function(self, w, h) self:SetWidth(w); self:SetHeight(h) end
++        end
++        if not idx.GetSize then
++            idx.GetSize = function(self) return self:GetWidth(), self:GetHeight() end
++        end
++        if not idx.SetNormalFontObject and idx.SetTextFontObject then
++            idx.SetNormalFontObject = idx.SetTextFontObject
++        end
++        if not idx.SetWordWrap then idx.SetWordWrap = function() end end
++        if not idx.GetStringHeight and idx.GetHeight then idx.GetStringHeight = idx.GetHeight end
++    end
++    local probe = CreateFrame("Frame")
++    shim(probe); shim(probe:CreateTexture()); shim(probe:CreateFontString())
++    shim(CreateFrame("Button")); shim(CreateFrame("CheckButton")); shim(CreateFrame("Slider"))
++    shim(CreateFrame("ScrollFrame")); shim(CreateFrame("EditBox"))
++end
++
+ -- DungeonClear Lua Companion Addon
+ -- Drives the C++ mod-dungeon-clear module with a premium UI
+ 
+@@ -116,7 +150,8 @@
+ -- Sit above most default UI so the readout stays usable
+ frame:SetFrameStrata("DIALOG")
+ frame:SetToplevel(true)
+-frame:SetScript("OnDragStart", function(self)
++frame:SetScript("OnDragStart", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     -- Read by PinTopLeft: re-anchoring the frame mid-drag breaks StartMoving's
+     -- grip on it, and a STATUS packet can land at any moment during a run.
+     self.isMoving = true
+@@ -124,7 +159,8 @@
+ end)
+ -- Right-click anywhere on the tiny bar restores the full window. Guarded by
+ -- tinyMode so right-clicks in full mode do nothing, and left-drag still moves.
+-frame:SetScript("OnMouseUp", function(self, button)
++frame:SetScript("OnMouseUp", function()
++    local self, button = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     if button == "RightButton" and DungeonClearDB.tinyMode then
+         DungeonClearDB.tinyMode = false
+         UpdateLayout()
+@@ -302,7 +338,8 @@
+ local stallTicker = CreateFrame("Frame")
+ stallTicker:Hide()
+ local stallTicks = 0
+-stallTicker:SetScript("OnUpdate", function(self)
++stallTicker:SetScript("OnUpdate", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     stallTicks = stallTicks + 1
+     ApplyStatusHeight()
+     if stallTicks >= 3 then self:Hide() end
+@@ -551,10 +588,9 @@
+         return
+     end
+ 
+-    local me = UnitName("player")
+-    if me and me ~= "" then
+-        SendAddonMessage("DC", payload, "WHISPER", me)
+-    elseif not silent and param ~= "addon" then
++    -- 1.12: SendAddonMessage kennt nur PARTY/RAID/GUILD/BATTLEGROUND, WHISPER kam
++    -- mit 2.1. Solo gibt es ohnehin keinen Bot, der die Anweisung annehmen koennte.
++    if not silent and param ~= "addon" then
+         DEFAULT_CHAT_FRAME:AddMessage("|cffff3333DungeonClear: cannot send bot commands right now.|r")
+     end
+ end
+@@ -642,7 +678,8 @@
+ -- want when watching rather than exploring. Both are the same server toggle
+ -- family, so a second click of either ends the camera.
+ spectateBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+-spectateBtn:SetScript("OnClick", function(self, button)
++spectateBtn:SetScript("OnClick", function()
++    local self, button = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     if button == "RightButton" or IsShiftKeyDown() then
+         SendDcCommand("spectate", "follow")
+         SetCameraState("follow")
+@@ -678,7 +715,8 @@
+     if UpdateResetBtnState then UpdateResetBtnState() end
+ end
+ 
+-spectateBtn:SetScript("OnEnter", function(self)
++spectateBtn:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+     if not spectateAvailable then
+         GameTooltip:SetText("Spectator mode disabled", 1, 1, 1)
+@@ -708,7 +746,8 @@
+     SendDcCommand("spectate", "prev")
+     SetCameraState("follow")  -- cycling from cold starts a follow cam too
+ end)
+-spectatePrevBtn:SetScript("OnEnter", function(self)
++spectatePrevBtn:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+     GameTooltip:SetText("Previous bot", 1, 1, 1)
+     GameTooltip:AddLine("Move the camera to the previous bot in the instance.",
+@@ -725,7 +764,8 @@
+     SendDcCommand("spectate", "next")
+     SetCameraState("follow")
+ end)
+-spectateNextBtn:SetScript("OnEnter", function(self)
++spectateNextBtn:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+     GameTooltip:SetText("Next bot", 1, 1, 1)
+     GameTooltip:AddLine("Move the camera to the next bot in the instance. " ..
+@@ -771,7 +811,8 @@
+ local secondToggle = CreateFrame("Frame")
+ local secondElapsed = 0
+ secondToggle:Hide()
+-secondToggle:SetScript("OnUpdate", function(self, elap)
++secondToggle:SetScript("OnUpdate", function()
++    local self, elap = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     secondElapsed = secondElapsed + elap
+     if secondElapsed < 1.0 then return end
+     self:Hide()
+@@ -794,7 +835,8 @@
+     if needsSecond then secondToggle:Show() end
+ end)
+ 
+-spectateResetBtn:SetScript("OnEnter", function(self)
++spectateResetBtn:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+     GameTooltip:SetText("Reset Camera", 1, 1, 1)
+     GameTooltip:AddLine("Ends the spectator camera and hands control of your " ..
+@@ -810,7 +852,8 @@
+ tinyToggle:SetAllPoints(tinyIndicator)
+ tinyToggle:EnableMouse(true)
+ tinyToggle:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+-tinyToggle:SetScript("OnClick", function(self, button)
++tinyToggle:SetScript("OnClick", function()
++    local self, button = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     -- Right-click over the circle expands back to the full window (matches the
+     -- frame-level OnMouseUp handler that covers the rest of the tiny bar).
+     if button == "RightButton" then
+@@ -826,7 +869,8 @@
+         SendDcCommand("pause", isPaused and "resume" or "pause")
+     end
+ end)
+-tinyToggle:SetScript("OnEnter", function(self)
++tinyToggle:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_TOP")
+     if not isDCOn then
+         GameTooltip:AddLine("Dungeon Clear")
+@@ -869,16 +913,18 @@
+ tinyPullToggle:SetAllPoints(tinyPullDot)
+ tinyPullToggle:EnableMouse(true)
+ tinyPullToggle:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+-tinyPullToggle:SetScript("OnClick", function(self, button)
++tinyPullToggle:SetScript("OnClick", function()
++    local self, button = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     if button == "RightButton" then
+         DungeonClearDB.tinyMode = false
+         UpdateLayout()
+         return
+     end
+-    local nextState = (pullSetting + 1) % 3
++    local nextState = math.mod(pullSetting + 1, 3)  -- 1.12: kein %-Operator (Lua 5.0)
+     SendDcCommand("pull", PullStates[nextState].cmd)
+ end)
+-tinyPullToggle:SetScript("OnEnter", function(self)
++tinyPullToggle:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_TOP")
+     GameTooltip:AddLine("Pull Mode")
+     GameTooltip:AddLine("Click to cycle: Leeroy / Advanced / Dynamic", 0.8, 0.8, 0.8, true)
+@@ -1032,10 +1078,12 @@
+ scrollFrame:SetPoint("TOPLEFT", scrollContainer, "TOPLEFT", 8, -8)
+ scrollFrame:SetPoint("BOTTOMRIGHT", scrollContainer, "BOTTOMRIGHT", -28, 8) -- leave room for the scrollbar
+ scrollFrame:EnableMouseWheel(true)
+-scrollFrame:SetScript("OnVerticalScroll", function(self, offset)
++scrollFrame:SetScript("OnVerticalScroll", function()
++    local self, offset = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, RedrawBossList)
+ end)
+-scrollFrame:SetScript("OnMouseWheel", function(self, delta)
++scrollFrame:SetScript("OnMouseWheel", function()
++    local self, delta = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     local bar = DungeonClearScrollFrameScrollBar
+     bar:SetValue(bar:GetValue() - delta * ROW_HEIGHT)
+ end)
+@@ -1087,14 +1135,15 @@
+     -- name too long for the bottom band (which truncates) is still readable.
+     -- RedrawBossList stashes the boss name + raw note on the row each draw.
+     row:EnableMouse(true)
+-    row:SetScript("OnEnter", function(self)
++    row:SetScript("OnEnter", function()
++        local self = this  -- 1.12: Handler bekommen keine Argumente
+         if not self.eventNoteFull or self.eventNoteFull == "" then return end
+         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+         if self.bossName then
+             GameTooltip:AddLine(self.bossName, 1, 1, 1)
+         end
+         -- Multiple folded events arrive joined by " | "; one tooltip line each.
+-        for note in string.gmatch(self.eventNoteFull, "[^|]+") do
++        for note in string.gfind(self.eventNoteFull, "[^|]+") do
+             GameTooltip:AddLine(strtrim(note), 0.78, 0.63, 0.18, true)
+         end
+         GameTooltip:Show()
+@@ -1103,7 +1152,8 @@
+     -- EnableMouse swallows the wheel, so forward it to keep the list scrollable
+     -- while the cursor is over a row.
+     row:EnableMouseWheel(true)
+-    row:SetScript("OnMouseWheel", function(_, delta)
++    row:SetScript("OnMouseWheel", function()
++        local _, delta = arg1, arg1  -- 1.12: Handler bekommen keine Argumente
+         local bar = DungeonClearScrollFrameScrollBar
+         bar:SetValue(bar:GetValue() - delta * ROW_HEIGHT)
+     end)
+@@ -1129,7 +1179,7 @@
+ -- grey out, pending events keep the gold dash.
+ local function FormatEventNote(note)
+     local out = {}
+-    for seg in string.gmatch(note, "[^|]+") do
++    for seg in string.gfind(note, "[^|]+") do
+         seg = strtrim(seg)
+         if seg ~= "" then
+             local piece
+@@ -1152,7 +1202,7 @@
+     -- Never render a blank panel. Until a real list arrives, show a single
+     -- placeholder row so the user sees the list is loading rather than empty.
+     -- The OnUpdate ensure-loop keeps re-requesting until bosses populate.
+-    if #bosses == 0 then
++    if table.getn(bosses) == 0 then
+         FauxScrollFrame_Update(scrollFrame, 0, VISIBLE_ROWS, ROW_HEIGHT)
+         FitRows(0)
+         for i = 1, VISIBLE_ROWS do bossRows[i]:Hide() end
+@@ -1169,8 +1219,8 @@
+         return
+     end
+ 
+-    FauxScrollFrame_Update(scrollFrame, #bosses, VISIBLE_ROWS, ROW_HEIGHT)
+-    FitRows(#bosses)
++    FauxScrollFrame_Update(scrollFrame, table.getn(bosses), VISIBLE_ROWS, ROW_HEIGHT)
++    FitRows(table.getn(bosses))
+     local offset = FauxScrollFrame_GetOffset(scrollFrame)
+ 
+     for i = 1, VISIBLE_ROWS do
+@@ -1186,7 +1236,8 @@
+             -- keep the row short, falling back to the full label otherwise.
+             local label = dataIndex .. ". " .. boss.name
+             if boss.wing then
+-                local region = boss.wing:match("%((.-)%)") or boss.wing
++                local _, _, region = string.find(boss.wing, "%((.-)%)")  -- 1.12: kein string.match
++            region = region or boss.wing
+                 label = label .. " |cff9999ff(" .. region .. ")|r"
+             end
+             row.text:SetText(label)
+@@ -1445,7 +1496,8 @@
+ end)
+ 
+ -- Layout saving on drag stop
+-frame:SetScript("OnDragStop", function(self)
++frame:SetScript("OnDragStop", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     self.isMoving = nil
+     self:StopMovingOrSizing()
+     local point, _, relativePoint, xOfs, yOfs = self:GetPoint()
+@@ -1497,7 +1549,7 @@
+ local bossEnsureElapsed = 0
+ local function OnUpdateHandler(self, elap)
+     if not frame:IsVisible() then return end
+-    if #bosses > 0 then return end  -- populated: the server pushes updates from here
++    if table.getn(bosses) > 0 then return end  -- populated: the server pushes updates from here
+ 
+     bossEnsureElapsed = bossEnsureElapsed + elap
+     if bossEnsureElapsed >= 2.0 then
+@@ -1579,14 +1631,14 @@
+             -- (e.g. Sunken Temple's six forcefield defenders, all index 0)
+             -- keep a stable, server-matching order in the panel — Lua's
+             -- table.sort is not stable, so without this they'd shuffle.
+-            seq = #pendingBosses,
++            seq = table.getn(pendingBosses),
+             name = name,
+             status = status,
+             x = x, y = y, z = z,
+             wing = wing
+         })
+     elseif parts[1] == "BOSS_END" then
+-        if #pendingBosses > 0 then
++        if table.getn(pendingBosses) > 0 then
+             -- A real list arrived: commit it, sorted by encounter index, with
+             -- arrival order as a stable tiebreak so same-index anchors keep the
+             -- server's clear order (see `seq` above).
+@@ -1603,7 +1655,7 @@
+             -- Empty response. Never downgrade a good list to empty — that's the
+             -- transient-empty case the ensure-loop will retry past. Only redraw
+             -- (to show the "Loading" placeholder) if we have nothing yet.
+-            if #bosses == 0 then
++            if table.getn(bosses) == 0 then
+                 RedrawBossList()
+             end
+         end
+@@ -1641,9 +1693,10 @@
+ end
+ 
+ -- Event handler
+-eventFrame:SetScript("OnEvent", function(self, event, ...)
++eventFrame:SetScript("OnEvent", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     if event == "ADDON_LOADED" then
+-        local name = ...
++        local name = arg1  -- 1.12: Ereignisdaten kommen als arg1..argN
+         if name == AddonName then
+             -- Initialize DB defaults if needed
+             if DungeonClearDB.tinyMode == nil then DungeonClearDB.tinyMode = false end
+@@ -1677,7 +1730,7 @@
+             end
+         end
+     elseif event == "CHAT_MSG_ADDON" then
+-        local prefix, message, channel, sender = ...
++        local prefix, message, channel, sender = arg1, arg2, arg3, arg4
+         OnAddonMessage(prefix, message, channel, sender)
+     elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "GROUP_ROSTER_UPDATE" then
+         local inInstance, instanceType = IsInInstance()
+@@ -1703,7 +1756,8 @@
+             -- Small delay to ensure party is fully loaded on the server
+             local delayFrame = CreateFrame("Frame")
+             local delayElapsed = 0
+-            delayFrame:SetScript("OnUpdate", function(sf, elap)
++            delayFrame:SetScript("OnUpdate", function()
++                local sf, elap = arg1, arg1  -- 1.12: Handler bekommen keine Argumente
+                 delayElapsed = delayElapsed + elap
+                 if delayElapsed >= 3.0 then
+                     RequestBossList()
+@@ -1820,8 +1874,7 @@
+     frame:Show()
+ end)
+ 
+-InterfaceOptions_AddCategory(optionsPanel)
+-
++if InterfaceOptions_AddCategory then InterfaceOptions_AddCategory(optionsPanel) end  -- 1.12: erst ab 2.4
+ -- ===========================================================================
+ -- Settings sub-panel (Interface -> AddOns -> DungeonClear -> Settings)
+ -- ===========================================================================
+@@ -2050,7 +2103,8 @@
+ 
+     if meta.desc then
+         row:EnableMouse(true)
+-        row:SetScript("OnEnter", function(self)
++        row:SetScript("OnEnter", function()
++            local self = this  -- 1.12: Handler bekommen keine Argumente
+             GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+             GameTooltip:SetText(meta.label or key, 1, 1, 1)
+             GameTooltip:AddLine(meta.desc, 0.8, 0.8, 0.8, true)
+@@ -2073,7 +2127,8 @@
+     if stype == DCT_BOOL then
+         local cb = CreateFrame("CheckButton", "DungeonClearCheck_" .. key, row, "UICheckButtonTemplate")
+         cb:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 8, 0)
+-        cb:SetScript("OnClick", function(self)
++        cb:SetScript("OnClick", function()
++            local self = this  -- 1.12: Handler bekommen keine Argumente
+             if row.updating then return end
+             local v = self:GetChecked() and 1 or 0
+             DungeonClearDB.settings[key] = v
+@@ -2118,7 +2173,8 @@
+         row.valText:SetPoint("LEFT", s, "RIGHT", 14, 0)
+         row.valText:SetTextColor(1, 0.82, 0)
+         row.isSlider = true
+-        s:SetScript("OnValueChanged", function(self, value)
++        s:SetScript("OnValueChanged", function()
++            local self, value = this, this:GetValue()  -- 1.12: Handler bekommen keine Argumente
+             value = RoundVal(stype, value)
+             row.valText:SetText(FmtVal(stype, value))
+             if row.updating then return end
+@@ -2249,8 +2305,7 @@
+ settingsPanel.refresh = RefreshSettings
+ settingsPanel:SetScript("OnShow", RefreshSettings)
+ 
+-InterfaceOptions_AddCategory(settingsPanel)
+-
++if InterfaceOptions_AddCategory then InterfaceOptions_AddCategory(settingsPanel) end  -- 1.12: erst ab 2.4
+ -- Minimap Button
+ -- Self-contained (no LibDBIcon dependency): a draggable button pinned to the
+ -- minimap edge. Left-click toggles the main window exactly like /dc; drag moves
+@@ -2291,7 +2346,8 @@
+         80 * math.cos(angle), 80 * math.sin(angle))
+ end
+ 
+-minimapButton:SetScript("OnDragStart", function(self)
++minimapButton:SetScript("OnDragStart", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     self:SetScript("OnUpdate", function()
+         local mx, my = Minimap:GetCenter()
+         local scale = Minimap:GetEffectiveScale()
+@@ -2301,15 +2357,18 @@
+         UpdateMinimapButtonPosition()
+     end)
+ end)
+-minimapButton:SetScript("OnDragStop", function(self)
++minimapButton:SetScript("OnDragStop", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     self:SetScript("OnUpdate", nil)
+ end)
+ 
+-minimapButton:SetScript("OnClick", function(self, button)
++minimapButton:SetScript("OnClick", function()
++    local self, button = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     ToggleMainWindow()
+ end)
+ 
+-minimapButton:SetScript("OnEnter", function(self)
++minimapButton:SetScript("OnEnter", function()
++    local self = this  -- 1.12: Handler bekommen keine Argumente
+     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+     GameTooltip:AddLine("Dungeon Clear")
+     GameTooltip:AddLine("Left-click to toggle the window.", 1, 1, 1)
+@@ -2326,7 +2385,8 @@
+ -- loaded, otherwise the button snaps back to the default on every login.
+ local mmLoader = CreateFrame("Frame")
+ mmLoader:RegisterEvent("ADDON_LOADED")
+-mmLoader:SetScript("OnEvent", function(self, _, name)
++mmLoader:SetScript("OnEvent", function()
++    local self, name = this, arg1  -- 1.12: Handler bekommen keine Argumente
+     if name == AddonName then
+         UpdateMinimapButtonPosition()
+         self:UnregisterEvent("ADDON_LOADED")
+@@ -2347,7 +2407,7 @@
+         end
+     else
+         -- Parse "/dc <sub> [param]" and send via addon message
+-        local subCmd, param = msg:match("^(%S+)%s*(.*)$")
++        local _, _, subCmd, param = string.find(msg, "^(%S+)%s*(.*)$")  -- 1.12: kein string.match
+         if subCmd then
+             SendDcCommand(subCmd, param)
+         end

@@ -199,6 +199,20 @@ EventBuilder& EventBuilder::UseGO(uint32 goEntry, float searchRadius,
     return *this;
 }
 
+EventBuilder& EventBuilder::UseRitualGO(uint32 goEntry, uint32 participants,
+                                        float searchRadius,
+                                        float x, float y, float z)
+{
+    EventStep& s = Add(EventStepKind::UseGameObject);
+    s.goEntry = goEntry;
+    s.participants = participants;
+    s.radius = searchRadius;
+    s.x = x;
+    s.y = y;
+    s.z = z;
+    return *this;
+}
+
 EventBuilder& EventBuilder::CastSpell(uint32 spellId)
 {
     EventStep& s = Add(EventStepKind::CastSpell);

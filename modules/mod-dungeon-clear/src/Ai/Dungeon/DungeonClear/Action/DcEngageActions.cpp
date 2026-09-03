@@ -3,6 +3,7 @@
  * and/or modify it under version 3 of the License, or (at your option), any later version.
  */
 
+#include <unordered_map>
 #include "Ai/Dungeon/DungeonClear/Util/NavmeshSnap.h"
 #include "DungeonClearActions.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcEncounterMask.h"
@@ -1977,10 +1978,20 @@ bool DcObjectiveArriveAction::Execute(Event& /*event*/)
             uint32 const kind = p.stepIndex < ev->steps.size()
                                     ? static_cast<uint32>(ev->steps[p.stepIndex].kind)
                                     : 9999u;
-            LOG_INFO("playerbots.dungeonclear",
-                     "[DC:{}] event '{}' STALLED at step {}/{} kind {}",
-                     bot->GetName(), ev->name, p.stepIndex,
-                     static_cast<uint32>(ev->steps.size()), kind);
+            // Once per bot per 30s. "Rare and singular" above was wrong: this
+            // runs every tick a stall persists - 147651 lines in 5.5 hours on
+            // 2026-09-03, seven a second, the whole journal drowned in it.
+            static std::unordered_map<uint64, uint32> s_stallSaidAt;
+            uint32 const nowStall = getMSTime();
+            uint32& saidAt = s_stallSaidAt[bot->GetObjectGuid().GetRawValue()];
+            if (!saidAt || getMSTimeDiff(saidAt, nowStall) > 30000)
+            {
+                saidAt = nowStall;
+                LOG_INFO("playerbots.dungeonclear",
+                         "[DC:{}] event '{}' STALLED at step {}/{} kind {}",
+                         bot->GetName(), ev->name, p.stepIndex,
+                         static_cast<uint32>(ev->steps.size()), kind);
+            }
         }
         StallDungeonClear(botAI, "I can't progress the event at " + next->name +
                                      " on my own. Sort it and I'll continue, or `dc skip`.");

@@ -1,0 +1,8 @@
+## Interface: 11200
+## Title: DungeonClear
+## Notes: Autonomous dungeon-clearing companion for mod-dungeon-clear.
+## Author: Jared
+## Version: 3.6-turtle
+## SavedVariables: DungeonClearDB
+
+DungeonClear.lua
