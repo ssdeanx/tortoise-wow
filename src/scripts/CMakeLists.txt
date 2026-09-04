@@ -560,3 +560,19 @@ else()
           )
   endif()
 endif()
+
+# Independent of USE_PCH_OLD on purpose: on MSVC the old PCH implementation is
+# the default, and a fallback that lived only in the modern branch never ran
+# there (2026-09-04, found by a reader: -DUSE_PCH_OLD=OFF "must also be set").
+# No PCH (USE_PCH=OFF - the usual escape from MSVC's PCH size limits, or a
+# compiler without support): the sources still assume the precompiled set of
+# headers is in scope, so force-include the same header instead. Identical
+# semantics, just no .pch file. Without this a USE_PCH=OFF build died on
+# 2026-09-04 in the scripts library the same way.
+if(NOT USE_PCH)
+  if(MSVC)
+    target_compile_options(${LIBRARY_NAME} PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/scriptPCH.h")
+  else()
+    target_compile_options(${LIBRARY_NAME} PRIVATE "-include${CMAKE_CURRENT_SOURCE_DIR}/scriptPCH.h")
+  endif()
+endif()

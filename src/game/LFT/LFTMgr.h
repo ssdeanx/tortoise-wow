@@ -2,6 +2,7 @@
 #define MANGOSSERVER_LFTMGR_H
 
 #include <unordered_set>
+#include "ObjectGuid.h"   // ObjectGuid members below; reachable only via the PCH before (USE_PCH=OFF, 2026-09-04)
 #include <array>
 #include <ctime>
 #include <map>

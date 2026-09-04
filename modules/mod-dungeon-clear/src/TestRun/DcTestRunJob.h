@@ -348,6 +348,7 @@ private:
     uint32 _lastMask = 0;
     std::size_t _lastAnchors = 0;
     uint32 _sinceProgressMs = 0;
+    uint32 _sinceHardProgressMs{0};  // since mask/anchor/distance progress (combat churn excluded)
 
     // One-shot live freeze dump, fired partway INTO the no-progress window
     // rather than at teardown. Teardown is too late for the question it answers:

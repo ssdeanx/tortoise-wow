@@ -3,6 +3,7 @@
  * and/or modify it under version 3 of the License, or (at your option), any later version.
  */
 
+#include <unordered_map>
 #include "DungeonEventExecutor.h"
 
 #include <algorithm>
@@ -533,10 +534,15 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                           bot->GetName(), go->GetObjectGuid().ToString(), go->GetName());
                 return StepResult::Running;
             }
-            LOG_DEBUG("playerbots.dungeonclear",
-                      "[dungeon-clear] {} event-step Use GO {} '{}'",
-                      bot->GetName(), go->GetObjectGuid().ToString(), go->GetName());
             go->Use(bot);
+            // INFO, not DEBUG: whether the ritual altar ever saw its clicks is the
+            // one fact three measurement windows on 2026-09-04 could not answer
+            // from the journal. uniqueUses is the core's own distinct-user count
+            // for a SUMMONING_RITUAL (0 for every other GO type).
+            LOG_INFO("playerbots.dungeonclear",
+                     "[dungeon-clear] {} event-step Use GO {} '{}' -> uniqueUses={} state={}",
+                     bot->GetName(), go->GetObjectGuid().ToString(), go->GetName(),
+                     go->GetUniqueUseCount(), static_cast<int>(go->GetGoState()));
 
             // A SUMMONING_RITUAL (GO type 18) does not fire on one click. The core
             // records DISTINCT users and bails out while there are too few:
@@ -578,6 +584,12 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                         {
                             // Only ever move a BOT. A human in the party clicks
                             // when they choose to, and counts if they are close.
+                            // HopTo, and nothing more eager. A direct MovePoint every 2s
+                            // was tried on 2026-09-04 (HopTo bails while the bot
+                            // isMoving(), which a follower nearly always is): it fetched
+                            // them, and the keepers then died in 3 of 37 runs against
+                            // 9 of 39 with HopTo. Whatever the restarted splines did to
+                            // the party, it cost more than the odd missed click.
                             if (GET_PLAYERBOT_AI(member) &&
                                 member->IsWithinDistInMap(go, DC_EVENT_GO_GATHER_RANGE))
                                 HopTo(member, go->GetPositionX(), go->GetPositionY(),
@@ -1443,9 +1455,13 @@ void DungeonEventExecutor::SweepCompletedConditionalEvents(Player* bot,
             // Latch it so the folded panel note flips to (done) and — because the
             // boss signature counts cleared.size() — the boss list re-pushes.
             cleared.insert(lk);
-            LOG_DEBUG("playerbots.dungeonclear",
-                      "[DC:{}] conditional event '{}' (id {}) completed via condition "
-                      "transition -> latched done", bot->GetName(), ev->name, ev->id);
+            // INFO, not DEBUG: this fires once per event per run at most, and it
+            // is the one line that can show a condition being mistaken for a
+            // completion - the suspect behind Uldaman parties that reached the
+            // shut seal with no event due on 2026-09-03.
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC:{}] conditional event '{}' (id {}) completed via condition "
+                     "transition -> latched done", bot->GetName(), ev->name, ev->id);
         }
     }
 }

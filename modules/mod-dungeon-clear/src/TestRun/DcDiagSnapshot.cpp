@@ -92,6 +92,37 @@ namespace
     {
         Map* const map = member->FindMap();
         m.attackerCount = static_cast<std::uint32_t>(member->getAttackers().size());
+        // One INFO line per attacker at capture time - this runs only when a run
+        // is frozen or a DIAG is taken, so it is rare. It exists because of
+        // Uldaman's Archaedas on 2026-09-04: awakened, faction 14, 6.5yd from the
+        // tank, 100% health for ten minutes, victim dropped at the end, and the
+        // tank's engine never left noncombat. Whether he was EVADING (which the
+        // stock "attackers" filter rejects, so no combat start), still flagged
+        // SPAWNING, or simply had no path to the tank, decides three different
+        // fixes - and none of it was in any log.
+        for (Unit* att : member->getAttackers())
+        {
+            if (!att)
+                continue;
+            Creature const* ac = att->ToCreature();
+            uint32 const uf = att->GetUInt32Value(UNIT_FIELD_FLAGS);
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC-DIAG] {} attacker {} (entry {}) faction={} evade={} victim={} "
+                     "flags[spawning={} nonatk={} notsel={}] rooted={} dist={:.1f} "
+                     "canReach={} botVictim={} botInCombat={}",
+                     member->GetName(), att->GetName(), att->GetEntry(),
+                     att->GetFactionTemplateId(),
+                     (ac && ac->GetCombatManager().IsInEvadeMode()) ? "yes" : "no",
+                     att->GetVictim() ? att->GetVictim()->GetName() : "-",
+                     (uf & UNIT_FLAG_SPAWNING) ? 1 : 0,
+                     (uf & UNIT_FLAG_NON_ATTACKABLE_2) ? 1 : 0,
+                     (uf & UNIT_FLAG_NOT_SELECTABLE) ? 1 : 0,
+                     att->HasUnitState(UNIT_STAT_ROOT) ? "yes" : "no",
+                     member->GetDistance(att),
+                     att->CanReachWithMeleeAutoAttack(member) ? "melee" : "far",
+                     member->GetVictim() ? member->GetVictim()->GetName() : "-",
+                     member->IsInCombat() ? "yes" : "no");
+        }
 
         bool anyLegitimatePvEHolder = false;
         auto describe = [&](Unit* other, bool suppressed, bool pvp)

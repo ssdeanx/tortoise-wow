@@ -36,7 +36,18 @@ foreach(PB_TARGET modules mod_mod_playerbots mod_mod-playerbots)
   # maps CMaNGOS names used throughout the bot sources to this core's API.
   # The aggregate module target used after the move had no PCH, so every one
   # of those declarations silently disappeared from the translation units.
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
+  # botpch.h is not an optimisation here, it is the compatibility boundary
+  # (cmangos-compat-shim.h: GuidSet, AreaTableEntry, GenericTransport, ...).
+  # It has to reach EVERY translation unit whether or not precompiled headers
+  # are in use. target_precompile_headers silently does nothing when PCH is
+  # off (USE_PCH=OFF, or CMAKE_DISABLE_PRECOMPILE_HEADERS - the usual escape
+  # from MSVC's PCH size limits), and until 2026-09-04 that was the only
+  # path on any CMake >= 3.16: a Windows dynamic-modules build without PCH
+  # died in WorldPosition.h / PlayerbotAI.h on exactly those shim names
+  # ("GenericTransport: undeclared identifier", "m_banned: unknown override
+  # specifier") while the same tree built on Linux with PCH. Force-include
+  # the header instead whenever the PCH route is not taken.
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16" AND USE_PCH AND NOT CMAKE_DISABLE_PRECOMPILE_HEADERS)
     target_precompile_headers(${PB_TARGET} PRIVATE "${PB_ROOT}/botpch.h")
   elseif(MSVC)
     target_compile_options(${PB_TARGET} PRIVATE "/FI${PB_ROOT}/botpch.h")

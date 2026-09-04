@@ -5,32 +5,11 @@
 if not strtrim then
     strtrim = function(s) return (string.gsub(s or "", "^%s*(.-)%s*$", "%1")) end
 end
--- Widget-Methoden, die 1.12 fehlen, auf die vorhandenen abbilden. Alle Objekte
--- einer Art teilen sich in 1.12 eine Metatabelle, darum reicht je ein Muster
--- (dasselbe Verfahren wie pfUI). SetSize kam mit 3.0, SetNormalFontObject
--- hiess in 1.12 SetTextFontObject.
-do
-    local function shim(obj)
-        local mt = obj and getmetatable(obj)
-        local idx = mt and mt.__index
-        if type(idx) ~= "table" then return end
-        if not idx.SetSize then
-            idx.SetSize = function(self, w, h) self:SetWidth(w); self:SetHeight(h) end
-        end
-        if not idx.GetSize then
-            idx.GetSize = function(self) return self:GetWidth(), self:GetHeight() end
-        end
-        if not idx.SetNormalFontObject and idx.SetTextFontObject then
-            idx.SetNormalFontObject = idx.SetTextFontObject
-        end
-        if not idx.SetWordWrap then idx.SetWordWrap = function() end end
-        if not idx.GetStringHeight and idx.GetHeight then idx.GetStringHeight = idx.GetHeight end
-    end
-    local probe = CreateFrame("Frame")
-    shim(probe); shim(probe:CreateTexture()); shim(probe:CreateFontString())
-    shim(CreateFrame("Button")); shim(CreateFrame("CheckButton")); shim(CreateFrame("Slider"))
-    shim(CreateFrame("ScrollFrame")); shim(CreateFrame("EditBox"))
-end
+-- KEIN Widget-Shim mehr. Ein frueherer Block hier legte zum Abtasten der
+-- Metatabellen sechs Probe-Rahmen an, darunter ein Eingabefeld - das hat in
+-- 1.12 Autofokus als Vorgabe und schluckte jede Taste: keine Bewegung, kein
+-- Chat, solange das Addon geladen war (Bericht 2026-09-04). Die fehlenden
+-- Methoden sind seit turtle2 im Text ersetzt.
 
 -- DungeonClear Lua Companion Addon
 -- Drives the C++ mod-dungeon-clear module with a premium UI
@@ -66,6 +45,7 @@ local RedrawBossList
 local currentInstanceKey = nil
 local function GetInstanceKey()
     local inInstance, instanceType = IsInInstance()
+    if inInstance and not instanceType then instanceType = "party" end  -- 1.12: nur EIN Rueckgabewert
     if not inInstance then return nil end
     -- Instance name distinguishes dungeons/raids; the type guards the rare
     -- same-name case. GetInstanceInfo's first return is the localized name.
@@ -142,7 +122,7 @@ local BuildSettingsFromCache    -- render rows from the cached schema at load
 
 -- UI Frame Creation
 local frame = CreateFrame("Frame", "DungeonClearFrame", UIParent)
-frame:SetSize(330, 420)
+frame:SetWidth(330); frame:SetHeight(420)  -- 1.12: kein SetSize
 frame:SetMovable(true)
 frame:EnableMouse(true)
 frame:RegisterForDrag("LeftButton")
@@ -198,7 +178,7 @@ end)
 local STATUS_H = 131
 local STALL_GAP = 8
 local statusFrame = CreateFrame("Frame", nil, frame)
-statusFrame:SetSize(306, STATUS_H)
+statusFrame:SetWidth(306); statusFrame:SetHeight(STATUS_H)  -- 1.12: kein SetSize
 statusFrame:SetPoint("TOP", frame, "TOP", 0, -35)
 statusFrame:SetBackdrop({
     bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -280,7 +260,7 @@ targetVal:SetPoint("LEFT", targetLabel, "RIGHT", 5, 0)
 -- anchor would grow upward into the detail line above.
 targetVal:SetWidth(210)
 targetVal:SetJustifyH("LEFT")
-targetVal:SetWordWrap(false)
+if targetVal.SetWordWrap then targetVal:SetWordWrap(false) end  -- 1.12: fehlt
 targetVal:SetText("None")
 targetVal:SetTextColor(1, 1, 1)
 
@@ -315,7 +295,7 @@ local function StallRowHeight()
     local h = 14
     local lh = stallLabel:GetHeight()
     if lh and lh > h then h = lh end
-    local sh = stallVal:GetStringHeight()
+    local sh = (stallVal.GetStringHeight and stallVal:GetStringHeight() or stallVal:GetHeight())
     if sh and sh > h then h = sh end
     local rh = stallVal:GetHeight()
     if rh and rh > h then h = rh end
@@ -353,7 +333,7 @@ end
 
 -- Tiny (single-line) display: on/off circle + status + targeted boss
 local tinyIndicator = frame:CreateTexture(nil, "OVERLAY")
-tinyIndicator:SetSize(16, 16)
+tinyIndicator:SetWidth(16); tinyIndicator:SetHeight(16)  -- 1.12: kein SetSize
 tinyIndicator:SetPoint("LEFT", frame, "LEFT", 10, 0)
 tinyIndicator:SetTexture("Interface\\FriendsFrame\\StatusIcon-Offline")
 tinyIndicator:Hide()
@@ -598,7 +578,7 @@ end
 -- Action Buttons Panel
 -- Four-up action row: On / Off / Skip / Pause-Resume (narrowed to fit one row).
 local onBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-onBtn:SetSize(68, 24)
+onBtn:SetWidth(68); onBtn:SetHeight(24)  -- 1.12: kein SetSize
 onBtn:SetPoint("TOPLEFT", statusFrame, "BOTTOMLEFT", 0, -8)
 onBtn:SetText("On")
 onBtn:SetScript("OnClick", function()
@@ -609,13 +589,13 @@ onBtn:SetScript("OnClick", function()
 end)
 
 local offBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-offBtn:SetSize(68, 24)
+offBtn:SetWidth(68); offBtn:SetHeight(24)  -- 1.12: kein SetSize
 offBtn:SetPoint("LEFT", onBtn, "RIGHT", 11, 0)
 offBtn:SetText("Off")
 offBtn:SetScript("OnClick", function() SendDcCommand("off") end)
 
 local skipBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-skipBtn:SetSize(68, 24)
+skipBtn:SetWidth(68); skipBtn:SetHeight(24)  -- 1.12: kein SetSize
 skipBtn:SetPoint("LEFT", offBtn, "RIGHT", 11, 0)
 skipBtn:SetText("Skip")
 skipBtn:SetScript("OnClick", function() SendDcCommand("skip") end)
@@ -627,7 +607,7 @@ skipBtn:SetScript("OnClick", function() SendDcCommand("skip") end)
 -- would resume the run instead. With the intent the server no-ops the
 -- already-holding case and just resyncs our label.
 pauseBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-pauseBtn:SetSize(68, 24)
+pauseBtn:SetWidth(68); pauseBtn:SetHeight(24)  -- 1.12: kein SetSize
 pauseBtn:SetPoint("LEFT", skipBtn, "RIGHT", 11, 0)
 pauseBtn:SetText("Pause")
 pauseBtn:SetScript("OnClick", function()
@@ -647,7 +627,7 @@ pullLabel:SetTextColor(0.8, 0.8, 0.8)
 local PULL_SEG_W = 86
 for i = 0, 2 do
     local seg = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    seg:SetSize(PULL_SEG_W, 24)
+    seg:SetWidth(PULL_SEG_W); seg:SetHeight(24)  -- 1.12: kein SetSize
     if i == 0 then
         seg:SetPoint("LEFT", pullLabel, "RIGHT", 8, 0)
     else
@@ -668,7 +648,7 @@ end
 -- message flips spectateAvailable false and the button greys out (see
 -- ApplySpectateAvailability). Assume available until the server says otherwise.
 spectateBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-spectateBtn:SetSize(100, 24)
+spectateBtn:SetWidth(100); spectateBtn:SetHeight(24)  -- 1.12: kein SetSize
 -- The pull-row segments span -8..-32 below onBtn (24px buttons centered on
 -- the label); start this row at -40 to keep the 8px row gap.
 spectateBtn:SetPoint("TOPLEFT", onBtn, "BOTTOMLEFT", 0, -40)
@@ -739,7 +719,7 @@ spectateBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 -- camera at all these also start one (server side treats a cycle from cold as
 -- "take the default seat"), so this row is a complete spectator control.
 spectatePrevBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-spectatePrevBtn:SetSize(30, 24)
+spectatePrevBtn:SetWidth(30); spectatePrevBtn:SetHeight(24)  -- 1.12: kein SetSize
 spectatePrevBtn:SetPoint("LEFT", spectateBtn, "RIGHT", 6, 0)
 spectatePrevBtn:SetText("|cffffd100<|r")
 spectatePrevBtn:SetScript("OnClick", function()
@@ -757,7 +737,7 @@ end)
 spectatePrevBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 spectateNextBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-spectateNextBtn:SetSize(30, 24)
+spectateNextBtn:SetWidth(30); spectateNextBtn:SetHeight(24)  -- 1.12: kein SetSize
 spectateNextBtn:SetPoint("LEFT", spectatePrevBtn, "RIGHT", 4, 0)
 spectateNextBtn:SetText("|cffffd100>|r")
 spectateNextBtn:SetScript("OnClick", function()
@@ -782,7 +762,7 @@ spectateNextBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 -- < > pair by a wider gap so it reads as the exit rather than a third seat
 -- control.
 spectateResetBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-spectateResetBtn:SetSize(110, 24)
+spectateResetBtn:SetWidth(110); spectateResetBtn:SetHeight(24)  -- 1.12: kein SetSize
 spectateResetBtn:SetPoint("TOPRIGHT", pauseBtn, "BOTTOMRIGHT", 0, -40)
 spectateResetBtn:SetText("Reset Camera")
 
@@ -890,7 +870,7 @@ tinyToggle:Hide()
 -- live pull state reads out as a short caption beside it, capped with a grey "|"
 -- pipe that separates it from the action/boss line that follows.
 tinyPullDot = frame:CreateTexture(nil, "OVERLAY")
-tinyPullDot:SetSize(16, 16)
+tinyPullDot:SetWidth(16); tinyPullDot:SetHeight(16)  -- 1.12: kein SetSize
 tinyPullDot:SetPoint("LEFT", tinyIndicator, "RIGHT", 6, 0)
 -- Reuse the FriendsFrame status dots (same family as the pause circle, which is
 -- known to render). The texture is swapped per state by UpdatePullControls.
@@ -1044,7 +1024,7 @@ listLabel:SetTextColor(0.24, 0.60, 1.0)
 
 -- Boss List Scroll Frame container
 local scrollContainer = CreateFrame("Frame", nil, frame)
-scrollContainer:SetSize(306, 205)
+scrollContainer:SetWidth(306); scrollContainer:SetHeight(205)  -- 1.12: kein SetSize
 scrollContainer:SetPoint("TOPLEFT", listLabel, "BOTTOMLEFT", 0, -4)
 scrollContainer:SetBackdrop({
     bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -1079,8 +1059,11 @@ scrollFrame:SetPoint("TOPLEFT", scrollContainer, "TOPLEFT", 8, -8)
 scrollFrame:SetPoint("BOTTOMRIGHT", scrollContainer, "BOTTOMRIGHT", -28, 8) -- leave room for the scrollbar
 scrollFrame:EnableMouseWheel(true)
 scrollFrame:SetScript("OnVerticalScroll", function()
-    local self, offset = this, arg1  -- 1.12: Handler bekommen keine Argumente
-    FauxScrollFrame_OnVerticalScroll(self, offset, ROW_HEIGHT, RedrawBossList)
+    -- 1.12: FauxScrollFrame_OnVerticalScroll(itemHeight, updateFunction) - the
+    -- FrameXML reads the frame from `this` and the scroll value from `arg1`
+    -- itself. The 3.x form passed the frame first, which landed a table in
+    -- itemHeight (BugGrabber, 2026-09-04: "arithmetic on local itemHeight").
+    FauxScrollFrame_OnVerticalScroll(ROW_HEIGHT, RedrawBossList)
 end)
 scrollFrame:SetScript("OnMouseWheel", function()
     local self, delta = this, arg1  -- 1.12: Handler bekommen keine Argumente
@@ -1091,7 +1074,7 @@ end)
 -- Pre-create the visible row pool inside scrollContainer, anchored to scrollFrame
 for i = 1, VISIBLE_ROWS do
     local row = CreateFrame("Frame", nil, scrollContainer)
-    row:SetSize(ROW_W, ROW_HEIGHT - 2)
+    row:SetWidth(ROW_W); row:SetHeight(ROW_HEIGHT - 2)  -- 1.12: kein SetSize
     row:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, -(i - 1) * ROW_HEIGHT)
 
     -- Custom solid color texture instead of SetBackdrop to prevent client crashes
@@ -1105,8 +1088,7 @@ for i = 1, VISIBLE_ROWS do
     row.text:SetPoint("LEFT", row, "LEFT", 8, 0)
     row.text:SetWidth(150)
     row.text:SetJustifyH("LEFT")
-    row.text:SetWordWrap(false)
-
+    if row.text.SetWordWrap then row.text:SetWordWrap(false) end  -- 1.12: fehlt
     -- Folded-event sub-line: a gating event (e.g. an Uldaman altar) shown under
     -- the boss it gates, instead of as its own row with a Go that can't resolve.
     -- Hidden unless the BOSS message carried an event note (field 10).
@@ -1118,7 +1100,7 @@ for i = 1, VISIBLE_ROWS do
     row.sub:SetJustifyH("LEFT")
     -- Single line only: a long note must truncate, never wrap down onto the
     -- next boss's row (that was the overlap bug).
-    row.sub:SetWordWrap(false)
+    if row.sub.SetWordWrap then row.sub:SetWordWrap(false) end  -- 1.12: fehlt
     row.sub:Hide()
 
     -- Status badge
@@ -1127,7 +1109,7 @@ for i = 1, VISIBLE_ROWS do
 
     -- "Go" action button
     row.goBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-    row.goBtn:SetSize(46, 20)
+    row.goBtn:SetWidth(46); row.goBtn:SetHeight(20)  -- 1.12: kein SetSize
     row.goBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
     row.goBtn:SetText("Go")
 
@@ -1153,7 +1135,7 @@ for i = 1, VISIBLE_ROWS do
     -- while the cursor is over a row.
     row:EnableMouseWheel(true)
     row:SetScript("OnMouseWheel", function()
-        local _, delta = arg1, arg1  -- 1.12: Handler bekommen keine Argumente
+        local _, delta = this, arg1  -- 1.12: Handler bekommen keine Argumente (Rahmen = this)
         local bar = DungeonClearScrollFrameScrollBar
         bar:SetValue(bar:GetValue() - delta * ROW_HEIGHT)
     end)
@@ -1260,7 +1242,7 @@ RedrawBossList = function()
                 -- the name is free to wrap to a second line — the note simply
                 -- floats down with it instead of being collided into. Lifting Go
                 -- onto the name line keeps it clear of the note.
-                row.text:SetWordWrap(true)
+                if row.text.SetWordWrap then row.text:SetWordWrap(true) end  -- 1.12: fehlt
                 row.text:SetPoint("TOPLEFT", row, "TOPLEFT", 8, -3)
                 row.goBtn:SetPoint("TOPRIGHT", row, "TOPRIGHT", -6, -2)
                 row.sub:SetPoint("TOPLEFT", row.text, "BOTTOMLEFT", 8, -2)
@@ -1272,7 +1254,7 @@ RedrawBossList = function()
                 -- No sub-line: let a long name (e.g. "Objective: Atal'ai Defender
                 -- (Mijan)") wrap to a second line instead of truncating. The row
                 -- is tall enough for two lines, and the name owns the full height.
-                row.text:SetWordWrap(true)
+                if row.text.SetWordWrap then row.text:SetWordWrap(true) end  -- 1.12: fehlt
                 row.text:SetPoint("LEFT", row, "LEFT", 8, 0)
                 row.goBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
                 row.sub:Hide()
@@ -1332,14 +1314,14 @@ end
 
 -- Toggle Buttons and Layout Adjustments
 local tinyBtn = CreateFrame("Button", "DungeonClearTinyButton", frame, "UIPanelButtonTemplate")
-tinyBtn:SetSize(40, 20)
+tinyBtn:SetWidth(40); tinyBtn:SetHeight(20)  -- 1.12: kein SetSize
 tinyBtn:SetPoint("RIGHT", closeBtn, "LEFT", 2, 0)
 tinyBtn:SetText("Tiny")
 
 local toggleBossesBtn = CreateFrame("Button", "DungeonClearToggleBossesButton", frame)
-toggleBossesBtn:SetSize(24, 24)
+toggleBossesBtn:SetWidth(24); toggleBossesBtn:SetHeight(24)  -- 1.12: kein SetSize
 toggleBossesBtn:SetPoint("LEFT", listLabel, "RIGHT", 6, 0)
-toggleBossesBtn:SetNormalFontObject("GameFontNormal")
+toggleBossesBtn:SetTextFontObject("GameFontNormal")
 toggleBossesBtn:SetHighlightFontObject("GameFontHighlight")
 toggleBossesBtn:SetText("[-]")
 local btnText = toggleBossesBtn:GetFontString()
@@ -1513,7 +1495,8 @@ eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")
 eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+eventFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")  -- 1.12: statt GROUP_ROSTER_UPDATE
+eventFrame:RegisterEvent("RAID_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 -- Corrective only, for the camera state the addon models from its own commands:
@@ -1547,7 +1530,8 @@ end
 -- empty — it self-terminates the moment a real list arrives and never becomes a
 -- steady poll. RedrawBossList preserves the scroll offset.
 local bossEnsureElapsed = 0
-local function OnUpdateHandler(self, elap)
+local function OnUpdateHandler()
+    local self, elap = this, arg1  -- 1.12: Handler bekommen keine Argumente
     if not frame:IsVisible() then return end
     if table.getn(bosses) > 0 then return end  -- populated: the server pushes updates from here
 
@@ -1555,6 +1539,7 @@ local function OnUpdateHandler(self, elap)
     if bossEnsureElapsed >= 2.0 then
         bossEnsureElapsed = 0
         local inInstance, instanceType = IsInInstance()
+        if inInstance and not instanceType then instanceType = "party" end  -- 1.12: nur EIN Rueckgabewert
         if inInstance and (instanceType == "party" or instanceType == "raid") then
             RequestBossList()
         end
@@ -1732,8 +1717,9 @@ eventFrame:SetScript("OnEvent", function()
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, channel, sender = arg1, arg2, arg3, arg4
         OnAddonMessage(prefix, message, channel, sender)
-    elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "GROUP_ROSTER_UPDATE" then
+    elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or (event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE") then
         local inInstance, instanceType = IsInInstance()
+        if inInstance and not instanceType then instanceType = "party" end  -- 1.12: nur EIN Rueckgabewert
 
         -- Did we cross into a *different* instance since the list was built? If
         -- so, drop the stale boss list now. This re-arms the empty-list ensure
@@ -1757,7 +1743,7 @@ eventFrame:SetScript("OnEvent", function()
             local delayFrame = CreateFrame("Frame")
             local delayElapsed = 0
             delayFrame:SetScript("OnUpdate", function()
-                local sf, elap = arg1, arg1  -- 1.12: Handler bekommen keine Argumente
+                local sf, elap = this, arg1  -- 1.12: Handler bekommen keine Argumente (Rahmen = this)
                 delayElapsed = delayElapsed + elap
                 if delayElapsed >= 3.0 then
                     RequestBossList()
@@ -1864,7 +1850,7 @@ optCmdList:SetText(
     "party spread, pull tuning, …) for your own runs. Saved per character and re-applied each run.")
 
 local openBtn = CreateFrame("Button", nil, optionsPanel, "UIPanelButtonTemplate")
-openBtn:SetSize(160, 24)
+openBtn:SetWidth(160); openBtn:SetHeight(24)  -- 1.12: kein SetSize
 openBtn:SetPoint("TOPLEFT", optCmdList, "BOTTOMLEFT", 0, -20)
 openBtn:SetText("Open DungeonClear")
 openBtn:SetScript("OnClick", function()
@@ -2032,7 +2018,7 @@ setIntro:SetTextColor(0.6, 0.6, 0.6)
 
 -- Reset-everything-to-server-default button.
 local resetAllBtn = CreateFrame("Button", nil, settingsPanel, "UIPanelButtonTemplate")
-resetAllBtn:SetSize(150, 22)
+resetAllBtn:SetWidth(150); resetAllBtn:SetHeight(22)  -- 1.12: kein SetSize
 resetAllBtn:SetPoint("TOPLEFT", setIntro, "BOTTOMLEFT", 0, -10)
 resetAllBtn:SetText("Reset All to Default")
 resetAllBtn:SetScript("OnClick", function()
@@ -2046,7 +2032,7 @@ setScroll:SetPoint("TOPLEFT", resetAllBtn, "BOTTOMLEFT", 0, -10)
 setScroll:SetPoint("BOTTOMRIGHT", settingsPanel, "BOTTOMRIGHT", -28, 16)
 
 local setContent = CreateFrame("Frame", "DungeonClearSettingsContent", setScroll)
-setContent:SetSize(560, 10)
+setContent:SetWidth(560); setContent:SetHeight(10)  -- 1.12: kein SetSize
 setScroll:SetScrollChild(setContent)
 
 -- Control-type ordering for the panel: checkboxes, then dropdowns, then text
@@ -2092,7 +2078,7 @@ end
 local function CreateSettingRow(key, stype)
     local meta = SettingMeta[key] or {}
     local row = CreateFrame("Frame", nil, setContent)
-    row:SetSize(540, 48)
+    row:SetWidth(540); row:SetHeight(48)  -- 1.12: kein SetSize
     row.key = key
     row.stype = stype
 
@@ -2115,7 +2101,7 @@ local function CreateSettingRow(key, stype)
 
     -- Per-row revert button, shown only while this setting is overridden.
     row.defBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-    row.defBtn:SetSize(64, 18)
+    row.defBtn:SetWidth(64); row.defBtn:SetHeight(18)  -- 1.12: kein SetSize
     row.defBtn:SetPoint("TOPRIGHT", row, "TOPRIGHT", -2, -2)
     row.defBtn:SetText("Default")
     row.defBtn:SetScript("OnClick", function()
@@ -2141,17 +2127,19 @@ local function CreateSettingRow(key, stype)
         -- ("Common", "Rare", "Epic", …) is clearer than a 0-6 slider.
         local dd = CreateFrame("Frame", "DungeonClearDropdown_" .. key, row, "UIDropDownMenuTemplate")
         dd:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", -6, -2)
-        UIDropDownMenu_SetWidth(dd, 130)
-        local function OnSelect(self)
+        UIDropDownMenu_SetWidth(130, dd)  --[[1.12: (width, frame)]]
+        local function OnSelect()
+            local self = this  -- 1.12: Dropdown-Klick ohne Argumente, this = der Eintrag
             local v = self.value
             UIDropDownMenu_SetSelectedValue(dd, v)
-            UIDropDownMenu_SetText(dd, QualityText(v))
+            UIDropDownMenu_SetText(QualityText(v), dd)  --[[1.12: (text, frame)]]
             if row.updating then return end
             DungeonClearDB.settings[key] = v
             row.defBtn:Show()
             SendDcCommand("set", key .. "\t" .. v, true)
         end
-        UIDropDownMenu_Initialize(dd, function(self, level)
+        UIDropDownMenu_Initialize(dd, function()
+        local self, level = this, UIDROPDOWNMENU_MENU_LEVEL  -- 1.12: Init ohne Argumente
             for q = 0, 6 do
                 local entry = UIDropDownMenu_CreateInfo()
                 entry.text = QualityText(q)
@@ -2216,7 +2204,7 @@ local function UpsertSetting(key, value, minV, maxV, stype, overridden)
         local v = math.floor(value + 0.5)
         if v < 0 then v = 0 elseif v > 6 then v = 6 end
         UIDropDownMenu_SetSelectedValue(row.control, v)
-        UIDropDownMenu_SetText(row.control, QualityText(v))
+        UIDropDownMenu_SetText(QualityText(v), row.control)  --[[1.12: (text, frame)]]
     else
         row.control:SetMinMaxValues(minV, maxV)
         row.control:SetValueStep(StepFor(stype))
@@ -2324,17 +2312,17 @@ end
 local minimapButton = CreateFrame("Button", "DungeonClearMinimapButton", Minimap)
 minimapButton:SetFrameStrata("MEDIUM")
 minimapButton:SetFrameLevel(8)
-minimapButton:SetSize(31, 31)
+minimapButton:SetWidth(31); minimapButton:SetHeight(31)  -- 1.12: kein SetSize
 minimapButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 minimapButton:RegisterForDrag("LeftButton")
 
 local mmOverlay = minimapButton:CreateTexture(nil, "OVERLAY")
-mmOverlay:SetSize(53, 53)
+mmOverlay:SetWidth(53); mmOverlay:SetHeight(53)  -- 1.12: kein SetSize
 mmOverlay:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
-mmOverlay:SetPoint("TOPLEFT")
+mmOverlay:SetPoint("TOPLEFT", mmOverlay:GetParent(), "TOPLEFT", 0, 0)  -- 1.12: nur die volle Form
 
 local mmIcon = minimapButton:CreateTexture(nil, "BACKGROUND")
-mmIcon:SetSize(20, 20)
+mmIcon:SetWidth(20); mmIcon:SetHeight(20)  -- 1.12: kein SetSize
 mmIcon:SetTexture("Interface\\Icons\\inv_misc_enggizmos_17")
 mmIcon:SetPoint("CENTER", minimapButton, "CENTER", 0, 1)
 mmIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)

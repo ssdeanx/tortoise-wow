@@ -76,6 +76,33 @@ namespace DcEventDoorRegistry
             case 184393:  // Old Hillsbrad — Thrall's Prison Door (gossip through
                           // the gate; his script opens it via EVENT_OPEN_DOORS)
                 return true;
+            // Uldaman — Ironaya's seal, the same shape as the Steamvault panels
+            // below: the Keystone (124371) is a wall CONTROL with a door
+            // template, and the Seal of Khaz'Mul (124372, lock 0) is opened by
+            // the Keystone's own script 27s after the click. Both belong to the
+            // Ironaya event (map 70 id 1). The door-blocked rung flagged them as
+            // corridor blockers 23 and 18 times on 2026-09-03, could not open
+            // either - correctly - and auto-paused the run each time it caught
+            // a tick on which the event was not due: 12 of 37 runs. The rung is
+            // simply the wrong tool here; the event is the right one and needs
+            // nothing from the door logic. (UldamanEvents.cpp has long claimed
+            // the seal was already excluded here. It was not.)
+            case 124371:  // Uldaman — Keystone
+            case 124372:  // Uldaman — Seal of Khaz'Mul
+                return true;
+            // Zul'Farrak — the five Troll Cages on the temple summit. Door
+            // templates, but nothing walks through one: the summit event
+            // (map 209 id 1) uses a cage from outside to start Bly's band, and
+            // the route ends beside them. All four measured runs (2026-08-31,
+            // 2026-09-02) died the same way: the tank parked 7yd from cage
+            // 141070, the rung flagged it corridor-blocking, could not open it
+            // and auto-paused until paused_timeout at 1/6 bosses.
+            case 141070:  // Zul'Farrak — Troll Cage
+            case 141071:  // Zul'Farrak — Troll Cage
+            case 141072:  // Zul'Farrak — Troll Cage
+            case 141073:  // Zul'Farrak — Troll Cage (the one the event uses)
+            case 141074:  // Zul'Farrak — Troll Cage
+                return true;
             // The Steamvault — Main Chambers Access Panels. These are wall
             // CONTROLS, not doors, but their template is GAMEOBJECT_TYPE_DOOR
             // and they spawn (and permanently stay) in GO_STATE_READY, so the

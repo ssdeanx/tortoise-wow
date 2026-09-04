@@ -34,6 +34,16 @@ vcpkg install ace:x64-windows
 cmake -B build -A x64 -DBUILD_PLAYERBOTS=ON -DUSE_EXTRACTORS=ON -DACE_ROOT=C:/vcpkg/installed/x64-windows
 ```
 
+Precompiled headers: on MSVC the build defaults to the old PCH implementation
+(`USE_PCH_OLD=ON`, `/Yc` and `/Yu` through `cmake/FindPCHSupport.cmake`). Add
+`-DUSE_PCH_OLD=OFF` to use CMake's own `target_precompile_headers` instead - the
+path the Linux build takes and the one that gets tested. If the PCH hits MSVC's
+size limits, `-DUSE_PCH=OFF` builds without one; the headers the sources expect
+are then force-included, in either PCH mode.
+
+```
+```
+
 With `-DBUILD_PLAYERBOTS=ON` you need Boost as well. Install the nine libraries
 the module actually includes rather than the `boost` meta-package — that one
 drags in `boost-cobalt`, which needs C++20 and does not build under Visual

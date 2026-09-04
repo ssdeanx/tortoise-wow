@@ -230,6 +230,15 @@ public:
 
         // Parse "DC\tCMD\t<subcommand>[\t<param>]" — strip the 7-byte prefix.
         std::string const cmdPayload = msg.substr(7);
+        // One INFO line per accepted addon command. The first 1.12 client to run
+        // the ported addon (2026-09-04) showed an empty boss list and nothing on
+        // the server side could say whether its request had ever arrived - this
+        // hook logged only at DEBUG. Sender, chat type and the raw payload are
+        // exactly what tells a missing message from a misparsed one.
+        LOG_INFO("playerbots.dungeonclear",
+                 "[DC-ADDON] {} sent type={} payload='{}'",
+                 player ? player->GetName() : "?", type,
+                 cmdPayload.size() > 60 ? cmdPayload.substr(0, 60) + "..." : cmdPayload);
         std::string subCmd;
         std::string param;
 

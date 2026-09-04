@@ -31,7 +31,7 @@ exception specifications, and ACE 6.x still uses them — its headers bury
 ## 2. Configure and build
 
 ```bash
-git clone -b playerbots-integration-gh https://github.com/Shyalya/tortoise-wow.git
+git clone --recursive -b playerbots-integration-gh https://github.com/Shyalya/tortoise-wow.git
 cd tortoise-wow
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/turtle -DBUILD_PLAYERBOTS=ON -DUSE_EXTRACTORS=ON
 cmake --build build -j$(nproc)

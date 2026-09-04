@@ -2,7 +2,7 @@
 ## Title: DungeonClear
 ## Notes: Autonomous dungeon-clearing companion for mod-dungeon-clear.
 ## Author: Jared
-## Version: 3.6-turtle
+## Version: 3.6-turtle9
 ## SavedVariables: DungeonClearDB
 
 DungeonClear.lua

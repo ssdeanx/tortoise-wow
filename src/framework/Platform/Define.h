@@ -32,6 +32,11 @@
 #include "Platform/CompilerDefs.h"
 
 #include "AllocatorWithCategory.h"
+// size_t for everything that includes only this header before using it -
+// Eluna's hooks/Hooks.h (a submodule, so not patched there) defines
+// CountOf() on size_t and breaks without the precompiled header: USE_PCH=OFF,
+// 2026-09-04, "size_t was not declared in this scope".
+#include <cstddef>
 
 #define MANGOS_LITTLEENDIAN 0
 #define MANGOS_BIGENDIAN    1

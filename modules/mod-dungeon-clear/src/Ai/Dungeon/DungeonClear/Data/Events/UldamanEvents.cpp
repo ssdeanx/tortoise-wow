@@ -3,6 +3,7 @@
  * and/or modify it under version 3 of the License, or (at your option), any later version.
  */
 
+#include <unordered_map>
 #include "Ai/Dungeon/DungeonClear/Data/Events/DungeonEventTables.h"
 #include "Ai/Dungeon/DungeonClear/Data/Events/DungeonRosterBuilders.h"
 
@@ -87,6 +88,7 @@ namespace
     constexpr uint32 ULD_KEEPER_ALTAR       = 130511;  // Altar of The Keepers
     constexpr uint32 ULD_ARCHAEDAS_ALTAR    = 133234;  // Altar of Archaedas
     constexpr uint32 ULD_RITUAL_CASTERS     = 3;       // data0 on both
+    constexpr uint32 ULD_ARCHAEDAS          = 2748;    // the stoned boss himself
 
     // Altar of The Keepers (GO 130511) at the Hall-of-the-Keepers centre. The
     // roster delivers the tank here (objective OBJ(1), ordered after Grimlok /
@@ -185,6 +187,55 @@ namespace
 namespace
 {
     bool UldamanIronayaSeal(Player* bot, AiObjectContext* context);
+    // Altar of Archaedas. CONDITIONAL, not anchored - measured 2026-09-03: the
+    // anchored version never ran once. The party reaches the altar, the anchor
+    // latches on arrival, the next anchor becomes Archaedas the BOSS, and the
+    // event owned by the objective is never driven. The parties then stood
+    // 7yd from him in state fighting_boss for 420s: he is faction 35 while
+    // stoned - friendly to everyone, like the Stone Keepers - so there was
+    // nothing to hit. A conditional event runs off the boss gate instead, the
+    // way the Ironaya seal does: due exactly when Archaedas is next, the altar
+    // is nearby and still READY (the core flips it to ACTIVE when the ritual
+    // fires, so this reads false the moment the job is done).
+    bool UldamanArchaedasAltar(Player* bot, AiObjectContext* context)
+    {
+        std::optional<DungeonBossInfo> const next =
+            context->GetValue<std::optional<DungeonBossInfo>>(DcKey::NextDungeonBoss)->Get();
+        bool const hisTurn = next.has_value() && next->entry == ULD_ARCHAEDAS;
+        GameObject* altar = hisTurn ? bot->FindNearestGameObject(ULD_ARCHAEDAS_ALTAR, ULD_SCAN) : nullptr;
+        Creature* arch = hisTurn ? bot->FindNearestCreature(ULD_ARCHAEDAS, ULD_SCAN, /*alive*/ true) : nullptr;
+        // Due while he is NEXT and ALIVE - not merely while the altar is still
+        // READY. The altar flips to ACTIVE the instant the ritual fires, and a
+        // conditional event is only driven while its condition holds: with the
+        // old test the steps after the ritual could never run. Which is exactly
+        // what happened on 2026-09-04 - he woke, went hostile, stood 6.5yd from
+        // the tank at 100% for ten minutes, and nobody engaged him because the
+        // event that owns this fight had already gone quiet. The ritual step is
+        // idempotent on an ACTIVE altar (UseGameObject returns Done), so keeping
+        // the event due costs nothing and lets the engage step below do its job.
+        bool const due = hisTurn && altar && arch;
+        // INFO, one line per 10s per bot, only once it is his turn. Three builds
+        // in a row produced no trace of this event at all; without this line it
+        // is impossible to tell "never asked" from "asked and said no".
+        if (hisTurn)
+        {
+            static std::unordered_map<uint64, uint32> s_saidAt;
+            uint32 const now = getMSTime();
+            uint32& at = s_saidAt[bot->GetObjectGuid().GetRawValue()];
+            if (!at || getMSTimeDiff(at, now) > 10000)
+            {
+                at = now;
+                LOG_INFO("playerbots.dungeonclear",
+                         "[DC:{}] Archaedas altar cond: altar={} state={} archaedas={} inCombat={} -> {}",
+                         bot->GetName(), altar ? "found" : "MISSING",
+                         altar ? static_cast<int>(altar->GetGoState()) : -1,
+                         arch ? "present" : "no", bot->IsInCombat() ? "yes" : "no",
+                         due ? "DUE" : "not due");
+            }
+        }
+        return due;
+    }
+    bool UldamanArchaedasAltar(Player* bot, AiObjectContext* context);
 }
 
 void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
@@ -232,7 +283,14 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       .ClearRadius(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z,
                                    ULD_KEEPER_RADIUS, ULD_KEEPER_ZBAND)
                       .Timeout(ULD_KEEPER_TIMEOUT)
-                      // 2) centre on the altar (close the last few yards).
+                      // 2) close on the altar - radius 6, and deliberately not
+                      //    tighter. Radius 2.5 was tried on 2026-09-03 to get the
+                      //    followers inside the 5yd click range; it did that, the
+                      //    ritual fired, and then the woken Stone Keepers did not
+                      //    die: 1 of 48 runs got past them against 9 of 39 before.
+                      //    Standing ON the altar when they wake is the one thing
+                      //    that changed. The click-range problem is solved by
+                      //    fetching the party instead (UseGameObject, participants).
                       .MoveTo(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z, /*radius*/ 6.0f)
                       // 3) work the altar: three of the party click it, the core
                       //    counts them and casts 11568 itself. That wakes the
@@ -245,7 +303,16 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       //    KillCreature (party auto-aggros; no .engage onto the
                       //    still-stoned/immune statues) holds the party here until
                       //    none remain alive.
-                      .KillCreature(ULD_STONE_KEEPER, /*count*/ 4, /*searchRadius*/ 50.0f)
+                      //    ENGAGE, not a plain gate. The plain gate relied on the woken
+                      //    keepers pulling the party; it held in roughly half the runs
+                      //    and stalled the other half at this step (114 of 127 keeper
+                      //    stalls on 2026-09-03/04 were step 3). Same mechanism as
+                      //    Archaedas below: a woken keeper that cannot reach anyone
+                      //    evades, an evading creature is not an "attacker", and no
+                      //    combat engine ever starts. The still-stoned ones are faction
+                      //    35, so Attack on them is a harmless no-op until they wake.
+                      .KillCreatureEngage(ULD_STONE_KEEPER, /*count*/ 4, /*searchRadius*/ 50.0f)
+                      .EngageOnlyWhenActive()
                       // 5) confirm the temple door has rumbled open before the
                       //    clear advances (search wide — it sits ~36yd off centre).
                       .WaitForGOState(ULD_TEMPLE_DOOR, /*GO_STATE_ACTIVE*/ 0,
@@ -259,7 +326,16 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
     // boss-nav delivers the tank onto the altar, this wakes him, the objective
     // latches, and the normal boss pull then fights and kills him.
     out.push_back(EventBuilder(70, 3, "Summon Archaedas (Altar of Archaedas)")
-                      .Anchored(/*orderIndex, doc-only*/ 8)
+                      .Conditional(&UldamanArchaedasAltar)
+                      .PanelBeforeBoss(ULD_ARCHAEDAS)
+                      // Must run IN COMBAT. By the time the condition is true the
+                      // party stands at the altar flagged in combat (the status line
+                      // read fighting_boss, 7yd from the stoned boss), and the
+                      // out-of-combat event trigger yields to MayDrive there while
+                      // the in-combat one only takes events that say so. Without
+                      // this word neither trigger ever ran the ritual - measured
+                      // 2026-09-03, two 90-minute windows, zero traces both times.
+                      .DrivesInCombat()
                       // 1) step onto the Altar of Archaedas in his chamber.
                       .MoveTo(ULD_ARCH_ALTAR_X, ULD_ARCH_ALTAR_Y, ULD_ARCH_ALTAR_Z,
                               /*radius*/ 6.0f)
@@ -268,14 +344,19 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       //    the stoned boss.
                       .UseRitualGO(ULD_ARCHAEDAS_ALTAR, ULD_RITUAL_CASTERS,
                                    /*searchRadius*/ 15.0f)
-                      // PERSISTENT, like the keeper altar above, and for the same
-                      // reason: events are driven only while the NEXT anchor is the
-                      // objective that owns them. This objective latches on arrival
-                      // (radius 10), the next anchor becomes Archaedas the BOSS, and
-                      // a non-persistent event is dropped right there - before the
-                      // ritual ever fires. Measured 2026-09-03: six parties reached
-                      // this altar, the event logged nothing, Archaedas fell 0 times.
-                      .Persistent()
+                      // 3) and then FIGHT him. Nothing else will: he wakes 4s after
+                      //    the ritual, turns faction 14 and AttackStarts the nearest
+                      //    party member - but a bot's combat engine only starts on
+                      //    "has attackers", which rejects an evading creature, and a
+                      //    boss that cannot close the last yards evades. Measured
+                      //    2026-09-04, tr-20260904-025743-13: tank Baderan flagged in
+                      //    combat, engine noncombat, Archaedas 6.5yd away at 100% for
+                      //    ten minutes, victim dropped at the end. The engage pipeline
+                      //    (EngageDirect: Attack + ChangeEngine) is the missing push.
+                      //    Attack on a still-stoned, still-friendly statue is a no-op
+                      //    that retries each tick until he turns.
+                      .KillCreatureEngage(ULD_ARCHAEDAS, /*count*/ 1, /*searchRadius*/ 60.0f)
+                      .EngageOnlyWhenActive()
                       .Build());
 }
 
@@ -322,7 +403,9 @@ void RegisterUldamanRoster(std::vector<BossRosterPatch>& t)
             MakeObjective(OBJ(2), /*encounterIndex*/ 7, 70,
                           "Altar of Archaedas",
                           96.48f, 269.05f, -52.15f, /*arriveRadius*/ 10.0f,
-                          /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 3,
+                          // eventId 0: a travel waypoint only. The ritual is the
+                          // CONDITIONAL event above, keyed on the boss gate.
+                          /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 0,
                           /*orderOverride*/ 8),
         };
         t.push_back(std::move(p));

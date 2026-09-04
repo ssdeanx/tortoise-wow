@@ -667,6 +667,7 @@ class Unit;
 class GameObjectAI;
 class GameObjectModel;
 class Transport;
+class Group;   // GetGroupLootRecipient - undeclared without the PCH (Camera.cpp, MSVC 2026-09-04)
 
 struct GameObjectDisplayInfoEntry;
 

@@ -207,3 +207,15 @@ order 70 7206 6      # Ancient Stone Keeper  St 44   (nach Altar of The Keepers)
 order 70 7291 7      # Galgann Firehammer    St 45
 order 70 4854 8      # Grimlok               St 45
 order 70 2748 10     # Archaedas             St 47   (nach Altar of Archaedas)
+
+# Razorfen Downs (map 129). Without this block the index numbered the spawned
+# bosses by itself and Tuten'kash (added by patch, encounterIndex 0, no static
+# spawn) shared bit 0 with one of them: 42 runs, 36 "successes" at 2/3, and
+# Tuten'kash never once killed - the other boss's death flipped his bit.
+# Order 1 keeps him on bit 0 to match the patch. Glutton (8567) is not in the
+# curated 1.12 list; naming him here is what makes him a boss to the router.
+# Ragglesnout (7354) is a rare and never an objective.
+order 129 7355 1     # Tuten'kash (gong at the entrance)
+order 129 7357 2     # Mordresh Fire Eye
+order 129 8567 3     # Glutton
+order 129 7358 4     # Amnennar the Coldbringer

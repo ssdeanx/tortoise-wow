@@ -19,7 +19,10 @@
 // find its definition.
 void RegisterAllRecordedRoutes();
 
-// Reads modules/mod-dungeon-clear/src/Routes/*.route (written by
+// Reads DungeonClear.RouteRecorderDir/*.route - modules/mod-dungeon-clear/routes/,
+// OUTSIDE the globbed src tree: a new or renamed file under src/ trips the
+// CONFIGURE_DEPENDS glob and rebuilds every module object (2026-09-04: three
+// full builds in one day, one hour each). Written by
 // DcRouteRecorder alongside its .cpp twin) and registers each one. This is
 // what makes a route usable after a plain restart instead of a rebuild.
 static void LoadRecordedRoutesFromDisk()
