@@ -191,6 +191,14 @@ void DungeonClearStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& trigge
         "dungeon clear hold at camp",
         { NextAction("dungeon clear hold at camp", DcRel::HoldAtCamp) }));
 
+    // While the leader publishes a gather point (a ritual altar that needs the
+    // party inside click range), followers walk there and hold. Above
+    // hold-at-camp (28) and follow-tank (25), below assist-camp (29): a fight
+    // still wins.
+    triggers.push_back(new TriggerNode(
+        "dungeon clear gather at point",
+        { NextAction("dungeon clear gather at point", DcRel::GatherAtPoint) }));
+
     // Leader-fight assist: while the leader tank is in combat, every follower
     // still OUT of combat is driven into the fight — the advanced-pull camp
     // fight, but also any Leeroy/dynamic/boss pull the tank took around a corner

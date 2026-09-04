@@ -626,6 +626,18 @@ public:
     }
 };
 
+// Follower: walk to the leader's gather point (DcGatherPoint.h) once, then
+// hold inside its radius until the leader stops refreshing it.
+class DungeonClearGatherAtPointAction : public DcMovementAction
+{
+public:
+    DungeonClearGatherAtPointAction(PlayerbotAI* botAI)
+        : DcMovementAction(botAI, "dungeon clear gather at point")
+    {
+    }
+    bool Execute(Event& event) override;
+};
+
 // Shared body for the two follower-only "join the leader's fight" actions.
 // Resolves the nearest live unit attacking the leader tank — LINE-OF-SIGHT BLIND
 // on purpose — sets it as the bot's current target, forces the bot into combat

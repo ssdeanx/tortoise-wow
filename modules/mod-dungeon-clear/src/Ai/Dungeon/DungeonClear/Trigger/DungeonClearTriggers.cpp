@@ -4,6 +4,7 @@
  */
 
 #include "DungeonClearTriggers.h"
+#include "Ai/Dungeon/DungeonClear/Util/DcLeaderSignal.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcRun.h"
 
 #include <algorithm>
@@ -1362,6 +1363,16 @@ bool DungeonClearHoldAtCampTrigger::IsActive()
     Position camp;
     bool passive = false;
     return DcLeaderSignal::GetLeaderCampHold(bot, camp, passive);
+}
+
+bool DungeonClearGatherAtPointTrigger::IsActive()
+{
+    if (!bot || bot->isDead() || bot->IsInCombat())
+        return false;
+    if (DcLeaderSignal::IsDungeonClearLeader(bot))
+        return false;
+    DcGatherPoint gp;
+    return DcLeaderSignal::GetLeaderGatherPoint(bot, gp);
 }
 
 bool DungeonClearHoldAtCampCombatTrigger::IsActive()

@@ -7,6 +7,7 @@
 #define _PLAYERBOT_DUNGEONCLEARSTATEVALUES_H
 
 #include <map>
+#include "Ai/Dungeon/DungeonClear/Data/DcGatherPoint.h"
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -483,6 +484,23 @@ public:
 
 private:
     DungeonFollowerState data;
+};
+
+// Leader-owned: where the followers should gather right now (see
+// DcGatherPoint.h). Written by DungeonEventExecutor, read by the followers'
+// gather trigger through DcLeaderSignal.
+class DungeonClearGatherPointValue : public ManualSetValue<DcGatherPoint&>
+{
+public:
+    DungeonClearGatherPointValue(PlayerbotAI* botAI)
+        : ManualSetValue<DcGatherPoint&>(botAI, data, DcKey::GatherPoint)
+    {
+    }
+
+    void Reset() override { data = DcGatherPoint{}; }
+
+private:
+    DcGatherPoint data;
 };
 
 // Progress through the active travel-objective EVENT (DungeonEventRegistry),

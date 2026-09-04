@@ -4,6 +4,7 @@
  */
 
 #include <unordered_map>
+#include "Ai/Dungeon/DungeonClear/Data/DcGatherPoint.h"
 #include "DungeonEventExecutor.h"
 
 #include <algorithm>
@@ -553,6 +554,7 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
             // leader-only click is a permanent no-op. That is what left the four
             // Stone Keepers asleep while the next step gated on killing them -
             // 48371 stalls in two hours on 2026-09-03, at step 3 of 5, kind 6.
+            bool wantGather = false;  // set below when a follower stands outside click range
             if (step.participants > 1)
             {
                 if (Group* group = bot->GetGroup())
@@ -582,6 +584,17 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                         // party that genuinely cannot reach the altar.
                         if (!member->IsWithinDistInMap(go, DC_EVENT_GO_USE_RANGE))
                         {
+                            static std::unordered_map<uint64, uint32> s_farSaidAt;
+                            uint32 const nowF = getMSTime();
+                            uint32& atF = s_farSaidAt[member->GetObjectGuid().GetRawValue()];
+                            if (!atF || getMSTimeDiff(atF, nowF) > 5000)
+                            {
+                                atF = nowF;
+                                LOG_INFO("playerbots.dungeonclear",
+                                         "[dungeon-clear] {} ritual: {} is {:.1f}yd from the altar (need {}), moving={}",
+                                         bot->GetName(), member->GetName(), member->GetDistance(go),
+                                         DC_EVENT_GO_USE_RANGE, member->isMoving() ? "yes" : "no");
+                            }
                             // Only ever move a BOT. A human in the party clicks
                             // when they choose to, and counts if they are close.
                             // HopTo, and nothing more eager. A direct MovePoint every 2s
@@ -590,14 +603,24 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                             // them, and the keepers then died in 3 of 37 runs against
                             // 9 of 39 with HopTo. Whatever the restarted splines did to
                             // the party, it cost more than the odd missed click.
+                            // Since 2026-09-04: publish a GATHER POINT on the
+                            // altar instead of hopping them from here. The
+                            // followers' own gather action (relevance 28.5,
+                            // above follow-tank) walks them in once and holds
+                            // them; HopTo never fired on a moving follower, and
+                            // the measured result was 3252 clicks with the
+                            // core's distinct-user count stuck at 2.
                             if (GET_PLAYERBOT_AI(member) &&
                                 member->IsWithinDistInMap(go, DC_EVENT_GO_GATHER_RANGE))
-                                HopTo(member, go->GetPositionX(), go->GetPositionY(),
-                                      go->GetPositionZ());
+                                wantGather = true;
                             continue;
                         }
                         go->Use(member);
                         ++clicked;
+                        LOG_INFO("playerbots.dungeonclear",
+                                 "[dungeon-clear] {} ritual click by {} at {:.1f}yd -> uniqueUses={}",
+                                 bot->GetName(), member->GetName(), member->GetDistance(go),
+                                 go->GetUniqueUseCount());
                     }
                 }
                 // Done only once the ritual ACTUALLY fired. The core flips the GO
@@ -606,8 +629,22 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                 // clicked". Staying Running holds the party at the altar while
                 // stragglers close the last yards; the step timeout still turns a
                 // genuine failure into a visible stall.
-                return go->GetGoState() != GO_STATE_READY ? StepResult::Done
-                                                          : StepResult::Running;
+                DcGatherPoint& gather =
+                    context->GetValue<DcGatherPoint&>(DcKey::GatherPoint)->Get();
+                bool const ritualDone = go->GetGoState() != GO_STATE_READY;
+                if (wantGather && !ritualDone)
+                {
+                    gather.mapId = bot->GetMapId();
+                    gather.x = go->GetPositionX();
+                    gather.y = go->GetPositionY();
+                    gather.z = go->GetPositionZ();
+                    gather.radius = 4.5f;   // followers park 4 yd out (outside the altar model), inside DC_EVENT_GO_USE_RANGE (5)
+                    gather.reach = DC_EVENT_GO_GATHER_RANGE;
+                    gather.untilMs = getMSTime() + 8000;  // refreshed every tick while Running
+                }
+                else
+                    gather = DcGatherPoint{};
+                return ritualDone ? StepResult::Done : StepResult::Running;
             }
             return StepResult::Done;
         }

@@ -219,3 +219,23 @@ order 129 7355 1     # Tuten'kash (gong at the entrance)
 order 129 7357 2     # Mordresh Fire Eye
 order 129 8567 3     # Glutton
 order 129 7358 4     # Amnennar the Coldbringer
+
+# Zul'Farrak (map 209). Owner's order 2026-09-04. Without this block the
+# compiled patch reordered Theka (1) and Velratha (6) that the curated 1.12
+# list never credited, so neither existed; Antu'sul and Sergeant Bly shared
+# bit 2 (Bly is credited by the list and is killed inside the temple event -
+# he is no anchor, hence the drop); Zel'jeb the Ancient (62495, Turtle) and
+# the Farraki Arena (Champion Razjal the Quick 62498, 1.18.0) were missing.
+# The two compiled objectives keep their keys: Temple Summit 4 (bit 7),
+# Sacred Pool / Gahz'rilla 7 (bit 8) - which is why Zel'jeb and Razjal sit
+# at 10 and 11, not 8 and 9: order-1 is the completion bit and 7/8 are taken.
+# Razjal needs the arena event (gossip, then Kath'zen 62496 and Juthza
+# 62497 in turn, then him) - ZulFarrakEvents.cpp, next build.
+order 209 7272 1      # Theka the Martyr
+order 209 8127 2      # Antu'sul
+order 209 7271 3      # Witch Doctor Zum'rah
+order 209 7267 5      # Chief Ukorz Sandscalp     (4 = Temple Summit objective)
+order 209 7795 6      # Hydromancer Velratha      (7 = Sacred Pool objective)
+order 209 62495 10    # Zel'jeb the Ancient       (owner: 8th)
+order 209 62498 11    # Champion Razjal the Quick (owner: Farraki Arena last)
+drop 7604             # Sergeant Bly - dies inside the temple event, not an anchor

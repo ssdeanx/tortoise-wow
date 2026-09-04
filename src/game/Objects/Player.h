@@ -1354,6 +1354,7 @@ class Player final: public Unit
         void MailHardcoreModeRewards(uint32 level);
         void MailVagrantModeRewards(uint32 level);
         void MailBoaringModeRewards(uint32 level);
+        void MailBrewmasterModeRewards();
         void AnnounceHardcoreModeLevelUp(uint32 level);
         // Titles
         bool IsCityProtector();
@@ -2559,7 +2560,12 @@ class Player final: public Unit
         bool IsSitState() const { return GetStandState() == UNIT_STAND_STATE_SIT; }
         // learnClassLevelSpells / learnDefaultSpells: cmangos training helpers; Penqle has equivalents.
         void learnClassLevelSpells(bool /*includeHighLevelQuestRewards*/ = false) {}
-        void learnDefaultSpells() {}
+        // learnDefaultSpells: the creation spells (playercreateinfo_spell). Was a
+        // no-op stub; the core has the real thing, so hand over - the bot factory
+        // calls this on every randomize to make sure the race/class starters
+        // (Holy Light 1, Seal of Righteousness 1, ...) are present before the
+        // trainer scan builds rank chains on top of them.
+        void learnDefaultSpells() { LearnDefaultSpells(); }
         // isGMVisible: cmangos shorthand for "GM is visible to others".
         bool isGMVisible() const { return !(m_ExtraFlags & PLAYER_EXTRA_GM_INVISIBLE); }
         // setCinematic: cmangos sets cinematic state. Stub no-op.

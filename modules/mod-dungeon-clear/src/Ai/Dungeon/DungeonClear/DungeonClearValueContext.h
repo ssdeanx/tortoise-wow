@@ -56,6 +56,7 @@ public:
         creators[DcKey::BlockingDoor] = &DungeonClearValueContext::dungeon_clear_blocking_door;
         creators[DcKey::EngageTrashTarget] = &DungeonClearValueContext::dungeon_clear_engage_trash_target;
         creators[DcKey::FollowerState] = &DungeonClearValueContext::dungeon_clear_follower_state;
+        creators[DcKey::GatherPoint] = &DungeonClearValueContext::dungeon_clear_gather_point;
         creators[DcKey::SwimState] = &DungeonClearValueContext::dungeon_clear_swim_state;
         creators[DcKey::LootSkip] = &DungeonClearValueContext::dungeon_clear_loot_skip;
         creators[DcKey::LootCampGuid] = &DungeonClearValueContext::dungeon_clear_loot_camp_guid;
@@ -103,6 +104,7 @@ private:
     static UntypedValue* dungeon_clear_blocking_door(PlayerbotAI* ai) { return new DungeonClearBlockingDoorValue(ai); }
     static UntypedValue* dungeon_clear_engage_trash_target(PlayerbotAI* ai) { return new DungeonClearEngageTrashTargetValue(ai); }
     static UntypedValue* dungeon_clear_follower_state(PlayerbotAI* ai) { return new DungeonClearFollowerStateValue(ai); }
+    static UntypedValue* dungeon_clear_gather_point(PlayerbotAI* ai) { return new DungeonClearGatherPointValue(ai); }
     static UntypedValue* dungeon_clear_swim_state(PlayerbotAI* ai) { return new DungeonClearSwimStateValue(ai); }
     static UntypedValue* dungeon_clear_loot_skip(PlayerbotAI* ai) { return new DungeonClearLootSkipValue(ai); }
     static UntypedValue* dungeon_clear_loot_camp_guid(PlayerbotAI* ai) { return new DungeonClearLootCampGuidValue(ai); }

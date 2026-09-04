@@ -40,7 +40,21 @@ void AutoLearnSpellAction::LearnSpells(std::ostringstream* out)
         LearnQuestSpells(out);
 
     if (sPlayerbotAIConfig.autoLearnTrainerSpells)
-        LearnTrainerSpells(out);
+    {
+        // To a fixpoint, not once. The scan walks trainers in creature-entry
+        // order and a rank is GREEN only once its previous rank is known, so a
+        // higher rank listed on a lower-entry trainer is skipped in the pass
+        // that teaches the rank below it. One pass per level-up left chains
+        // stuck mid-way (2026-09-04: level-22 paladins on Holy Light rank 2,
+        // level-34 ones on rank 5). Repeat while a pass still learns something.
+        for (int pass = 0; pass < 6; ++pass)
+        {
+            size_t const before = bot->GetSpellMap().size();
+            LearnTrainerSpells(out);
+            if (bot->GetSpellMap().size() == before)
+                break;
+        }
+    }
 
 #ifdef MANGOSBOT_ZERO
     if (sPlayerbotAIConfig.autoLearnDroppedSpells)

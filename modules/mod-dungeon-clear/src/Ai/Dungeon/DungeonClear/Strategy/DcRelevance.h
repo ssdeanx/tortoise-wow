@@ -72,6 +72,7 @@ namespace DcRel
     inline constexpr float AtObjective      = 30.0f; // arrive at a travel objective (anchor-kind peer)
     inline constexpr float AssistCamp       = 29.0f; // follower: pile into the leader's fight
     inline constexpr float HoldAtCamp       = 28.0f; // follower: hold passive at camp mid-pull
+    inline constexpr float GatherAtPoint    = 28.5f; // follower: stand at the leader's gather point (ritual altar)
     inline constexpr float NeedsRest        = 26.5f; // rest to target HP/mana (tie-broken above RoomTrash)
     inline constexpr float RoomTrash        = 26.0f; // room-aggro boss pre-clear
     inline constexpr float BlockingTrash    = 25.0f; // leader: engage a pack blocking the path

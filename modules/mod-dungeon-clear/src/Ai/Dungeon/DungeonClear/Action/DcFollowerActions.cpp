@@ -4,6 +4,8 @@
  */
 
 #include "DungeonClearActions.h"
+#include <unordered_map>
+#include "Ai/Dungeon/DungeonClear/Util/DcLeaderSignal.h"
 
 #include <algorithm>
 #include <cmath>
@@ -1843,4 +1845,60 @@ bool DungeonClearRezPartyAction::Execute(Event& /*event*/)
                   bot->GetName(), rezAction, target->GetName(),
                   cast ? "started" : "not possible yet");
     return cast;
+}
+
+bool DungeonClearGatherAtPointAction::Execute(Event& /*event*/)
+{
+    DcGatherPoint gp;
+    if (!DcLeaderSignal::GetLeaderGatherPoint(bot, gp))
+        return false;
+    float const dist = bot->GetDistance(gp.x, gp.y, gp.z);
+    if (dist <= gp.radius)
+    {
+        // Arrived: stand still and own the tick, so follow-tank cannot pull
+        // the bot back into formation while the leader is still counting
+        // clicks. Per-tick Hold does not spam stop packets (DcMovement).
+        static std::unordered_map<uint64, uint32> s_arrivedSaidAt;
+        uint32 const nowA = getMSTime();
+        uint32& atA = s_arrivedSaidAt[bot->GetObjectGuid().GetRawValue()];
+        if (!atA || getMSTimeDiff(atA, nowA) > 10000)
+        {
+            atA = nowA;
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC:{}] gather: holding {:.1f}yd from the gather point", bot->GetName(), dist);
+        }
+        DcMovement::StopBot(bot, DcMovement::Stop::Hold);
+        return true;
+    }
+    // One point move per approach, not one per tick: a restarted spline every
+    // tick is what the executor's forced MovePoint experiment paid for. Re-issue
+    // only when the bot is standing (arrived somewhere else, or was stopped) or
+    // every 3 s as a safety net against a swallowed move.
+    static std::unordered_map<uint64, uint32> s_issuedAt;
+    uint32 const now = getMSTime();
+    uint32& at = s_issuedAt[bot->GetObjectGuid().GetRawValue()];
+    if (bot->isMoving() && at && getMSTimeDiff(at, now) < 3000)
+        return true;
+    at = now;
+    // Spread the party around the object instead of stacking five bots on one
+    // spot: a fixed per-bot bearing, 2 yd out - still well inside the 5 yd a
+    // click needs.
+    float const bearing = static_cast<float>(bot->GetObjectGuid().GetCounter() % 8) * 0.7853982f;
+    // 4 yd out, not 2: the gather point is the OBJECT's centre, and a ritual
+    // altar has a solid model around it. A point inside the model makes the
+    // path end at the model's edge - outside the old 3.5 yd arrival radius -
+    // so the follower never "arrived", re-issued its move every 3 s and
+    // drifted in and out of the 5 yd click range (arch10, 2026-09-04: 65
+    // walk-ins, the core's distinct-user count never above 2). 4 yd is
+    // outside any altar model and still inside DC_EVENT_GO_USE_RANGE.
+    float const off = std::min(gp.radius - 0.5f, 4.0f);
+    float const tx = gp.x + std::cos(bearing) * off;
+    float const ty = gp.y + std::sin(bearing) * off;
+    bot->GetMotionMaster()->Clear();
+    bot->GetMotionMaster()->MovePoint(0, tx, ty, gp.z, FORCED_MOVEMENT_NONE, 0.0f, 0.0f,
+                                      /*generatePath*/ true, false);
+    LOG_INFO("playerbots.dungeonclear",
+             "[DC:{}] gather: {:.0f}yd from the leader's gather point -> walking in",
+             bot->GetName(), dist);
+    return true;
 }

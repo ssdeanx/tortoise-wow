@@ -890,7 +890,21 @@ void PlayerbotHolder::OnBotLogin(Player * const bot)
         // (WorldPacketHandlerStrategy.cpp) never ran for it - it would otherwise sit at
         // its starting level with none of the trainer-taught abilities a real character
         // of that level would have. Catch it up once, on its first ever login.
-        if (sPlayerbotAIConfig.disableRandomLevels && !bot->GetTotalPlayedTime())
+        // ...and not only that bot. On this core the cmangos training helpers the
+        // factory relies on (Player::learnClassLevelSpells / learnDefaultSpells)
+        // are no-op compatibility stubs, so PlayerbotFactory::InitAvailableSpells
+        // teaches no class spells at all; the ONLY teacher is "auto learn spell"
+        // (a trainer scan, gated on AiPlayerbot.AutoLearnTrainerSpells). It ran on
+        // the SMSG_LEVELUP_INFO packet, on the first login above, and on talent
+        // chat commands - nothing else. A bot levelled or randomized while the
+        // setting was off (the shipped default IS off) therefore stayed without
+        // its trainer spells for good; switching the setting on later changed
+        // nothing until the bot happened to level again. Reported downstream on
+        // 2026-09-04 ("tried 0/0/0 and 1/1/1, no dice"). Catch every bot up on
+        // login instead: the scan learns only what is GREEN at the trainer and
+        // not yet known, so it is idempotent and a no-op for a complete bot.
+        if (sPlayerbotAIConfig.autoLearnTrainerSpells ||
+            (sPlayerbotAIConfig.disableRandomLevels && !bot->GetTotalPlayedTime()))
         {
             ai->DoSpecificAction("auto learn spell");
         }

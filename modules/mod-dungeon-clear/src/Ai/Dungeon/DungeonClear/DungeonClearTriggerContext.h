@@ -38,6 +38,7 @@ public:
         creators["dungeon clear pull"] = &DungeonClearTriggerContext::pull;
         creators["dungeon clear pull maneuver"] = &DungeonClearTriggerContext::pull_maneuver;
         creators["dungeon clear hold at camp"] = &DungeonClearTriggerContext::hold_at_camp;
+        creators["dungeon clear gather at point"] = &DungeonClearTriggerContext::gather_at_point;
         creators["dungeon clear stay at camp"] = &DungeonClearTriggerContext::stay_at_camp;
         creators["dungeon clear assist camp"] = &DungeonClearTriggerContext::assist_camp;
         creators["dungeon clear assist camp combat"] = &DungeonClearTriggerContext::assist_camp_combat;
@@ -89,6 +90,7 @@ private:
     static Trigger* pull(PlayerbotAI* ai) { return new DungeonClearPullTrigger(ai); }
     static Trigger* pull_maneuver(PlayerbotAI* ai) { return new DungeonClearPullManeuverTrigger(ai); }
     static Trigger* hold_at_camp(PlayerbotAI* ai) { return new DungeonClearHoldAtCampTrigger(ai); }
+    static Trigger* gather_at_point(PlayerbotAI* ai) { return new DungeonClearGatherAtPointTrigger(ai); }
     static Trigger* stay_at_camp(PlayerbotAI* ai) { return new DungeonClearHoldAtCampCombatTrigger(ai); }
     static Trigger* assist_camp(PlayerbotAI* ai) { return new DungeonClearAssistCampTrigger(ai); }
     static Trigger* assist_camp_combat(PlayerbotAI* ai) { return new DungeonClearAssistCampCombatTrigger(ai); }

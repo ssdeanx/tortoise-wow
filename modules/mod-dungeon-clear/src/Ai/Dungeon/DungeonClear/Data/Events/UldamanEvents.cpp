@@ -283,15 +283,19 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       .ClearRadius(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z,
                                    ULD_KEEPER_RADIUS, ULD_KEEPER_ZBAND)
                       .Timeout(ULD_KEEPER_TIMEOUT)
-                      // 2) close on the altar - radius 6, and deliberately not
-                      //    tighter. Radius 2.5 was tried on 2026-09-03 to get the
-                      //    followers inside the 5yd click range; it did that, the
-                      //    ritual fired, and then the woken Stone Keepers did not
-                      //    die: 1 of 48 runs got past them against 9 of 39 before.
+                      // 2) close on the altar - radius 2.5 (again). At 6 the
+                      //    followers stand in formation outside the 5yd click
+                      //    range: 2026-09-04 12:01-13:31, 3252 clicks and the
+                      //    core's distinct-user count never passed 2, so the
+                      //    ritual never fired. Radius 2.5 on 2026-09-03 did get
+                      //    three clickers and the ritual fired - and was reverted
+                      //    only because the woken Keepers were then not attacked
+                      //    (a plain KillCreature step). That step is an engage
+                      //    step now, so the two are measured together here.
                       //    Standing ON the altar when they wake is the one thing
                       //    that changed. The click-range problem is solved by
                       //    fetching the party instead (UseGameObject, participants).
-                      .MoveTo(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z, /*radius*/ 6.0f)
+                      .MoveTo(ULD_KEEPER_X, ULD_KEEPER_Y, ULD_KEEPER_Z, /*radius*/ 2.5f)
                       // 3) work the altar: three of the party click it, the core
                       //    counts them and casts 11568 itself. That wakes the
                       //    nearest keeper, which enters combat with the zone and
@@ -338,7 +342,7 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       .DrivesInCombat()
                       // 1) step onto the Altar of Archaedas in his chamber.
                       .MoveTo(ULD_ARCH_ALTAR_X, ULD_ARCH_ALTAR_Y, ULD_ARCH_ALTAR_Z,
-                              /*radius*/ 6.0f)
+                              /*radius*/ 2.5f)
                       // 2) work the altar: three clicks, then the core casts
                       //    10340, which sets DATA_ARCHAEDAS=IN_PROGRESS and wakes
                       //    the stoned boss.

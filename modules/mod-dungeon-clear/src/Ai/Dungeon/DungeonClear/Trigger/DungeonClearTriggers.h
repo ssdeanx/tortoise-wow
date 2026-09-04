@@ -335,6 +335,17 @@ public:
     bool IsActive() override;
 };
 
+// Follower: the leader has published a gather point (an altar that needs the
+// party inside click range). Outranks follow-tank and hold-at-camp so the
+// follower walks there and stands still instead of drifting back into
+// formation. Combat releases it (the awakened encounter owns the party).
+class DungeonClearGatherAtPointTrigger : public Trigger
+{
+public:
+    DungeonClearGatherAtPointTrigger(PlayerbotAI* botAI) : Trigger(botAI, "dungeon clear gather at point", 1) {}
+    bool IsActive() override;
+};
+
 // Follower-only, COMBAT engine. The combat-side twin of the trigger above: fires
 // while this bot's leader is in a holding pull phase AND this bot is IN combat.
 // A held follower is dragged into combat the moment the tank aggros (group

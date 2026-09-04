@@ -64,6 +64,7 @@ namespace DcKey
     inline constexpr char const* BlockingDoor            = "dungeon clear blocking door";
     inline constexpr char const* EngageTrashTarget       = "dungeon clear engage trash target";
     inline constexpr char const* FollowerState           = "dungeon clear follower state";
+    inline constexpr char const* GatherPoint             = "dungeon clear gather point";
     inline constexpr char const* SwimState               = "dungeon clear swim state";
     inline constexpr char const* LootSkip                = "dungeon clear loot skip";
     inline constexpr char const* LootCampGuid            = "dungeon clear loot camp guid";

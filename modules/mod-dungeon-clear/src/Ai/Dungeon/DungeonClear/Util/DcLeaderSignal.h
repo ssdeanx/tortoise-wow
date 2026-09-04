@@ -7,6 +7,7 @@
 #define _DC_LEADER_SIGNAL_H
 
 #include "Define.h"
+#include "Ai/Dungeon/DungeonClear/Data/DcGatherPoint.h"
 #include "ObjectGuid.h"
 #include "Position.h"
 
@@ -144,6 +145,12 @@ public:
     // Unlike GetLeaderPullInfo (which is true only mid-maneuver, for the passive
     // teardown), this is true throughout pull mode so the party never follows.
     static bool GetLeaderCampHold(Player* bot, Position& campOut, bool& passiveOut);
+
+    // The leader's live gather point (DcGatherPoint.h), for a non-leader
+    // follower on the same map within its reach. False when there is no
+    // leader, `bot` is the leader, the run is off/paused, the point has
+    // expired, or the follower is too far away to be summoned.
+    static bool GetLeaderGatherPoint(Player* bot, DcGatherPoint& out);
 
     // True when `bot` is a non-leader follower whose elected leader tank is in
     // the advanced-pull camp fight RIGHT NOW: pull phase Engage (the pack has
