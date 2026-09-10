@@ -4,15 +4,16 @@
 
 ---
 
-### 📚 Complete 19-Module Reference Library
+## Complete 20-Module Reference Library
 
 | Security & Server | World & Characters | Gameplay & Items | Bots & Modules |
 | :--- | :--- | :--- | :--- |
-| [00. Self & Own Character](./00_self_and_player_commands.md) | [03. Teleports & Movement](./03_teleports_and_movement.md) | [06. Quests & Instances](./06_quests_instances_and_events.md) | [11. Playerbot Suite](./11_playerbot_suite.md) |
+| [00. Self & Own Character](./00_self_and_player_commands.md) | **[03. Teleports & Movement](./03_teleports_and_movement.md)** | [06. Quests & Instances](./06_quests_instances_and_events.md) | [11. Playerbot Suite](./11_playerbot_suite.md) |
 | [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
 | [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
 | [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | [17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md) | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
-| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Manual)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Portals)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| *(Server Scripting)* | *(Engine Core)* | *(Runtime Lua API)* | [19. Eluna Lua Engine](./19_eluna_lua_engine.md) |
 
 ---
 
@@ -23,7 +24,9 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 ### Category A: Raid & Custom Dungeon Fast Group Teleports (Top Priority)
 
 #### 🌋 Macro 1: Group Teleport to Molten Core & Rally
+
 Teleports your character and entire party directly to the Molten Core portal and orders bots to follow:
+
 ```lua
 .tele group molten
 .bot summon *
@@ -31,7 +34,9 @@ Teleports your character and entire party directly to the Molten Core portal and
 ```
 
 #### 🏰 Macro 2: Group Teleport to Scarlet Citadel (Turtle Custom Raid)
+
 Teleports group to the custom 10-man Scarlet Citadel raid entrance:
+
 ```lua
 .tele group ScarletCitadel
 .bot summon *
@@ -39,7 +44,9 @@ Teleports group to the custom 10-man Scarlet Citadel raid entrance:
 ```
 
 #### 🌿 Macro 3: Group Teleport to Crescent Grove (Turtle Custom Dungeon)
+
 Teleports group to the custom level 32–38 Crescent Grove dungeon in Ashenvale:
+
 ```lua
 .tele group crescentgrove
 .bot summon *
@@ -47,7 +54,9 @@ Teleports group to the custom level 32–38 Crescent Grove dungeon in Ashenvale:
 ```
 
 #### ⛏️ Macro 4: Group Teleport to Hateforge Quarry (Turtle Custom Dungeon)
+
 Teleports group to the custom level 50–60 Hateforge Quarry dungeon in Burning Steppes:
+
 ```lua
 .tele group hateforgeinstance
 .bot summon *
@@ -55,7 +64,9 @@ Teleports group to the custom level 50–60 Hateforge Quarry dungeon in Burning 
 ```
 
 #### 💀 Macro 5: Group Teleport to Naxxramas
+
 Teleports group to Naxxramas entrance in Eastern Plaguelands:
+
 ```lua
 .tele group naxxramas
 .bot summon *
@@ -67,27 +78,35 @@ Teleports group to Naxxramas entrance in Eastern Plaguelands:
 ### Category B: Spatial Navigation, Blink & Body Recovery (Middle Priority)
 
 #### ⚡ Macro 6: 20-Yard Forward Blink & 15-Yard Upward Leap
+
 Instantly blinks 20 yards through world geometry in facing direction and lifts 15 yards up:
+
 ```lua
 .go forward 20
 .go up 15
 ```
 
 #### ⚰️ Macro 7: Teleport to Corpse & Instant Revive
+
 Teleports your ghost directly to your dead corpse coordinates and restores 100% health/mana:
+
 ```lua
 .go corpse
 .revive
 ```
 
 #### 🎯 Macro 8: Teleport Directly to Selected Target Unit
+
 Teleports your character directly on top of your selected target player or NPC:
+
 ```lua
 .go target
 ```
 
 #### 🚀 Macro 9: Master Fast Travel Mode (Flight + Speed + Full Maps)
+
 Unlocks all flight paths, uncovers world map fog, enables levitation/flight, and sets 250% run speed:
+
 ```lua
 .taxicheat on
 .explorecheat on
@@ -101,17 +120,21 @@ Unlocks all flight paths, uncovers world map fog, enables levitation/flight, and
 ### Category C: City Teleports & Unstuck (Bottom Section)
 
 #### 🏛️ Macro 10: Teleport to Stormwind City (Alliance Hub)
+
 ```lua
 .tele stormwind
 ```
 
 #### 🐺 Macro 11: Teleport to Orgrimmar (Horde Hub)
+
 ```lua
 .tele orgrimmar
 ```
 
 #### 🆘 Macro 12: Emergency Hearthstone Unstuck
+
 Casts emergency hearthstone homebind return to rescue stuck characters:
+
 ```lua
 .unstuck
 ```
@@ -121,14 +144,16 @@ Casts emergency hearthstone homebind return to rescue stuck characters:
 ## 2. Complete Turtle-WoW Custom Instance Directory
 
 ### Custom Turtle-WoW Dungeons (5-Man)
+
 | Destination Token | Instance Name | Level Range | Map ID | Location |
 | :--- | :--- | :---: | :---: | :--- |
 | `.tele crescentgrove` | Crescent Grove | 32–38 | **805** | Ashenvale Night Elf Barrow Den |
-| `.tele hateforgeinstance`| Hateforge Quarry | 50–60 | **806** | Burning Steppes Dark Iron Quarry |
+| `.tele hateforgeinstance` | Hateforge Quarry | 50–60 | **806** | Burning Steppes Dark Iron Quarry |
 | `.tele gilneascity` | Gilneas City | 42–48 | **807** | Gilnean Gothic Ruins |
 | `.tele alahthalas` | Alah'Thalas | 55–60 | **808** | Quel'Thalas High Elf Arcane Sanctum |
 
 ### Custom Turtle-WoW Raids (10-Man / 20-Man / 40-Man)
+
 | Destination Token | Raid Name | Size | Map ID | Location |
 | :--- | :--- | :---: | :---: | :--- |
 | `.tele ScarletCitadel` | Scarlet Citadel | 10-Man | **811** | Tirisfal Glades Scarlet Bastion |
@@ -143,6 +168,7 @@ Casts emergency hearthstone homebind return to rescue stuck characters:
 Verified against CMaNGOS core command handlers (`src/game/Chat/Chat.cpp`):
 
 ### 🎯 Spatial Movement & Navigation (`.go`)
+
 - `.gps [target]`
   - **Security**: Observer (1)
   - **What it does**: Outputs current Map ID, Area ID, Zone ID, exact 3D X, Y, Z coordinates, and facing orientation angle.
@@ -206,6 +232,7 @@ Verified against CMaNGOS core command handlers (`src/game/Chat/Chat.cpp`):
 ---
 
 ### 🌐 Predefined Named Teleports (`.tele`)
+
 - `.tele <dest_token>`
   - **Security**: Observer (1)
   - **What it does**: Teleports character to named location token stored in `tw_world.game_tele`.
@@ -234,6 +261,7 @@ Verified against CMaNGOS core command handlers (`src/game/Chat/Chat.cpp`):
 ---
 
 ### 👥 Player Summoning & Fast Travel Cheats
+
 - `.appear <player>` / `.goname <player>`
   - **Security**: Observer (1)
   - **What it does**: Teleports you directly to specified player's current coordinates.

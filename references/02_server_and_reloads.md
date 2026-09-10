@@ -1,18 +1,22 @@
 # 02. Server Operations & Reloads
 
+> **Target Core**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + Dynamic Modules  
+> **Source Verification**: `src/game/Chat/Chat.cpp` & `src/modules/Eluna/hooks/PlayerHooks.cpp`  
 > **Quick Navigation**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📖 Project Readme](../README.md) • [🎯 Bot Macro Book (13_bot_whispers_and_macros.md)](./13_bot_whispers_and_macros.md) • [⚔️ Class Strategies (14_bot_strategies_and_tactics.md)](./14_bot_strategies_and_tactics.md) • [🗺️ Teleport Directory (03_teleports_and_movement.md)](./03_teleports_and_movement.md)
 
 ---
 
-### 📚 Complete 19-Module Reference Library
+## Complete 20-Module Reference Library
 
 | Security & Server | World & Characters | Gameplay & Items | Bots & Modules |
 | :--- | :--- | :--- | :--- |
 | [00. Self & Own Character](./00_self_and_player_commands.md) | [03. Teleports & Movement](./03_teleports_and_movement.md) | [06. Quests & Instances](./06_quests_instances_and_events.md) | [11. Playerbot Suite](./11_playerbot_suite.md) |
-| [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
-| [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
-| [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | [17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md) | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
-| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Manual)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | **[02. Server & Reloads](./02_server_and_reloads.md)** |
+| [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
+| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | [17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
+| *(Server Scripting)* | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Portals)* | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
+| *(Engine Core)* | *(Runtime Lua API)* | *(Dungeon AI Solver)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| *(Script Engine)* | *(Hooks & API)* | *(Core Reloads)* | [19. Eluna Lua Engine](./19_eluna_lua_engine.md) |
 
 ---
 
@@ -22,19 +26,23 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 ### Category A: Hotfix Content & Database Reloads (Top Priority)
 
-#### 🔄 Macro 1: Master Hotfix Reload (Items, Spells, Quests, NPCs, Vendors)
-Reloads the primary content database tables live into server memory without restarting the world daemon:
+#### 🔄 Macro 1: Master Hotfix Reload (Items, Spells, Quests, NPCs, Vendors, Lua)
+
+Pulls all live SQL updates and Lua script changes from MariaDB into server memory without restarting `mangosd`:
+
 ```lua
 .reload item_template
+.reload spell_template
 .reload quest_template
 .reload creature_template
-.reload spell_affect
 .reload npc_vendor
-.reload npc_trainer
+.reload eluna
 ```
 
-#### 📦 Macro 2: Dynamic Module & Localization Reload
-Reloads dynamic module strings, translations, and server configurations live:
+#### 📦 Macro 2: Dynamic Module Strings & Config Live Reload
+
+Reloads `mangosd.conf`, `mod_dungeon_clear.conf`, `dc_roster.txt`, and runtime string localization tables:
+
 ```lua
 .reload config
 .reload module_string
@@ -42,46 +50,51 @@ Reloads dynamic module strings, translations, and server configurations live:
 .reload mangos_string
 ```
 
----
+#### 🏰 Macro 3: Turtle Custom Systems Live Reload
 
-### Category B: Loot Tables & World Portals Reload (Middle Priority)
+Reloads custom Turtle-WoW donation shop items, guild/player housing definitions, and dynamic visibility phases:
 
-#### 💰 Macro 3: Loot Tables & Drop Rates Reload
-Reloads creature loot, reference loot, skinning, and fishing drop tables:
 ```lua
-.reload creature_loot_template
-.reload reference_loot_template
-.reload item_loot_template
-.reload skinning_loot_template
-```
-
-#### 🗺️ Macro 4: Teleports & World Portals Reload
-Reloads teleport destination tokens, area triggers, and taverns:
-```lua
-.reload game_tele
-.reload areatrigger_teleport
-.reload areatrigger_tavern
+.reload shop
+.reload housing
+.reload visibilities
+.reload gmlevels
+.reload bgplayers
 ```
 
 ---
 
-### Category C: Server Maintenance, Broadcasts & Lifecycle (Bottom Section)
+### Category B: Server Life-Cycle, Raid Resets & Maintenance (Middle Priority)
 
-#### 📢 Macro 5: Server Maintenance Broadcast & Safe Save
-Sends a realm-wide announcement and flushes all character inventories to the database:
+#### 💾 Macro 4: Emergency Full Server Snapshot (Save All Characters)
+
+Forces an immediate database flush and save transaction for all online players and bot characters:
+
 ```lua
-.broadcast Server maintenance in 15 minutes. Please find a safe resting area.
 .saveall
 ```
 
+#### 🔄 Macro 5: Global Raid Lockout Reset & Corpse Purge
+
+Instantly wipes all raid instance lockout IDs across all maps and sweeps empty corpse records:
+
+```lua
+.server resetallraids
+.server corpses
+```
+
 #### ⏱️ Macro 6: 5-Minute Graceful Restart Countdown
+
 Starts an automated 300-second restart countdown with automatic player notifications:
+
 ```lua
 .server restart 300
 ```
 
 #### 🛑 Macro 7: Cancel Pending Restart / Shutdown
+
 Cancels any active server restart or shutdown countdown immediately:
+
 ```lua
 .server restart cancel
 .server shutdown cancel
@@ -120,9 +133,11 @@ Reload tables directly into server memory from MariaDB without restarting `mango
 ```
 
 ### Core World, Content & Dynamic Module Reloads
+
 | Target | Security | What it Reloads |
 | :--- | :--- | :--- |
-| `.reload config` | Admin (4) | Reloads `mangosd.conf` server configuration file live. |
+| `.reload eluna [mapId]` | Dev (3) | Hot-reloads all Eluna Lua scripts in `./lua_scripts` (or specific map ID). |
+| `.reload config` | Admin (4) | Reloads `mangosd.conf` server configuration file and `dc_roster.txt` live. |
 | `.reload module_string` | Admin (4) | Reloads dynamic module string tables (`tw_world.module_string`). |
 | `.reload module_string_locale` | Admin (4) | Reloads localized module string translations (`tw_world.module_string_locale`). |
 | `.reload item_template` | Admin (4) | Reloads item stats, requirements, and display models. |
@@ -141,6 +156,8 @@ Reload tables directly into server memory from MariaDB without restarting `mango
 | `.reload bgplayers` | Admin (4) | Reloads battleground minimum player thresholds. |
 
 ### Complete Alphabetic Target Directory
+
+- **Lua Engine & Scripting**: `.reload eluna` (global or per-map `.reload eluna <mapId>`)
 - **Turtle Custom Features**: `.reload shop`, `.reload housing`, `.reload visibilities`, `.reload gmlevels`, `.reload gm_ticket_template`, `.reload bgplayers`, `.reload petitions`
 - **Accounts & Bans**: `.reload account_banned`, `.reload ip_banned`
 - **Area Triggers & Graveyards**: `.reload areatrigger_involvedrelation`, `.reload areatrigger_tavern`, `.reload areatrigger_teleport`, `.reload game_graveyard_zone`, `.reload game_weather`, `.reload taxi_path_transitions`, `.reload cinematic_waypoints`
@@ -154,6 +171,4 @@ Reload tables directly into server memory from MariaDB without restarting `mango
 
 ---
 
-<p align="center">
-  [⬅ Prev: 01. Security & Accounts](./01_security_and_account.md) • [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📖 Project Readme](../README.md) • [Next: 03. Teleports & Movement ➡](./03_teleports_and_movement.md)
-</p>
+[⬅ Prev: 01. Security & Accounts](./01_security_and_account.md) • [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📖 Project Readme](../README.md) • [Next: 03. Teleports & Movement ➡](./03_teleports_and_movement.md)

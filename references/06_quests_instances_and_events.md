@@ -4,15 +4,16 @@
 
 ---
 
-### 📚 Complete 19-Module Reference Library
+## Complete 20-Module Reference Library
 
 | Security & Server | World & Characters | Gameplay & Items | Bots & Modules |
 | :--- | :--- | :--- | :--- |
-| [00. Self & Own Character](./00_self_and_player_commands.md) | [03. Teleports & Movement](./03_teleports_and_movement.md) | [06. Quests & Instances](./06_quests_instances_and_events.md) | [11. Playerbot Suite](./11_playerbot_suite.md) |
+| [00. Self & Own Character](./00_self_and_player_commands.md) | [03. Teleports & Movement](./03_teleports_and_movement.md) | **[06. Quests & Instances](./06_quests_instances_and_events.md)** | [11. Playerbot Suite](./11_playerbot_suite.md) |
 | [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
 | [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
 | [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | [17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md) | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
-| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Manual)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Portals)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| *(Server Scripting)* | *(Engine Core)* | *(Runtime Lua API)* | [19. Eluna Lua Engine](./19_eluna_lua_engine.md) |
 
 ---
 
@@ -23,20 +24,26 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 ### Category A: Raid & Instance Lockout Resets (Top Priority)
 
 #### 🔓 Macro 1: Clear All Personal Raid & Dungeon Lockouts
+
 Clears all saved instance locks (Molten Core, BWL, AQ40, Naxxramas, Onyxia, ZG) for your character:
+
 ```lua
 .instance unbind all
 .instance listbinds
 ```
 
 #### 🌍 Macro 2: Server-Wide Raid Lockout Reset
+
 Forces an immediate reset on all active raid locks across all online players and parties:
+
 ```lua
 .server resetallraids
 ```
 
 #### 📜 Macro 3: Instant Quest Auto-Complete & Inspection
+
 Marks all quest objectives complete in character quest log ready for turn-in:
+
 ```lua
 .quest complete 870
 .quest status 870
@@ -47,14 +54,18 @@ Marks all quest objectives complete in character quest log ready for turn-in:
 ### Category B: World Events & Hunter Pets (Middle Priority)
 
 #### 🎪 Macro 4: Force Start World Event (Darkmoon Faire / Holidays)
+
 Activates the specified world event ID and verifies active event status:
+
 ```lua
 .event start 1
 .event list
 ```
 
 #### 🐾 Macro 5: Hunter Pet Max Loyalty & Spells
+
 Sets pet loyalty to Rank 6 (Best Friend) and teaches pet abilities:
+
 ```lua
 .pet loyalty 6
 .pet learnspell 24597
@@ -65,7 +76,9 @@ Sets pet loyalty to Rank 6 (Best Friend) and teaches pet abilities:
 ### Category C: Instance Performance & Diagnostics (Bottom Section)
 
 #### 📊 Macro 6: Instance Memory & Tick Performance Dumps
+
 Outputs live map grid memory allocations and instance performance metrics:
+
 ```lua
 .instance stats
 .instance perfinfos
@@ -78,6 +91,7 @@ Outputs live map grid memory allocations and instance performance metrics:
 Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
 
 ### 📜 Quest Management (`.quest`)
+
 - `.quest add <quest_id>`
   - **Security**: Developer (3)
   - **What it does**: Adds quest directly to target character quest log.
@@ -106,6 +120,7 @@ Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
 ---
 
 ### 🏰 Instance Lockouts & Controls (`.instance`)
+
 - `.instance unbind all`
   - **Security**: Developer (3)
   - **What it does**: Clears all saved dungeon and raid lockout IDs for target character.
@@ -155,6 +170,7 @@ For full documentation and GM test automation, see **[15. Dungeon Clear AI Modul
 ---
 
 ### 🎪 World Events & Pets (`.event` / `.pet`)
+
 - `.event start <event_id>`: Forces world event to activate (Admin 4, e.g. `.event start 1`).
 - `.event stop <event_id>`: Forces world event to terminate (Admin 4, e.g. `.event stop 1`).
 - `.event enable <event_id>` / `.event disable <event_id>`: Enables or disables event schedule (Admin 4).

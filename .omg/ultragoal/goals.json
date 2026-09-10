@@ -1,32 +1,50 @@
 [
   {
     "id": "goal-1",
-    "description": "Stop running server daemons cleanly and stash all local uncommitted working tree modifications",
-    "status": "in-progress",
-    "verification_criteria": "turtle-mangosd and turtle-realmd inactive, git stash created cleanly with clean working tree."
+    "description": "Comprehensive reference audit and extraction of Warrior-specific mechanics, commands, and IDs",
+    "status": "completed",
+    "verification_criteria": "All reference docs (18, 17, 00, 03, 07, 11, 12, 13, 14, 15) audited; Warrior specs, item IDs, bot strategies, and dungeon commands cataloged."
   },
   {
     "id": "goal-2",
-    "description": "Pull and merge latest commits from origin/playerbots-integration-gh and initialize submodules",
-    "status": "todo",
-    "verification_criteria": "Branch successfully updated to match origin/playerbots-integration-gh HEAD, submodules initialized."
+    "description": "Character baseline and skill readiness: Boost, spells, weapon skills, travel unlocks, and utility macros",
+    "status": "completed",
+    "verification_criteria": "Exact GM console commands and macros documented for level 60, all myspells, maxskill, bags, gold, taxicheat, explorecheat."
   },
   {
     "id": "goal-3",
-    "description": "Restore local modifications back to working tree via git stash pop",
-    "status": "todo",
-    "verification_criteria": "git stash pop succeeds with 0 merge conflicts and local files intact."
+    "description": "Warrior DPS mechanics deep dive: DW Fury (17/34/0) & 2H Arms Cleave (31/20/0), Heroic Strike queue miss bug, rotations, stat caps (305 weapon skill, 6% hit cap), and LIP threat dropping",
+    "status": "completed",
+    "verification_criteria": "DW Fury and 2H Arms talent allocations, HS queue bug mechanics, stance dancing for Overpower, Execute phase, and threat safety documented."
   },
   {
     "id": "goal-4",
-    "description": "Audit incoming commit diff and execute new database migrations if present",
-    "status": "todo",
-    "verification_criteria": "Commit diff audited; all new SQL files applied with --force to tw_world/tw_char and tracked in tw_world.migrations."
+    "description": "Master Keyring, Attunements & Doors: UBRS Seal of Ascension, Scholo, Strat, BRD, Dire Maul, Onyxia, and Molten Core",
+    "status": "completed",
+    "verification_criteria": "All dungeon keys (12344, 13704, 12382, 11000, 18249) and raid attunements (16309, 22754) cataloged with 1-click spawning macro."
   },
   {
     "id": "goal-5",
-    "description": "Configure, compile C++ engine in Release mode, restart services, and verify operational logs",
-    "status": "todo",
-    "verification_criteria": "CMake build exits 0, turtle-mangosd and turtle-realmd start cleanly without errors."
+    "description": "Turtle-WoW custom dungeons and raids directory with teleport tokens and level ranges",
+    "status": "completed",
+    "verification_criteria": "Custom dungeons (Hateforge, Alah'Thalas, Gilneas, Crescent Grove) and raids (Scarlet Citadel 10m, Karazhan 10m, Timbermaw 20m, Emerald Sanctum 40m) mapped."
+  },
+  {
+    "id": "goal-6",
+    "description": "Raid coordination & bot commands: 10-man group conversion, /ra vs /p channels, Main Tank designation, and .dc clear AI in raids",
+    "status": "completed",
+    "verification_criteria": "Raid conversion procedures, /ra channel broadcast commands, bot MT threat configuration, and .dc execution verified."
+  },
+  {
+    "id": "goal-7",
+    "description": "Self-enchanting, consumable provisioning, and world buffing procedures",
+    "status": "completed",
+    "verification_criteria": ".bot enchants * mechanism, arcanums (11733, 11734, 20077), consumable item IDs, and .aura world buff scripts documented."
+  },
+  {
+    "id": "goal-8",
+    "description": "Create permanent reference module references/20_warrior_dps_dungeons_and_raids.md and integrate into gm_commands.md sitemap",
+    "status": "completed",
+    "verification_criteria": "New reference file written with zero linter errors; gm_commands.md index updated with Module 20 entry."
   }
 ]

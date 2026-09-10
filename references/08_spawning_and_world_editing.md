@@ -4,15 +4,16 @@
 
 ---
 
-### 📚 Complete 19-Module Reference Library
+## Complete 20-Module Reference Library
 
 | Security & Server | World & Characters | Gameplay & Items | Bots & Modules |
 | :--- | :--- | :--- | :--- |
 | [00. Self & Own Character](./00_self_and_player_commands.md) | [03. Teleports & Movement](./03_teleports_and_movement.md) | [06. Quests & Instances](./06_quests_instances_and_events.md) | [11. Playerbot Suite](./11_playerbot_suite.md) |
 | [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
-| [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
+| [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | **[08. Spawning & Editing](./08_spawning_and_world_editing.md)** | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
 | [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | [17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md) | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
-| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Manual)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Portals)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| *(Server Scripting)* | *(Engine Core)* | *(Runtime Lua API)* | [19. Eluna Lua Engine](./19_eluna_lua_engine.md) |
 
 ---
 
@@ -23,28 +24,36 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 ### Category A: Essential World Spawning & Deletion (Top Priority)
 
 #### 🐉 Macro 1: Spawn Permanent NPC & Inspect Metadata
+
 Spawns an NPC into the database at current coordinates and outputs creature entry, GUID, and faction ID:
+
 ```lua
 .npc add 10182
 .npc info
 ```
 
 #### 📦 Macro 2: Spawn Permanent GameObject & Align
+
 Spawns a static GameObject (chest, portal, chair, forge) into `tw_world.gameobject` and targets it:
+
 ```lua
 .gobject add 179501
 .gobject target
 ```
 
 #### 🗑️ Macro 3: Delete Targeted NPC / GameObject
+
 Permanently deletes selected creature or GameObject from the active map and database:
+
 ```lua
 .npc delete
 .gobject delete
 ```
 
 #### 🔄 Macro 4: Mass World Respawn (NPCs + Chests + Mining Nodes)
+
 Forces an immediate respawn of all dead creatures and harvested resource nodes within active grid:
+
 ```lua
 .respawn
 ```
@@ -54,14 +63,18 @@ Forces an immediate respawn of all dead creatures and harvested resource nodes w
 ### Category B: NPC Positioning, Scale & Vendor Customization (Middle Priority)
 
 #### 📍 Macro 5: Move Selected NPC to Player Coordinates
+
 Moves selected NPC directly to your feet and prints updated position:
+
 ```lua
 .npc move
 .npc info
 ```
 
 #### 🛒 Macro 6: Add Item to NPC Vendor Stock
+
 Adds an item entry directly to selected vendor inventory with infinite restock count:
+
 ```lua
 .npc additem 19019 1 0
 ```
@@ -71,7 +84,9 @@ Adds an item entry directly to selected vendor inventory with infinite restock c
 ### Category C: NPC Dialogue & Emotes (Bottom Section)
 
 #### 🗣️ Macro 7: Force Selected NPC Dialogue & Emotes
+
 Forces selected NPC to speak in `/say` and perform an animation emote:
+
 ```lua
 .npc say Welcome to Tortoise-WoW, traveler!
 .npc playemote 65
@@ -84,6 +99,7 @@ Forces selected NPC to speak in `/say` and perform an animation emote:
 Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
 
 ### 🧙 Creature Spawning & Editing (`.npc`)
+
 - `.npc add <entry_id>`
   - **Security**: Developer (3)
   - **What it does**: Permanently spawns NPC into `tw_world.creature` at current player coordinates.
@@ -157,6 +173,7 @@ Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
 ---
 
 ### 📦 GameObject Manipulation (`.gobject` / `.wp` / `.path`)
+
 - `.gobject add <entry_id>`
   - **Security**: Developer (3)
   - **What it does**: Spawns permanent GameObject (chest, door, portal, chair) into `tw_world.gameobject`.
