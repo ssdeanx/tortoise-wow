@@ -60,6 +60,15 @@ struct DcPullContext
                                                  // (0,0,0) = unset
     std::vector<Position> breadcrumbs;           // recently-walked trail used to
                                                  // place the camp behind the tank
+    // The tank's last sanctioned GEOMETRY snap (far-from-poly recovery): where
+    // it stood and where the snap put it. A follower that cannot reach any
+    // crumb walks to `geometrySnapFrom` and, standing on it, takes the same
+    // snap - the trail is wiped by the relocation, so this is the only thing
+    // that lets it cross the gap the tank crossed (Zul'Farrak pyramid deck,
+    // 2026-09-05). (0,0,0) / 0 = none.
+    Position    geometrySnapFrom;
+    Position    geometrySnapTo;
+    uint32      geometrySnapMs = 0;
     float       returnLegStartDist = 0.0f;       // bot->camp distance stamped when
                                                  // the drag-back (Returning) begins;
                                                  // the turn-and-plant gate requires

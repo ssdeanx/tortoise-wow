@@ -237,5 +237,154 @@ order 209 7271 3      # Witch Doctor Zum'rah
 order 209 7267 5      # Chief Ukorz Sandscalp     (4 = Temple Summit objective)
 order 209 7795 6      # Hydromancer Velratha      (7 = Sacred Pool objective)
 order 209 62495 10    # Zel'jeb the Ancient       (owner: 8th)
-order 209 62498 11    # Champion Razjal the Quick (owner: Farraki Arena last)
+order 209 62498 13    # Champion Razjal the Quick (owner: Farraki Arena last)
+# Razjal AFTER the Farraki Arena objective (orderOverride 11 in ZulFarrakEvents.cpp;
+# a boss with order N takes key N-1, an objective with override N takes key N, so 13 -> key 12):
+# as boss 10 the party pulled him before the challenge, he is invulnerable until
+# his gossip starts it, and runs died at 8/10 (arch24, 2026-09-05). The arena
+# event kills him as its last step; his bit flips there.
 drop 7604             # Sergeant Bly - dies inside the temple event, not an anchor
+
+# --- Maraudon (map 349) -------------------------------------------------------
+# Auto-derived roster had six anchors with Princess Theradras (the end boss)
+# at position 4 and no Celebras the Cursed / Rotgrip at all. Full clear order,
+# orange wing first, then across Poison Falls to the purple wing, then the
+# inner caverns; Theradras last. Meshlok stays dropped (30 % rare).
+# Order confirmed by the owner 2026-09-05: Rotgrip last, after Theradras.
+order 349 13282 1     # Noxxion (Foulspore Cavern, orange)
+order 349 12258 2     # Razorlash (Poison Falls)
+order 349 12236 3     # Lord Vyletongue (Wicked Grotto, purple)
+order 349 12225 4     # Celebras the Cursed (Earth Song Falls)
+order 349 12203 5     # Landslide
+order 349 13601 6     # Tinkerer Gizlock
+order 349 12201 7     # Princess Theradras
+order 349 13596 8     # Rotgrip (open water; owner: last, after Theradras)
+keep  13596           # the module removes Rotgrip (open water); owner wants him in, last
+
+# --- Sunken Temple (map 109) -------------------------------------------------
+# The compiled rows put Hazzas at key 2, Shade of Eranikus at key 3 and the
+# Weaver & Dreamscythe objective (key 5) BEFORE Jammal'an (key 6). The two
+# dragons phase in only after Jammal'an dies (owner 2026-09-05: "die kommen
+# erst nach Jammal"), so a group would stand at an invisible objective. This
+# restores the order the events file intended: forcefield defenders (0),
+# central-circle pre-clear (1), Jammal'an (2), Weaver & Dreamscythe (5),
+# Morphaz (6), Hazzas (7), Shade of Eranikus (8), then the optional pit wing
+# (statues 10-15, Atal'alarion 16, Egg 17, Avatar 18) as the compiled tail.
+# Zolo, Gasher and Hukku are credited bosses AND forcefield objectives; at
+# key 0 they are dead before the picker reaches them and get skipped.
+order 109 5712 1     # Zolo (key 0, dies as a forcefield defender)
+order 109 5713 1     # Gasher (key 0, dies as a forcefield defender)
+order 109 5715 1     # Hukku (key 0, dies as a forcefield defender; 5715, not 5713)
+order 109 5710 3     # Jammal'an the Prophet (key 2)
+order 109 5719 7     # Morphaz (key 6)
+order 109 5722 8     # Hazzas (key 7)
+order 109 5709 9     # Shade of Eranikus (key 8)
+
+# =============================================================================
+# Turtle WoW custom dungeons. None of these is in the compiled credit list, so
+# the order lines below ARE the roster (an order line credits its entry).
+# Bosses and coordinates from turtle_world 2026-09-05 (creature_template rank 1
+# with 10k+ health, one spawn each); the sequence follows the walk from the
+# entrance. Provisional until the owner confirms. Rares are left out.
+# =============================================================================
+
+# --- The Crescent Grove (map 802), entrance 579,91,276 -----------------------
+# Inuvias Brightlance (92133, lvl 40 in a 32-38 dungeon) looks like a rare and
+# is not ordered; Wardens Liferoot/Treeshade and the Elders are trash-sized.
+order 802 92107 1     # Grovetender Engryss        lvl 34   261,-148
+order 802 92109 2     # Keeper Ranathos            lvl 35   122,68
+order 802 92108 3     # High Priestess A'lathea    lvl 36  -309,-308
+order 802 92111 4     # Fenektis the Deceiver      lvl 37  -510,62
+order 802 92110 5     # Master Raxxieth            lvl 38  -659,-391 (end boss)
+
+# --- Stormwrought Ruins (map 818), front entrance -5633,-4393,250 -------------
+order 818 62547 1     # Dagar the Glutton          lvl 34  -5792,-4366
+order 818 62548 2     # Oronok Torn-Heart          lvl 34  -5787,-4260
+order 818 62552 3     # Librarian Theodorus        lvl 35  -5910,-4304
+order 818 62549 4     # Duke Balor the IV          lvl 36  -5993,-4363
+order 818 62551 5     # Chieftain Stormsong        lvl 36  -6068,-4153
+order 818 62550 6     # Deathlord Tidebane         lvl 38  -6324,-4007 (end boss)
+
+# --- Gilneas City (map 815), entrance -1100,2238,183 --------------------------
+# Regent-Lord Mortimer and Regent-Lady Celia Harlow stand together (a pair).
+# Horsemaster Levvin (61605, 10k hp) is not ordered.
+order 815 61419 1     # Matthias Holtz             lvl 44  -1100,2333
+order 815 61420 2     # Packmaster Ragetooth       lvl 44  -1288,2222
+order 815 61421 3     # Judge Sutherland           lvl 46  -1475,2322
+order 815 61422 4     # Dustivan Blackcowl         lvl 46  -1451,2567
+order 815 61423 5     # Marshal Magnus Greystone   lvl 47  -1062,2805
+order 815 61264 6     # Regent-Lord Mortimer Harlow lvl 47  -956,2957
+order 815 61263 7     # Regent-Lady Celia Harlow   lvl 47  -962,2949
+order 815 61418 8     # Genn Greymane              lvl 49  -943,2969 (end boss)
+
+# --- Hateforge Quarry (map 808), entrance -8174,-3121,200 ---------------------
+# 'Broody' (60715) is Figgles' companion, not ordered.
+order 808 60736 1     # Engineer Figgles           lvl 54  -8120,-3463
+order 808 60735 2     # High Foreman Bargul Blackhammer lvl 54 -8305,-3442
+order 808 60829 3     # Corrosis                   lvl 52  -8249,-3572
+order 808 60734 4     # Hatereaver Annihilator     lvl 55  -7991,-3582
+order 808 60737 5     # Har'gesh Doomcaller        lvl 57  -8307,-3742 (end boss)
+
+# --- Karazhan Crypt (map 800), entrance -11068,-1806,53 -----------------------
+# Alarus (the end boss) is summoned by the Crypt Watcher trigger
+# (trigger_summon_alarus) and has no spawn row; needs an event before it can
+# be an objective. Bosses are level 61-62 - the party is capped at 60.
+order 800 91919 1     # Commander Andreon          lvl 61  -11064,-1542
+order 800 91917 2     # Corpsemuncher              lvl 62  -11224,-1407
+order 800 92935 3     # Guard Captain Gort         lvl 62  -11217,-1697
+order 800 91929 4     # Hivaxxis                   lvl 62  -11255,-1745
+order 800 91916 5     # Archlich Enkhraz           lvl 62  -11188,-1792
+order 800 91920 6     # Marrowspike                lvl 62  -11215,-1800
+
+# --- Stormwind Vault (map 35), entrance -1,41,-24 -----------------------------
+order 35 80851 1      # Volkan Cruelblade          lvl 62  -13,52
+order 35 80852 2      # Tham'Grarr                 lvl 62  -131,71
+order 35 80850 3      # Black Bride                lvl 62  73,116
+order 35 80854 4      # Damian                     lvl 62  -13,150
+order 35 80853 5      # Aszosh Grimflame           lvl 62  -1,191
+order 35 93107 6      # Arc'tiras                  lvl 62  -100,151 (end boss)
+
+# --- Windhorn Canyon (map 820), entrance -8026,-3510,158 ----------------------
+# On the ladder since the start, 9 starts and never a clear; the auto roster
+# had nothing to go on. Full boss set, walk from the entrance.
+order 820 62778 1     # Ahgk'tos the Pure          lvl 24  -7232,-3503
+order 820 62779 2     # Pathun Duskhide            lvl 25  -7529,-3583
+order 820 62783 3     # Ambassador Vortalus        lvl 26  -7669,-3641
+order 820 62780 4     # Bonespeaker Narlgom        lvl 27  -7643,-3646
+order 820 62785 5     # Champion Rotag             lvl 27  -7640,-3636
+order 820 62784 6     # Walgan Bloodcaller         lvl 27  -7743,-3397
+order 820 62781 7     # Prophet Stormhoof          lvl 28  -7626,-3681
+order 820 62782 8     # Chieftain Shalk Blackwind  lvl 29  -7511,-3798 (end boss)
+
+# --- Blackrock Depths (map 230) ----------------------------------------------
+# The compiled rows gave nine anchors in bit order: Lord Incendius first (deep
+# inside Shadowforge City), no Gerstahn, no Grebmar, no Emperor. Full clear in
+# walking order (turtle_world positions 2026-09-06), provisional until the
+# owner confirms. Objectives keep their compiled keys: Ring of Law 3 (after
+# Grebmar), Shadowforge Lock 9 (the Giant Door lever at 614,-47, before the
+# doors at 723,-106 into Shadowforge City).
+# Rares (rank 2) are NOT objectives: Pyromancer Loregrain, Lord Roccor, Warder
+# Stilgiss/Verek, Panzor. The Seven (Doom'rel gossip) and the Lyceum braziers
+# are module events (Tomb of the Seven at key 16, the two braziers at key 17,
+# BlackrockDepthsEvents.cpp); Magmus/Moira/Emperor follow at keys 17-19.
+order 230 9018 1      # High Interrogator Gerstahn   lvl 52   311,-146,-70  (Detention Block)
+order 230 9319 2      # Houndmaster Grebmar          lvl 52   608,-175,-84  (kennels under the arena)
+#                     3 = Ring of Law (compiled objective, arena centre)
+order 230 9033 5      # General Angerforge           lvl 57   652,21,-60    (East Garrison)
+order 230 9016 6      # Bael'Gar                     lvl 54   702,184,-72   (north, Molten Core side)
+#                     9 = Shadowforge Lock (compiled objective, lever 614,-47)
+order 230 8983 10     # Golem Lord Argelmach         lvl 57   847,16,-54    (Manufactory)
+# Grim Guzzler: NOT ordered. On this realm Ribbly Screwspigot (9543) is faction
+# 35 with vendor/gossip flags, Plugger (9499) faction 674 (bartender), Phalanx
+# (9502) faction 35 until the Plugger brawl - all friendly, and a boss anchor
+# on a friendly NPC parks the tank in front of it until the run dies
+# (2026-09-06: 13,728 first-contact lines on Ribbly, 3 runs no_progress 7/19).
+order 230 9056 14     # Fineous Darkvire             lvl 54   963,-344,-72
+order 230 9017 15     # Lord Incendius               lvl 55   894,-267,-72  (Black Anvil)
+order 230 9156 16     # Ambassador Flamelash         lvl 57   1010,-239,-61
+order 230 9938 18     # Magmus                       lvl 57   1381,-659,-92 (key 17, after the two brazier objectives)
+order 230 8929 19     # Princess Moira Bronzebeard   lvl 58   1385,-831,-88 (Imperial Seat)
+order 230 9019 20     # Emperor Dagran Thaurissan    lvl 59   1380,-832,-88 (end boss)
+# BRD rares (rank 2) are credited in the compiled list and would otherwise be
+# numbered past the authored block (Loregrain showed up at key 19): drop them.
+drop 9024 9025 9041 10264 8923   # Pyromancer Loregrain, Lord Roccor, Warder Stilgiss, Verek, Panzor

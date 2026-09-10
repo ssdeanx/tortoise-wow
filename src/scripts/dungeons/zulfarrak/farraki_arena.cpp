@@ -646,6 +646,19 @@ CreatureAI* GetAI_npc_champion_razjal_the_quick(Creature* creature)
     return new npc_champion_razjal_the_quickAI(creature);
 }
 
+// The world DB may carry no gossip_menu / gossip_menu_option rows for Razjal
+// (gossip_menu_id 0 in the base template; the 1.18 update only touches an
+// option row that never existed there). Offer the challenge from the script,
+// so the menu works with or without those rows (2026-09-05).
+bool OnGossipHello_npc_champion_razjal_the_quick(Player* player, Creature* creature)
+{
+    if (npc_champion_razjal_the_quickAI* ai = dynamic_cast<npc_champion_razjal_the_quickAI*>(creature->AI()))
+        if (ai->CanStartEvent())
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "I accept your challenge, Champion.", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+    player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetObjectGuid());
+    return true;
+}
+
 bool OnGossipSelect_npc_champion_razjal_the_quick(Player* player, Creature* creature, uint32 /*sender*/, uint32 /*action*/)
 {
     player->CLOSE_GOSSIP_MENU();
@@ -680,5 +693,6 @@ void AddSC_farraki_arena()
     newscript->Name = "npc_champion_razjal_the_quick";
     newscript->GetAI = &GetAI_npc_champion_razjal_the_quick;
     newscript->pGossipSelect = &OnGossipSelect_npc_champion_razjal_the_quick;
+    newscript->pGossipHello = &OnGossipHello_npc_champion_razjal_the_quick;
     newscript->RegisterSelf();
 }

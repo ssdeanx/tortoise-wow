@@ -1192,6 +1192,86 @@ bool DcLeaderSignal::GetLeaderScoutTrailPoint(Player* bot, float lag, Position& 
     if (found)
         return true;
 
+    // Far-behind follower. The walk above starts at the TANK and probes crumbs
+    // the follower may not be able to reach at all before it ever looks near
+    // the follower - measured Maraudon 2026-09-05: 237 "trail join failed" in
+    // 90 min, 106 of them with a crumb inside 25yd of the bot. So when the
+    // follower is well behind, look for the crumb nearest to IT; if that is
+    // walkable, join the trail there (aiming a few crumbs toward the tank so
+    // the join is progress) and let the glide take over from that point.
+    if (bot->GetExactDist(leader) > 60.0f)
+    {
+        // Same floor first: Sunken Temple 2026-09-05 had stragglers 30-47 yd
+        // ABOVE the tank on the upper ring; the 3D-nearest crumb was the one
+        // right below them on the lower level (unreachable), while the trail
+        // also crossed their own floor a little farther away. A crumb within
+        // kSameFloorDz of the bot's own height wins inside a wider 2D radius;
+        // only when there is none does the plain 3D-nearest crumb get its turn.
+        constexpr float kSameFloorDz = 8.0f;
+        constexpr float kSameFloorRadius2d = 60.0f;
+        std::size_t nearestIdx = crumbs.size();
+        float nearest = kSameFloorRadius2d;
+        for (std::size_t i = 0; i < crumbs.size(); ++i)
+        {
+            if (std::fabs(crumbs[i].GetPositionZ() - bot->GetPositionZ()) > kSameFloorDz)
+                continue;
+            float const d = bot->GetExactDist2d(&crumbs[i]);
+            if (d < nearest)
+            {
+                nearest = d;
+                nearestIdx = i;
+            }
+        }
+        if (nearestIdx == crumbs.size())
+        {
+            nearest = 40.0f;   // join radius, 3D
+            for (std::size_t i = 0; i < crumbs.size(); ++i)
+            {
+                float const d = bot->GetExactDist(&crumbs[i]);
+                if (d < nearest)
+                {
+                    nearest = d;
+                    nearestIdx = i;
+                }
+            }
+        }
+        if (nearestIdx < crumbs.size())
+        {
+            std::size_t const ahead = std::min(nearestIdx + 4, crumbs.size() - 1);
+            std::size_t const candidates[2] = { ahead, nearestIdx };
+            for (std::size_t idx : candidates)
+            {
+                Position const& c = crumbs[idx];
+                if (bot->GetExactDist(&c) < 3.0f)
+                    continue;   // already standing on it
+                if (IsNavReachable(bot, c) && !TrailOverZoneLine(bot, c))
+                {
+                    static std::mutex s_joinLogLock;
+                    static std::unordered_map<ObjectGuid, uint32> s_joinLogAt;
+                    uint32 const now = getMSTime();
+                    bool speak = false;
+                    {
+                        std::lock_guard<std::mutex> lock(s_joinLogLock);
+                        uint32& last = s_joinLogAt[bot->GetObjectGuid()];
+                        if (!last || getMSTimeDiff(last, now) > 10000)
+                        {
+                            last = now;
+                            speak = true;
+                        }
+                    }
+                    if (speak)
+                        LOG_INFO("playerbots.dungeonclear",
+                                 "[DC:{}] trail join via nearest crumb #{} of {} ({}yd away, "
+                                 "{}yd behind the tank)",
+                                 bot->GetName(), int(idx), int(crumbs.size()),
+                                 int(bot->GetExactDist(&c)), int(bot->GetExactDist(leader)));
+                    out = c;
+                    return true;
+                }
+            }
+        }
+    }
+
     // Trail shorter than the full lag (or nothing reachable past it): trail the
     // farthest reachable pre-lag crumb (the follower simply stacks a little
     // closer until more trail accrues).
@@ -1243,9 +1323,14 @@ bool DcLeaderSignal::GetLeaderScoutTrailPoint(Player* bot, float lag, Position& 
             }
             LOG_INFO("playerbots.dungeonclear",
                      "[DC:{}] trail join failed: {}yd behind the tank, nearest crumb "
-                     "{}yd away (#{} of {})",
+                     "{}yd away (#{} of {}, {}yd {} the bot) at {:.0f},{:.0f},{:.0f}",
                      bot->GetName(), int(bot->GetExactDist(leader)), int(nearest),
-                     int(nearestIdx), int(crumbs.size()));
+                     int(nearestIdx), int(crumbs.size()),
+                     nearestIdx < crumbs.size()
+                         ? int(std::fabs(crumbs[nearestIdx].GetPositionZ() - bot->GetPositionZ())) : 0,
+                     nearestIdx < crumbs.size() &&
+                             crumbs[nearestIdx].GetPositionZ() < bot->GetPositionZ() ? "below" : "above",
+                     bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ());
         }
     }
     return false;
@@ -1488,13 +1573,13 @@ bool DcLeaderSignal::GetLeaderGatherPoint(Player* bot, DcGatherPoint& out)
     if (!bot)
         return false;
     Player* leader = FindLeaderTank(bot);
-    if (!leader || leader == bot)
+    if (!leader || leader == bot || !leader->IsInWorld() || leader->FindMap() != bot->FindMap())
         return false;
     PlayerbotAI* leaderAI = GET_PLAYERBOT_AI(leader);
     if (!leaderAI)
         return false;
     AiObjectContext* ctx = leaderAI->GetAiObjectContext();
-    if (!DcRun::Of(ctx).enabled || DcRun::Of(ctx).paused)
+    if (!ctx || !DcRun::Of(ctx).enabled || DcRun::Of(ctx).paused)
         return false;
     DcGatherPoint const& gp = ctx->GetValue<DcGatherPoint&>(DcKey::GatherPoint)->Get();
     if (!gp.Live(getMSTime()) || gp.mapId != bot->GetMapId())

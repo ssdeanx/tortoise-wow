@@ -4,6 +4,7 @@
  */
 
 #include "DungeonClearActions.h"
+#include "Ai/Dungeon/DungeonClear/DcPullContext.h"
 #include "Ai/Dungeon/DungeonClear/Util/NavmeshSnap.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcRun.h"
 
@@ -232,6 +233,20 @@ namespace
     //
     // Returns true if a recovery move was issued. False means none of
     // the offsets looked recoverable; caller stalls normally.
+    // Remember a geometry snap on the bot's pull context so followers can
+    // replay it (see DcPullContext::geometrySnapFrom).
+    void RecordGeometrySnap(Player* bot, float fx, float fy, float fz, float tx, float ty, float tz)
+    {
+        PlayerbotAI* const ai = GET_PLAYERBOT_AI(bot);
+        AiObjectContext* const ctx = ai ? ai->GetAiObjectContext() : nullptr;
+        if (!ctx)
+            return;
+        DcPullContext& pc = ctx->GetValue<DcPullContext&>(DcKey::PullContext)->Get();
+        pc.geometrySnapFrom = Position(fx, fy, fz, 0.0f);
+        pc.geometrySnapTo = Position(tx, ty, tz, 0.0f);
+        pc.geometrySnapMs = getMSTime();
+    }
+
     bool TryFarFromPolyRecovery(Player* bot)
     {
         if (!bot)
@@ -265,6 +280,7 @@ namespace
                     bot->GetMap(), x, y, nb->z, /*halfHeight*/ 40.0f, /*radius*/ 8.0f);
                 if (floorHit.ok && z - floorHit.z > 25.0f)
                 {
+                    RecordGeometrySnap(bot, x, y, z, floorHit.x, floorHit.y, floorHit.z);
                     bot->GetMotionMaster()->Clear();
                     bot->NearTeleportTo(floorHit.x, floorHit.y, floorHit.z,
                                         bot->GetOrientation(),
@@ -288,6 +304,7 @@ namespace
             NavmeshSnap::Result const column = NavmeshSnap::SnapColumn(bot->GetMap(), x, y, z);
             if (column.ok && std::fabs(column.z - z) > 8.0f)
             {
+                RecordGeometrySnap(bot, x, y, z, column.x, column.y, column.z);
                 bot->GetMotionMaster()->Clear();
                 bot->NearTeleportTo(column.x, column.y, column.z, bot->GetOrientation(),
                                     /*casting*/ false, /*vehicle*/ false, /*withPet*/ true);
@@ -1124,7 +1141,7 @@ DungeonClearAdvanceAction::Step DungeonClearAdvanceAction::DoStuckRecover(Advanc
         if (Map* stuckMap = bot->FindMap())
         {
             if (DungeonClearRouteRegistry::Forget(next->mapId, stuckMap->GetDifficulty(),
-                                                  next->entry))
+                                                  next->entry, stuckMap->GetInstanceId()))
             {
                 DcRouteRecorder::DiscardRoute(next->mapId, next->entry);
                 LOG_INFO("playerbots.dungeonclear",

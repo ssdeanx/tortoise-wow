@@ -215,6 +215,14 @@ if(TORTOISE_MODULE_CMAKE_PHASE STREQUAL "POST_TARGETS")
   # wrong is silent - MSVC does not know `-include`, drops it with at most a
   # D9002, and every one of those 47 files then fails on undefined macros.
   # Reported from a Windows build on 2026-09-02 with both modules static.
+  #
+  # NOTE: this used to collide with mod-playerbots.cmake's own "/FI<botpch.h>"
+  # on this same `modules` target - MSVC's project generator only keeps the
+  # LAST /FI set via target_compile_options on a given target (confirmed via
+  # the generated modules.vcxproj), so whichever of the two ran last silently
+  # dropped the other module's prelude. Fixed properly upstream by giving
+  # mod-playerbots its own `modules_playerbots` static library (see
+  # modules/CMakeLists.txt), so there is only one /FI claim on `modules` again.
   if(MSVC)
     target_compile_options(modules PRIVATE
       "/FI${CMAKE_CURRENT_LIST_DIR}/src/AcCompat.h")

@@ -223,7 +223,21 @@ void DungeonClearRouteRegistry::Register(uint32 mapId, Difficulty difficulty, ui
     Store()[key] = std::move(hints);
 }
 
+std::unordered_map<DungeonClearRouteRegistry::Key, std::unordered_set<uint32>,
+                   DungeonClearRouteRegistry::KeyHash>&
+DungeonClearRouteRegistry::StrikeSet()
+{
+    static std::unordered_map<Key, std::unordered_set<uint32>, KeyHash> instance;
+    return instance;
+}
+
 bool DungeonClearRouteRegistry::Forget(uint32 mapId, Difficulty difficulty, uint32 bossEntry)
+{
+    return Forget(mapId, difficulty, bossEntry, /*instanceId*/ 0);
+}
+
+bool DungeonClearRouteRegistry::Forget(uint32 mapId, Difficulty difficulty, uint32 bossEntry,
+                                       uint32 instanceId)
 {
     SeedAuthoredRoutes();
     std::lock_guard<std::mutex> lock(RegistryLock());
@@ -238,6 +252,28 @@ bool DungeonClearRouteRegistry::Forget(uint32 mapId, Difficulty difficulty, uint
                  "[DC-ROUTE] keeping PINNED route for map {} boss {} despite a stuck ladder",
                  mapId, bossEntry);
         return false;
+    }
+    // Two strikes from DIFFERENT instances before a learned route is dropped.
+    // Uldaman's Altar of the Keepers route was walked to completion 47 times
+    // between two drops, and both drops came from one wedged leader each -
+    // the second while its bot stood off the navmesh ("no start poly"). A
+    // single group's geometry wedge threw the shared route away for all ten
+    // groups, and the three runs that then built a raw navmesh path from the
+    // Obsidian Sentinel walked into a pocket 270yd from the altar with no way
+    // out (2026-09-04/05).
+    if (Store().count(key))
+    {
+        auto& strikes = StrikeSet()[key];
+        strikes.insert(instanceId);
+        if (strikes.size() < 2)
+        {
+            LOG_INFO("playerbots.dungeonclear",
+                     "[DC-ROUTE] map {} boss {}: stuck-ladder strike from instance {} - "
+                     "keeping the learned route until a second instance wedges on it",
+                     mapId, bossEntry, instanceId);
+            return false;
+        }
+        StrikeSet().erase(key);
     }
     if (Store().erase(key) > 0)
     {

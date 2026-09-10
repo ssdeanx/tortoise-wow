@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "Ai/Dungeon/DungeonClear/Data/Events/DungeonEventTables.h"
+#include "Ai/Dungeon/DungeonClear/Data/DcRosterFile.h"
 
 static_assert(BossRosterRegistry::ObjectiveEntry(0) == 0x4F000000u,
               "objective entry base must stay in the synthetic range");
@@ -55,7 +56,10 @@ namespace
             RegisterSteamvaultRoster(t);
             RegisterArcatrazRoster(t);
             RegisterSethekkHallsRoster(t);
+#ifndef MANGOSBOT_ZERO   // TBC Black Morass (map 269); Turtle WoW has its own
+                         // level-60 dungeon on that map id (token black-morass-tw)
             RegisterBlackMorassRoster(t);
+#endif
             RegisterMaraudonRoster(t);
             RegisterBlackfathomDeepsRoster(t);
             RegisterUtgardeKeepRoster(t);
@@ -101,9 +105,14 @@ namespace
         std::unordered_set<uint32> const remove(patch.remove.begin(), patch.remove.end());
         std::vector<DungeonBossInfo> result;
         result.reserve(base.size() + adds.size());
+        // A `keep` line in the roster file overrides a compiled removal: the
+        // owner decides what is an objective (Maraudon's Rotgrip, 2026-09-05).
         for (DungeonBossInfo const& b : base)
-            if (!remove.count(b.entry))
-                result.push_back(b);
+        {
+            if (remove.count(b.entry) && !DcRosterFile::IsKept(b.entry))
+                continue;
+            result.push_back(b);
+        }
 
         // 1b. Reorder auto-derived bosses in place: stamp the requested
         //     orderOverride onto each kept entry so it sorts by its clear-path

@@ -51,10 +51,12 @@ namespace
     {
         botAI->TellError(why);
 
-        Player* master = botAI->GetMaster();
-        if (!master || GET_PLAYERBOT_AI(master))
-            LOG_WARN("playerbots.dungeonclear", "DC command refused for {}: {}",
-                     bot ? bot->GetName() : "<unknown>", why);
+        // Always in the journal, whoever the master is. With a human GM as
+        // master the refusal used to go only to that GM's chat, and the
+        // harness could report "dc on did not take (look for 'DC command
+        // refused')" three times a night with nothing to look at (2026-09-05).
+        LOG_INFO("playerbots.dungeonclear", "DC command refused for {}: {}",
+                 bot ? bot->GetName() : "<unknown>", why);
     }
 
     bool IsAuthorized(Player* bot, Event const& event)
@@ -238,6 +240,26 @@ bool DcOnAction::Execute(Event& event)
     // so exactly one bot takes the path below even with several tanks present.
     if (!DcLeaderSignal::IsDungeonClearLeader(bot))
     {
+        // Silent by design for followers; but when the TANK lands here the run
+        // never starts and nothing says why ("dc on did not take", 2-4 times a
+        // night with no refusal logged - 2026-09-05). Name it, throttled.
+        {
+            static std::unordered_map<uint64, uint32> s_notLeaderSaidAt;
+            uint32 const nowN = getMSTime();
+            uint32& atN = s_notLeaderSaidAt[bot->GetObjectGuid().GetRawValue()];
+            if (!atN || getMSTimeDiff(atN, nowN) > 10000)
+            {
+                atN = nowN;
+                Player* const leader = DcLeaderSignal::FindLeaderTank(bot);
+                Group* const grp = bot->GetGroup();
+                LOG_INFO("playerbots.dungeonclear",
+                         "[DC:{}] dc on: not the dungeon-clear leader (leader tank {}, group leader {}, members {}) "
+                         "-> strategies only",
+                         bot->GetName(), leader ? leader->GetName() : "none",
+                         grp ? grp->GetLeaderGuid().GetCounter() : 0u,
+                         grp ? grp->GetMembersCount() : 0u);
+            }
+        }
         if (!botAI->HasStrategy("dungeon clear", BOT_STATE_NON_COMBAT))
             botAI->ChangeStrategy("+dungeon clear", BOT_STATE_NON_COMBAT);
         if (!botAI->HasStrategy("dungeon clear combat", BOT_STATE_COMBAT))

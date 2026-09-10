@@ -1,0 +1,312 @@
+[
+  {
+    "kind": "event",
+    "entry": 8420,
+    "script": "event_dreadsteed_ritual_start"
+  },
+  {
+    "kind": "event",
+    "entry": 8428,
+    "script": "event_dreadsteed_ritual_second_part"
+  },
+  {
+    "kind": "event",
+    "entry": 6721,
+    "script": "event_king_of_the_foulweald"
+  },
+  {
+    "kind": "event",
+    "entry": 4777,
+    "script": "event_banner_destroyed"
+  },
+  {
+    "kind": "event",
+    "entry": 9104,
+    "script": "event_summon_gahzranka"
+  },
+  {
+    "kind": "event",
+    "entry": 747,
+    "script": "event_test_of_endurance"
+  },
+  {
+    "kind": "event",
+    "entry": 5246,
+    "script": "event_the_principle_source"
+  },
+  {
+    "kind": "event",
+    "entry": 2228,
+    "script": "event_awaken_stone_keeper"
+  },
+  {
+    "kind": "event",
+    "entry": 2268,
+    "script": "event_awaken_archaedas"
+  },
+  {
+    "kind": "event",
+    "entry": 4884,
+    "script": "event_free_pyroguard_emberseer"
+  },
+  {
+    "kind": "event",
+    "entry": 7216,
+    "script": "event_rysons_beacon_alliance"
+  },
+  {
+    "kind": "event",
+    "entry": 7219,
+    "script": "event_rysons_beacon_horde"
+  },
+  {
+    "kind": "event",
+    "entry": 7218,
+    "script": "event_rysons_beacon_destroyed"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 522,
+    "script": "at_twiggy_flathead"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1526,
+    "script": "at_ring_of_law"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3066,
+    "script": "at_ravenholdt"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4112,
+    "script": "at_naxxramas"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 2026,
+    "script": "at_blackrock_spire"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 2046,
+    "script": "at_blackrock_spire"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3552,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3550,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3549,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3548,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3547,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3546,
+    "script": "at_childrens_week_spot"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 962,
+    "script": "at_zumrah"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3847,
+    "script": "at_orb_of_command"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4016,
+    "script": "at_shade_of_eranikus"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4017,
+    "script": "at_twilight_grove"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1726,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3626,
+    "script": "at_enter_vael_room"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1966,
+    "script": "at_murloc_camp"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 3587,
+    "script": "at_irontree_wood"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4047,
+    "script": "at_temple_ahnqiraj"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4052,
+    "script": "at_temple_ahnqiraj"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1786,
+    "script": "at_shadowforge_bridge"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4033,
+    "script": "at_temple_ahnqiraj"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4034,
+    "script": "at_temple_ahnqiraj"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4036,
+    "script": "at_temple_ahnqiraj"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 171,
+    "script": "at_huldar_miran"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1667,
+    "script": "at_sentry_point"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4115,
+    "script": "at_naxxramas"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4156,
+    "script": "at_naxxramas"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4113,
+    "script": "at_naxxramas"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 4117,
+    "script": "at_naxxramas"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 2066,
+    "script": "at_ubrs_the_beast"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 2786,
+    "script": "at_stormwind_gates"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1727,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1728,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1729,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1730,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1731,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1732,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1733,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1734,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1735,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1736,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1737,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1738,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1739,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1740,
+    "script": "at_scent_larkorwi"
+  },
+  {
+    "kind": "area_trigger",
+    "entry": 1766,
+    "script": "at_scent_larkorwi"
+  }
+]

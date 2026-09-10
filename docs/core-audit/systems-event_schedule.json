@@ -1,0 +1,875 @@
+[
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 1,
+    "start": "2020-06-21 20:00:00.000000",
+    "length": 30240,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 2,
+    "start": "2020-12-11 12:00:00.000000",
+    "length": 44640,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 4,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 5,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "2026-12-30 04:00:00.000000",
+    "entry": 6,
+    "start": "2017-01-01 03:00:00.000000",
+    "length": 10,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 7,
+    "start": "2020-01-24 22:00:00.000000",
+    "length": 43200,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-16 22:00:00.000000",
+    "entry": 8,
+    "start": "2021-02-11 22:00:00.000000",
+    "length": 20160,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-03-29 22:59:59.000000",
+    "entry": 9,
+    "start": "2020-03-29 20:00:00.000000",
+    "length": 18720,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 10,
+    "start": "2022-02-01 12:00:00.000000",
+    "length": 10080,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 40320
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 11,
+    "start": "2020-09-29 22:00:00.000000",
+    "length": 10080,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 12,
+    "start": "2020-10-18 20:00:00.000000",
+    "length": 20160,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 02:00:00.000000",
+    "entry": 22,
+    "start": "2020-08-03 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 17,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 13,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2026-12-31 23:00:00.000000",
+    "entry": 14,
+    "start": "2017-01-07 08:00:00.000000",
+    "length": 1920,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 10080
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 16,
+    "start": "2020-12-31 23:00:00.000000",
+    "length": 120,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 180
+  },
+  {
+    "end": "2026-12-31 23:00:00.000000",
+    "entry": 15,
+    "start": "2017-01-08 13:00:00.000000",
+    "length": 120,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 10080
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 19,
+    "start": "2020-05-02 00:00:01.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 7200
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 20,
+    "start": "2020-05-03 00:00:01.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 7200
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 23,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 25,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 1,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 03:00:00.000000",
+    "entry": 27,
+    "start": "2020-01-02 00:00:00.000000",
+    "length": 720,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1440
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 29,
+    "start": "2020-06-10 00:00:01.000000",
+    "length": 20160,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 80640
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 30,
+    "start": "2020-06-23 00:00:01.000000",
+    "length": 20160,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 80640
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 31,
+    "start": "2020-05-12 00:00:01.000000",
+    "length": 20160,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 80640
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 32,
+    "start": "2020-05-26 00:00:01.000000",
+    "length": 20160,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 80640
+  },
+  {
+    "end": "2030-04-11 00:00:01.000000",
+    "entry": 28,
+    "start": "2024-03-30 00:00:01.000000",
+    "length": 17280,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 33,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 5184000
+  },
+  {
+    "end": "2030-01-01 06:00:05.000000",
+    "entry": 34,
+    "start": "2020-12-31 06:00:00.000000",
+    "length": 1445,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-01-01 03:00:00.000000",
+    "entry": 35,
+    "start": "2010-03-24 10:00:00.000000",
+    "length": 420,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1260
+  },
+  {
+    "end": "2030-01-01 03:00:00.000000",
+    "entry": 36,
+    "start": "2010-03-24 17:00:00.000000",
+    "length": 420,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1260
+  },
+  {
+    "end": "2030-01-01 03:00:00.000000",
+    "entry": 37,
+    "start": "2010-03-25 00:00:00.000000",
+    "length": 420,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1260
+  },
+  {
+    "end": "2030-12-31 11:00:00.000000",
+    "entry": 161,
+    "start": "2017-01-01 17:00:00.000000",
+    "length": 9999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2026-12-31 23:00:00.000000",
+    "entry": 40,
+    "start": "2017-01-08 11:00:00.000000",
+    "length": 300,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 10080
+  },
+  {
+    "end": "2030-12-30 23:00:00.000000",
+    "entry": 47,
+    "start": "2017-01-01 05:00:00.000000",
+    "length": 1080,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1440
+  },
+  {
+    "end": "2030-01-01 04:00:00.000000",
+    "entry": 45,
+    "start": "2020-03-20 10:00:00.000000",
+    "length": 262800,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-01-01 04:00:00.000000",
+    "entry": 46,
+    "start": "2020-09-23 09:00:00.000000",
+    "length": 262800,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 53,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 52,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 54,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 55,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 56,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 57,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 58,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 59,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 60,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 61,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 62,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 63,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 64,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 65,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 18,
+    "start": "2020-05-01 00:00:01.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 7200
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 24,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 68,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-12-31 03:00:00.000000",
+    "entry": 103,
+    "start": "2020-09-08 04:00:00.000000",
+    "length": 33720,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 129,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 130,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 81,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 80,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 150,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 33720,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 151,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 33720,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 05:30:00.000000",
+    "entry": 49,
+    "start": "2020-01-02 21:00:00.000000",
+    "length": 480,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1440
+  },
+  {
+    "end": "2030-03-31 18:00:00.000000",
+    "entry": 152,
+    "start": "2022-01-01 17:00:00.000000",
+    "length": 60,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1440
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 160,
+    "start": "2023-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 159,
+    "start": "2005-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 158,
+    "start": "2015-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 156,
+    "start": "2014-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 66,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 69,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 70,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 71,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 72,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 73,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 74,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 75,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-12-31 11:00:00.000000",
+    "entry": 48,
+    "start": "2017-01-01 17:00:00.000000",
+    "length": 1080,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1440
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 39,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 10,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 60
+  },
+  {
+    "end": "2025-01-01 00:00:00.000000",
+    "entry": 78,
+    "start": "2010-01-01 00:00:00.000000",
+    "length": 1,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 60
+  },
+  {
+    "end": "2025-01-01 00:00:00.000000",
+    "entry": 83,
+    "start": "2004-12-31 23:00:00.000000",
+    "length": 2592000,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "2025-01-01 00:00:00.000000",
+    "entry": 84,
+    "start": "2004-12-31 23:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "0000-00-00 00:00:00.000000",
+    "entry": 85,
+    "start": "0000-00-00 00:00:00.000000",
+    "length": 999999999,
+    "disabled": 1,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2025-01-01 00:00:00.000000",
+    "entry": 86,
+    "start": "2004-12-31 23:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-01-02 23:59:59.000000",
+    "entry": 21,
+    "start": "2020-12-25 00:00:00.000000",
+    "length": 12960,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 110,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-09 06:00:00.000000",
+    "entry": 38,
+    "start": "2020-02-08 06:00:00.000000",
+    "length": 1445,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2027-06-05 00:00:00.000000",
+    "entry": 41,
+    "start": "2020-06-04 00:00:00.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2027-10-01 00:00:00.000000",
+    "entry": 42,
+    "start": "2020-09-30 00:00:00.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 12:00:00.000000",
+    "entry": 162,
+    "start": "2021-01-01 18:00:00.000000",
+    "length": 9999999999,
+    "disabled": 0,
+    "hardcoded": 1,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 111,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 112,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 113,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 114,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-02-11 22:00:00.000000",
+    "entry": 115,
+    "start": "2021-02-16 22:00:00.000000",
+    "length": 525600,
+    "disabled": 1,
+    "hardcoded": 0,
+    "occurrence": 525600
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 50,
+    "start": "2020-05-04 00:00:01.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 7200
+  },
+  {
+    "end": "2030-12-31 22:59:59.000000",
+    "entry": 51,
+    "start": "2020-05-05 00:00:01.000000",
+    "length": 1440,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 7200
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 163,
+    "start": "2023-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  },
+  {
+    "end": "2030-03-30 03:00:00.000000",
+    "entry": 164,
+    "start": "2023-03-30 04:00:00.000000",
+    "length": 2,
+    "disabled": 0,
+    "hardcoded": 0,
+    "occurrence": 1
+  }
+]

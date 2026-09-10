@@ -351,6 +351,7 @@ world/arathi_highlands.cpp
 world/ashenvale.cpp
 world/alahthalas.cpp
 world/azshara.cpp
+world/balor.cpp
 world/blasted_lands.cpp
 world/boss_omen.cpp
 world/boss_omen.h
@@ -489,6 +490,14 @@ include_directories(
 add_library(${LIBRARY_NAME} STATIC
   ${SCRIPTS_SRCS}
 )
+
+# MSVC's /GL intermediate representation makes this exceptionally large
+# generated script archive exceed the COFF librarian's 4 GiB hard limit.
+# Keep LTCG on the core, bot module and final executable; ordinary /O2 is the
+# only viable release mode for this archive.
+if(MSVC AND (ENABLE_LTO OR PROFILE_GENERATE OR PROFILE_USE))
+  target_compile_options(${LIBRARY_NAME} PRIVATE $<$<CONFIG:Release>:/GL->)
+endif()
 
 SET_TARGET_PROPERTIES (${LIBRARY_NAME} PROPERTIES FOLDER "Game Libs")
 

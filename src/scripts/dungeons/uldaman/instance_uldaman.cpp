@@ -321,7 +321,11 @@ struct instance_uldaman : public ScriptedInstance
                             encounterDone = false;
                             /** Creature become alive */
                             SetUnFrozenState(target);
-                            if (Unit* victim = target->SelectNearestTarget(80.0f))
+                            Unit* victim = target->SelectNearestTarget(80.0f);
+                            sLog.outInfo("[ULD] keeper %s woken (faction %u) -> victim %s",
+                                         target->GetGuidStr().c_str(), target->GetFactionTemplateId(),
+                                         victim ? victim->GetName() : "NONE -> FAIL");
+                            if (victim)
                             {
                                 target->AI()->AttackStart(victim);
                             }
@@ -330,6 +334,8 @@ struct instance_uldaman : public ScriptedInstance
                                 SetData(ULDAMAN_ENCOUNTER_STONE_KEEPERS, FAIL);
                             }
                         }
+                        else
+                            sLog.outInfo("[ULD] keepers IN_PROGRESS: no stoned keeper left to wake (encounterDone=%u)", encounterDone ? 1u : 0u);
                         if (encounterDone)
                             SetData(ULDAMAN_ENCOUNTER_STONE_KEEPERS, DONE); //Open the doors
                         break;

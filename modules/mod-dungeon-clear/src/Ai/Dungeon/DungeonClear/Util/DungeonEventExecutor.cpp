@@ -4,8 +4,11 @@
  */
 
 #include <unordered_map>
+#include "BoundedBotThrottle.h"
+#include "ArchitectureDiagnostics.h"
 #include "Ai/Dungeon/DungeonClear/Data/DcGatherPoint.h"
 #include "DungeonEventExecutor.h"
+#include "ScriptMgr.h"
 
 #include <algorithm>
 #include <cmath>
@@ -363,9 +366,38 @@ bool DungeonEventExecutor::SelectGossip(Player* bot, Creature* npc, int32 option
     GossipMenu& menu = bot->PlayerTalkClass->GetGossipMenu();
     // Tortoise port: this menu hands out items by index with no by-id lookup;
     // presence IS the index check.
-    if (menu.MenuItemCount() == 0 ||
-        static_cast<uint32>(option) >= menu.MenuItemCount())
-        return false;  // menu/option not ready yet — caller retries
+    // No menu at all: the NPC has no gossip_menu_id / no gossip_menu_option rows,
+    // but a C++ script with a select handler that starts on ANY option (Zul Farrak
+    // Champion Razjal the Quick 62498 - gossip_menu_id 0 in this world DB, the
+    // 1.18 update assumed menu 62498; 2026-09-05). A client would show an empty
+    // window; the bot goes straight to the handler the option would have reached.
+    // Two ways `option` is meant: a DB menu INDEX (option < item count), or a
+    // script select ACTION when it is not a valid index. A script-only NPC has
+    // no DB rows so its menu is either empty (Zul Farrak Razjal, gossip_menu_id
+    // 0) or holds one script-added item whose real action is not its index
+    // (Blackrock Depths Doom'rel: the challenge item carries GOSSIP_ACTION_INFO_DEF
+    // + 1 = 1001, well above the item count of 1). In both cases a real client
+    // would click the item and the core would hand its ACTION to the select
+    // handler; the bot calls that handler directly with `option` as the action.
+    if (static_cast<uint32>(option) >= menu.MenuItemCount())
+    {
+        static BoundedBotThrottle s_emptySaidAt;
+        uint32 const nowE = getMSTime();
+        bool const handled = sScriptMgr.OnGossipSelect(bot, npc, /*sender*/ 0u,
+                                                       static_cast<uint32>(option), /*code*/ nullptr);
+        if (TurtleDiagnostics::enabled.load(std::memory_order_relaxed) &&
+            s_emptySaidAt.Allow(bot->GetObjectGuid().GetRawValue(), nowE, 10000))
+        {
+            LOG_INFO("playerbots.dungeonclear",
+                     "[dungeon-clear] {} gossip: script select on {} (entry {}, menu items {}, action {}, "
+                     "gossip_menu_id {}, npcflags {}, {:.1f}yd) -> {}",
+                     bot->GetName(), npc->GetName(), npc->GetEntry(), menu.MenuItemCount(),
+                     static_cast<uint32>(option), npc->GetDefaultGossipMenuId(),
+                     npc->GetUInt32Value(UNIT_NPC_FLAGS), bot->GetDistance(npc),
+                     handled ? "HANDLED" : "not handled");
+        }
+        return handled;  // not handled -> false, caller retries next tick
+    }
 
     // Send the NPC's OWN guid: HandleGossipSelectOptionOpcode rejects the select
     // unless the packet guid equals the open menu's sender GUID, and a real bot's
@@ -539,11 +571,21 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
             // INFO, not DEBUG: whether the ritual altar ever saw its clicks is the
             // one fact three measurement windows on 2026-09-04 could not answer
             // from the journal. uniqueUses is the core's own distinct-user count
-            // for a SUMMONING_RITUAL (0 for every other GO type).
-            LOG_INFO("playerbots.dungeonclear",
-                     "[dungeon-clear] {} event-step Use GO {} '{}' -> uniqueUses={} state={}",
-                     bot->GetName(), go->GetObjectGuid().ToString(), go->GetName(),
-                     go->GetUniqueUseCount(), static_cast<int>(go->GetGoState()));
+            // for a SUMMONING_RITUAL (0 for every other GO type). Once per
+            // second per leader: the step re-clicks every tick while Running,
+            // which wrote ~20 lines/s per leader at the Uldaman altar (2026-09-05).
+            {
+                static BoundedBotThrottle s_useSaidAt;
+                uint32 const nowU = getMSTime();
+                if (TurtleDiagnostics::enabled.load(std::memory_order_relaxed) &&
+                    s_useSaidAt.Allow(bot->GetObjectGuid().GetRawValue(), nowU, 1000))
+                {
+                    LOG_INFO("playerbots.dungeonclear",
+                             "[dungeon-clear] {} event-step Use GO {} '{}' -> uniqueUses={} state={}",
+                             bot->GetName(), go->GetObjectGuid().ToString(), go->GetName(),
+                             go->GetUniqueUseCount(), static_cast<int>(go->GetGoState()));
+                }
+            }
 
             // A SUMMONING_RITUAL (GO type 18) does not fire on one click. The core
             // records DISTINCT users and bails out while there are too few:
@@ -568,7 +610,7 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                             continue;
                         if (!member->IsInWorld() || !member->IsAlive())
                             continue;
-                        if (member->GetMapId() != bot->GetMapId())
+                        if (member->FindMap() != bot->FindMap())
                             continue;
                         // The core's Use() does no range check of its own - the
                         // client normally enforces it - so hold the same distance
@@ -584,12 +626,11 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                         // party that genuinely cannot reach the altar.
                         if (!member->IsWithinDistInMap(go, DC_EVENT_GO_USE_RANGE))
                         {
-                            static std::unordered_map<uint64, uint32> s_farSaidAt;
+                            static BoundedBotThrottle s_farSaidAt;
                             uint32 const nowF = getMSTime();
-                            uint32& atF = s_farSaidAt[member->GetObjectGuid().GetRawValue()];
-                            if (!atF || getMSTimeDiff(atF, nowF) > 5000)
+                            if (TurtleDiagnostics::enabled.load(std::memory_order_relaxed) &&
+                                s_farSaidAt.Allow(member->GetObjectGuid().GetRawValue(), nowF, 5000))
                             {
-                                atF = nowF;
                                 LOG_INFO("playerbots.dungeonclear",
                                          "[dungeon-clear] {} ritual: {} is {:.1f}yd from the altar (need {}), moving={}",
                                          bot->GetName(), member->GetName(), member->GetDistance(go),
@@ -617,10 +658,18 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                         }
                         go->Use(member);
                         ++clicked;
-                        LOG_INFO("playerbots.dungeonclear",
-                                 "[dungeon-clear] {} ritual click by {} at {:.1f}yd -> uniqueUses={}",
-                                 bot->GetName(), member->GetName(), member->GetDistance(go),
-                                 go->GetUniqueUseCount());
+                        {
+                            static BoundedBotThrottle s_clickSaidAt;
+                            uint32 const nowC = getMSTime();
+                            if (TurtleDiagnostics::enabled.load(std::memory_order_relaxed) &&
+                                s_clickSaidAt.Allow(member->GetObjectGuid().GetRawValue(), nowC, 1000))
+                            {
+                                LOG_INFO("playerbots.dungeonclear",
+                                         "[dungeon-clear] {} ritual click by {} at {:.1f}yd -> uniqueUses={}",
+                                         bot->GetName(), member->GetName(), member->GetDistance(go),
+                                         go->GetUniqueUseCount());
+                            }
+                        }
                     }
                 }
                 // Done only once the ritual ACTUALLY fired. The core flips the GO
@@ -638,7 +687,7 @@ StepResult DungeonEventExecutor::RunStep(Player* bot, AiObjectContext* context,
                     gather.x = go->GetPositionX();
                     gather.y = go->GetPositionY();
                     gather.z = go->GetPositionZ();
-                    gather.radius = 4.5f;   // followers park 4 yd out (outside the altar model), inside DC_EVENT_GO_USE_RANGE (5)
+                    gather.radius = 3.5f;   // followers park 4 yd out (outside the altar model), inside DC_EVENT_GO_USE_RANGE (5)
                     gather.reach = DC_EVENT_GO_GATHER_RANGE;
                     gather.untilMs = getMSTime() + 8000;  // refreshed every tick while Running
                 }
@@ -1485,6 +1534,19 @@ void DungeonEventExecutor::SweepCompletedConditionalEvents(Player* bot,
         }
         else if (seenDue.count(lk))
         {
+            // An event that says how completion looks is only latched when it
+            // looks like that. Otherwise the flicker is forgotten (seenDue
+            // reset) and the event is simply not due until its condition
+            // reads true again.
+            if (ev->completedWhen && !ev->completedWhen(bot, context))
+            {
+                seenDue.erase(lk);
+                LOG_INFO("playerbots.dungeonclear",
+                         "[DC:{}] conditional event '{}' (id {}) went not-due without "
+                         "completing -> NOT latched, stays pending",
+                         bot->GetName(), ev->name, ev->id);
+                continue;
+            }
             // Was due, now isn't, and the executor never latched it: its gating
             // condition WAS the latch (e.g. a Stratholme ziggurat whose instance
             // data flips 1 -> 2 the instant the Ash'ari Crystal topples, mid-

@@ -80,6 +80,20 @@ void LootObject::Refresh(Player* bot, ObjectGuid guid, bool debug)
             }
         }
 
+        // Loot the normal loot first, skin afterwards. A corpse that is both
+        // lootable and skinnable used to have skillId overwritten to SKINNING
+        // below, so IsLootPossible rejected the whole corpse for "not enough
+        // skill" and the bot never took the normal loot it was tapped for
+        // (Prairie Wolf etc.). If we are tapped for normal loot, take it now
+        // with skillId left at SKILL_NONE; the corpse keeps its SKINNABLE flag
+        // and, once the loot is gone (LOOTABLE clears), a later Refresh falls
+        // through to the skinning branch below - so a skinner loots, then skins.
+        if (!this->guid.IsEmpty())
+        {
+            skillId = SKILL_NONE;
+            return;
+        }
+
         if (creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE))
         {
             skillId = creature->GetCreatureInfo()->GetRequiredLootSkill();

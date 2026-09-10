@@ -18,6 +18,7 @@
 #include "Timer.h"
 
 #include <atomic>
+#include <mutex>
 #include <optional>
 #include "Ai/Dungeon/DungeonClear/DcValueKeys.h"
 
@@ -151,13 +152,44 @@ namespace
                       ironayaIsNext ? "her turn" : "not yet");
         }
 
+        int reason = 0;                              // 0 = due
         if (!ironayaIsNext)
-            return false;                            // earlier bosses still up
-        if (!seal)
-            return false;                            // not near the chamber yet
-        if (seal->GetGoState() != GO_STATE_READY)
-            return false;                            // already open -> done
-        return ironaya != nullptr;
+            reason = 1;                              // earlier bosses still up
+        else if (!seal)
+            reason = 2;                              // not near the chamber (or left it)
+        else if (seal->GetGoState() != GO_STATE_READY)
+            reason = 3;                              // already open -> done
+        else if (!ironaya)
+            reason = 4;                              // Ironaya not found alive in ULD_SCAN
+        // One INFO line per leader per CHANGE of verdict. The 5 s DEBUG line
+        // above never reaches the journal, and the question after 2026-09-04
+        // is exactly which of these flickers turned the event "done" before
+        // the keystone was ever clicked.
+        {
+            static std::mutex reasonMutex;
+            static std::unordered_map<uint64, int> lastReason;
+            static char const* const names[] = { "due", "not her turn", "seal out of range",
+                                                 "seal open", "Ironaya not found" };
+            std::lock_guard<std::mutex> lock(reasonMutex);
+            int& last = lastReason[bot->GetObjectGuid().GetRawValue()];
+            if (last != reason + 1)
+            {
+                last = reason + 1;
+                LOG_INFO("playerbots.dungeonclear",
+                         "[DC:{}] Uldaman Ironaya seal cond -> {} (next boss {})",
+                         bot->GetName(), names[reason], next.has_value() ? next->entry : 0u);
+            }
+        }
+        return reason == 0;
+    }
+
+    // Completion for the seal event: the seal itself stands open. Anything else
+    // that makes the activation predicate read false (the tank out of scan
+    // range, Ironaya momentarily not found) is a pause, not a completion.
+    bool UldamanIronayaUnsealed(Player* bot, AiObjectContext* /*context*/)
+    {
+        GameObject* seal = bot->FindNearestGameObject(ULD_SEAL_DOOR, ULD_SCAN);
+        return seal && seal->GetGoState() != GO_STATE_READY;
     }
 
     // --- Why the two altars below are ANCHORED, not CONDITIONAL --------------
@@ -187,6 +219,7 @@ namespace
 namespace
 {
     bool UldamanIronayaSeal(Player* bot, AiObjectContext* context);
+    bool UldamanIronayaUnsealed(Player* bot, AiObjectContext* context);
     // Altar of Archaedas. CONDITIONAL, not anchored - measured 2026-09-03: the
     // anchored version never ran once. The party reaches the altar, the anchor
     // latches on arrival, the next anchor becomes Archaedas the BOSS, and the
@@ -242,6 +275,7 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
 {
     out.push_back(EventBuilder(70, 1, "Unseal Ironaya (Seal of Khaz'Mul)")
                       .Conditional(&UldamanIronayaSeal)
+                      .CompletedWhen(&UldamanIronayaUnsealed)
                       // Render in the panel just before Ironaya (cosmetic; does not
                       // affect engine ordering — the seal is opened on her gate).
                       .PanelBeforeBoss(ULD_IRONAYA)
@@ -302,6 +336,14 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       //    pulls the party.
                       .UseRitualGO(ULD_KEEPER_ALTAR, ULD_RITUAL_CASTERS,
                                    /*searchRadius*/ 15.0f)
+                      // The altar spell is a real 5 s cast on the first clicker (SpellCastTimes
+                      // index 6 = 5000 ms); SEND_EVENT 2228 fires only when it lands. Hold the
+                      // leader at the altar for it. (This wait alone did NOT fix the cancelled
+                      // casts - 7 of 7 still cancelled in arch13: the clickers dropping their
+                      // channel visual pulled the participant count under 3 and the core's
+                      // "helpers cancelled" rule killed the cast. Spell::update now exempts
+                      // persistent, owner-less altars, 2026-09-05.)
+                      .Wait(7000)
                       // 4) kill all four. Each keeper's death chain-wakes the next
                       //    (SmartAI SetData) and re-pulls the zone, so a plain-gate
                       //    KillCreature (party auto-aggros; no .engage onto the
@@ -348,6 +390,14 @@ void RegisterUldamanEvents(std::vector<DungeonEvent>& out)
                       //    the stoned boss.
                       .UseRitualGO(ULD_ARCHAEDAS_ALTAR, ULD_RITUAL_CASTERS,
                                    /*searchRadius*/ 15.0f)
+                      // The altar spell is a real 5 s cast on the first clicker (SpellCastTimes
+                      // index 6 = 5000 ms); SEND_EVENT 2228 fires only when it lands. Hold the
+                      // leader at the altar for it. (This wait alone did NOT fix the cancelled
+                      // casts - 7 of 7 still cancelled in arch13: the clickers dropping their
+                      // channel visual pulled the participant count under 3 and the core's
+                      // "helpers cancelled" rule killed the cast. Spell::update now exempts
+                      // persistent, owner-less altars, 2026-09-05.)
+                      .Wait(7000)
                       // 3) and then FIGHT him. Nothing else will: he wakes 4s after
                       //    the ritual, turns faction 14 and AttackStarts the nearest
                       //    party member - but a bot's combat engine only starts on

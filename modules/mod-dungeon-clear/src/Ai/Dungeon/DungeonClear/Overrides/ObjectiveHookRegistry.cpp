@@ -54,7 +54,11 @@ namespace
     // cooldown is a no-op it drops on the floor, which is what makes "just fire it
     // every tick" the right shape here: no cooldown bookkeeping of our own to keep
     // in step with the core's.
-    constexpr uint32 BRD_TYPE_RING_OF_LAW = 1;  // DataTypes::TYPE_RING_OF_LAW
+    // 0 on this core: blackrock_depths.h has RING_OF_LAW 0, VAULT 1, ROCKNOT 2,
+    // TOMB_OF_SEVEN 3, LYCEUM 4. With 1 the hook read TYPE_VAULT, never saw
+    // IN_PROGRESS and returned Running forever: every BRD group stalled at
+    // "Ring of Law step 1/3" (62x in 35 min, 10 runs lost, 2026-09-06 02:42).
+    constexpr uint32 BRD_TYPE_RING_OF_LAW = 0;  // DataTypes::TYPE_RING_OF_LAW
     constexpr uint32 BRD_RING_IN_PROGRESS = 1;  // EncounterState::IN_PROGRESS
     constexpr uint32 BRD_RING_OF_LAW_TRIGGER = 1526;
 
@@ -212,11 +216,21 @@ namespace
             return ObjectiveArriveResult::Done;
 
         zumrah->SetFaction(ZF_ZUMRAH_FACTION_HOSTILE);
+        // ...and make him come: at 18-23yd the flipped faction alone does not
+        // aggro him, and the party's target list only carries units already in
+        // combat, so both sides stood and looked at each other until the cap
+        // (arch19, 2026-09-05: 7 wakes, 3 kills; arch16: 10/10 with 81 joins).
+        bool attacked = false;
+        if (zumrah->AI())
+        {
+            zumrah->AI()->AttackStart(bot);
+            attacked = zumrah->GetVictim() != nullptr;
+        }
         LOG_INFO("playerbots.dungeonclear",
-                 "DungeonClear: ZulFarrak — set Zum'rah ({}) faction {} -> {} for {} "
-                 "(area trigger 962 never fires for an all-bot party)",
+                 "DungeonClear: ZulFarrak — set Zum'rah ({}) faction {} -> {} for {} at {:.0f}yd, "
+                 "AttackStart -> victim {} (area trigger 962 never fires for an all-bot party)",
                  ZF_ZUMRAH, ZF_ZUMRAH_FACTION_FRIENDLY, ZF_ZUMRAH_FACTION_HOSTILE,
-                 bot->GetName());
+                 bot->GetName(), bot->GetDistance(zumrah), attacked ? "set" : "NONE");
         return ObjectiveArriveResult::Done;
     }
 
@@ -697,7 +711,10 @@ namespace
             // because this module is a static lib: a TU whose only output is
             // constructor side-effects has no referenced symbol and the linker
             // drops it, taking its hooks with it. Ids 8 and 12 live here.
+#ifndef MANGOSBOT_ZERO   // TBC Black Morass (map 269); Turtle WoW has its own
+                         // level-60 dungeon on that map id (token black-morass-tw)
             RegisterBlackMorassHooks(t);
+#endif
             return t;
         }();
         return kHooks;

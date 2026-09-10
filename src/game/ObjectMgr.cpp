@@ -1118,6 +1118,30 @@ void ObjectMgr::LoadCreatureTemplates()
         LoadCreatureInfo(fields);
         
     } while (result->NextRow());
+
+    // Bind scripts the DB did not: the Farraki Arena trio (Zul Farrak 1.18) has
+    // its script_name rows in update 20260626153218, which a realm may not have
+    // applied - then Razjal is a friendly NPC without AI or gossip and the arena
+    // can never start (2026-09-05). Only touches rows with NO script of their own.
+    struct FallbackCreatureScript { uint32 entry; char const* script; };
+    static FallbackCreatureScript const kFallbackCreatureScripts[] =
+    {
+        { 62496, "npc_kathzen_the_brutal" },
+        { 62497, "npc_juthza_the_cunning" },
+        { 62498, "npc_champion_razjal_the_quick" },
+    };
+    for (FallbackCreatureScript const& fb : kFallbackCreatureScripts)
+    {
+        CreatureInfo* info = const_cast<CreatureInfo*>(GetCreatureTemplate(fb.entry));
+        if (!info || info->script_id)
+            continue;
+        uint32 const scriptId = sScriptMgr.GetScriptId(fb.script);
+        if (!scriptId)
+            continue;
+        info->script_id = scriptId;
+        sLog.outInfo("BindFallbackCreatureScripts: creature %u (%s) had no script in the DB -> bound %s",
+                     fb.entry, info->name.c_str(), fb.script);
+    }
 }
 
 void ObjectMgr::LoadCreatureTemplate(uint32 entry)
@@ -1225,6 +1249,12 @@ void ObjectMgr::LoadCreatureInfo(Field* fields)
     pInfo->phase_quest_id = fields[78].GetUInt32();
     pInfo->script_id = sScriptMgr.GetScriptId(fields[79].GetString());
     CheckCreatureTemplate(pInfo.get());
+    // Refresh on both initial loading and single-template reloads. Class-zero
+    // non-trainers cannot match a player class and need not enter this index.
+    bool const commonTrainer = pInfo->trainer_type == TRAINER_TYPE_TRADESKILLS;
+    bool const classTrainer = (pInfo->trainer_type == TRAINER_TYPE_CLASS ||
+        pInfo->trainer_type == TRAINER_TYPE_PETS) && pInfo->trainer_class != 0;
+    m_botTrainerIndex.Update(entry, pInfo->trainer_class, commonTrainer, commonTrainer || classTrainer);
 }
 
 template <class T>
@@ -2536,8 +2566,14 @@ void ObjectMgr::LoadItemPrototypes()
 
                 if (proto->Spells[j].SpellCategory > 0)
                 {
+                    // An item's spell category is a free-form grouping key for shared
+                    // cooldowns: the value is only ever used as a map key by
+                    // Unit::HasSpellCategoryCooldown, never looked up in SpellCategory.dbc
+                    // (this is that store's only reader in the whole core). A category the
+                    // DBC does not list still works, so this is a note, not a fault - the
+                    // value is deliberately left in place rather than cleared.
                     if (!sSpellCategoryStore.LookupEntry(proto->Spells[j].SpellCategory))
-                        sLog.outErrorDb("Item (Entry: %u) has wrong (not existing) spell category in spellcategory_%d (%u)", i, j + 1, proto->Spells[j].SpellCategory);
+                        sLog.outDetail("Item (Entry: %u) has spell category in spellcategory_%d (%u) that is not listed in SpellCategory.dbc", i, j + 1, proto->Spells[j].SpellCategory);
                 }
             }
         }
@@ -7331,7 +7367,7 @@ void ObjectMgr::LoadBroadcastTexts()
         {
             if (!sEmotesStore.LookupEntry(bct.emoteId1))
             {
-                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has emoteId2 %u but emote does not exist.", bct.entry, bct.emoteId1);
+                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has emoteId1 %u but emote does not exist.", bct.entry, bct.emoteId1);
                 bct.emoteId1 = 0;
             }
         }
@@ -7340,7 +7376,7 @@ void ObjectMgr::LoadBroadcastTexts()
         {
             if (!sEmotesStore.LookupEntry(bct.emoteId2))
             {
-                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has emoteId3 %u but emote does not exist.", bct.entry, bct.emoteId2);
+                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has emoteId2 %u but emote does not exist.", bct.entry, bct.emoteId2);
                 bct.emoteId2 = 0;
             }
         }
@@ -7349,7 +7385,7 @@ void ObjectMgr::LoadBroadcastTexts()
         {
             if (!sEmotesStore.LookupEntry(bct.emoteId3))
             {
-                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has EmoteId3 %u but emote does not exist.", bct.entry, bct.emoteId3);
+                sLog.outErrorDb("BroadcastText (Id: %u) in table `broadcast_text` has emoteId3 %u but emote does not exist.", bct.entry, bct.emoteId3);
                 bct.emoteId3 = 0;
             }
         }
@@ -9372,9 +9408,8 @@ void ObjectMgr::LoadAreaTemplate()
 {
     sAreaStorage.Load();
 
-    for (auto itr = sAreaStorage.begin<AreaEntry>(); itr != sAreaStorage.end<AreaEntry>() ; ++itr)
-        if (itr->IsZone() && itr->MapId != 0 && itr->MapId != 1)
-            sAreaFlagByMapId.insert(AreaFlagByMapId::value_type(itr->MapId, itr->ExploreFlag));
+    // World initialization only: immutable indexed reads once map workers run.
+    AreaEntry::RebuildLookupIndex();
 }
 
 void ObjectMgr::LoadAreaLocales()
@@ -10207,31 +10242,38 @@ ChatChannelsEntry const* ObjectMgr::GetChannelEntryFor(std::string const& name)
 {
     for (auto const& itr : m_chatChannelsMap)
     {
-        // need to remove %s from entryName if it exists before we match
-        for (const auto loc : itr.second.name)
+        for (std::string const& entryName : itr.second.name)
         {
-            std::string entryName(loc);
-            std::size_t removeString = entryName.find("%s");
-
             // Not loaded locale
             if (entryName.empty())
                 continue;
 
-            if (removeString != std::string::npos)
-                entryName.replace(removeString, 2, "");
+            std::size_t const zoneMarker = entryName.find("%s");
+            if (zoneMarker == std::string::npos)
+            {
+                if (entryName == name)
+                    return &itr.second;
+                continue;
+            }
 
-            if (name.find(entryName) != std::string::npos)
+            std::string const prefix = entryName.substr(0, zoneMarker);
+            std::string const suffix = entryName.substr(zoneMarker + 2);
+            if (name.size() < prefix.size() + suffix.size())
+                continue;
+
+            if (name.compare(0, prefix.size(), prefix) == 0 &&
+                name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0)
                 return &itr.second;
         }
 
         // search in shortcut name
-        for (const auto loc : itr.second.shortcut)
+        for (std::string const& shortcut : itr.second.shortcut)
         {
             // Not loaded locale
-            if (loc.empty())
+            if (shortcut.empty())
                 continue;
 
-            if (loc == name)
+            if (shortcut == name)
                 return &itr.second;
         }
     }

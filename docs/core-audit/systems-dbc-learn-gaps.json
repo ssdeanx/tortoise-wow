@@ -1,0 +1,152 @@
+[
+  {
+    "spell": 1233,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 875
+  },
+  {
+    "spell": 1330,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 961
+  },
+  {
+    "spell": 1398,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 1100
+  },
+  {
+    "spell": 1821,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 1816
+  },
+  {
+    "spell": 1952,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 1951
+  },
+  {
+    "spell": 2442,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2437
+  },
+  {
+    "spell": 2443,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2438
+  },
+  {
+    "spell": 2444,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2439
+  },
+  {
+    "spell": 2445,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2440
+  },
+  {
+    "spell": 2446,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2441
+  },
+  {
+    "spell": 2452,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2447
+  },
+  {
+    "spell": 2453,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2448
+  },
+  {
+    "spell": 2454,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2449
+  },
+  {
+    "spell": 2455,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2450
+  },
+  {
+    "spell": 2456,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2451
+  },
+  {
+    "spell": 2929,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 2926
+  },
+  {
+    "spell": 12683,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 12680
+  },
+  {
+    "spell": 12683,
+    "slot": 1,
+    "effect": 36,
+    "learn_spell": 12682
+  },
+  {
+    "spell": 12683,
+    "slot": 2,
+    "effect": 36,
+    "learn_spell": 12681
+  },
+  {
+    "spell": 12688,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 12687
+  },
+  {
+    "spell": 12688,
+    "slot": 1,
+    "effect": 36,
+    "learn_spell": 12689
+  },
+  {
+    "spell": 12692,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 12691
+  },
+  {
+    "spell": 12692,
+    "slot": 1,
+    "effect": 36,
+    "learn_spell": 12690
+  },
+  {
+    "spell": 18282,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 21302
+  },
+  {
+    "spell": 47273,
+    "slot": 0,
+    "effect": 36,
+    "learn_spell": 47607
+  }
+]

@@ -1,0 +1,498 @@
+[
+  {
+    "effect": 0,
+    "slots": 48884
+  },
+  {
+    "effect": 1,
+    "slots": 89
+  },
+  {
+    "effect": 2,
+    "slots": 2408
+  },
+  {
+    "effect": 3,
+    "slots": 1104
+  },
+  {
+    "effect": 5,
+    "slots": 175
+  },
+  {
+    "effect": 6,
+    "slots": 16727
+  },
+  {
+    "effect": 7,
+    "slots": 8
+  },
+  {
+    "effect": 8,
+    "slots": 35
+  },
+  {
+    "effect": 9,
+    "slots": 55
+  },
+  {
+    "effect": 10,
+    "slots": 355
+  },
+  {
+    "effect": 11,
+    "slots": 3
+  },
+  {
+    "effect": 12,
+    "slots": 2
+  },
+  {
+    "effect": 16,
+    "slots": 77
+  },
+  {
+    "effect": 17,
+    "slots": 72
+  },
+  {
+    "effect": 18,
+    "slots": 9
+  },
+  {
+    "effect": 19,
+    "slots": 29
+  },
+  {
+    "effect": 20,
+    "slots": 1
+  },
+  {
+    "effect": 21,
+    "slots": 1
+  },
+  {
+    "effect": 22,
+    "slots": 3
+  },
+  {
+    "effect": 23,
+    "slots": 1
+  },
+  {
+    "effect": 24,
+    "slots": 2309
+  },
+  {
+    "effect": 25,
+    "slots": 21
+  },
+  {
+    "effect": 26,
+    "slots": 1
+  },
+  {
+    "effect": 27,
+    "slots": 197
+  },
+  {
+    "effect": 28,
+    "slots": 23
+  },
+  {
+    "effect": 29,
+    "slots": 11
+  },
+  {
+    "effect": 30,
+    "slots": 207
+  },
+  {
+    "effect": 31,
+    "slots": 139
+  },
+  {
+    "effect": 32,
+    "slots": 2
+  },
+  {
+    "effect": 33,
+    "slots": 56
+  },
+  {
+    "effect": 34,
+    "slots": 14
+  },
+  {
+    "effect": 35,
+    "slots": 243
+  },
+  {
+    "effect": 36,
+    "slots": 5654
+  },
+  {
+    "effect": 37,
+    "slots": 1
+  },
+  {
+    "effect": 38,
+    "slots": 103
+  },
+  {
+    "effect": 39,
+    "slots": 14
+  },
+  {
+    "effect": 40,
+    "slots": 1
+  },
+  {
+    "effect": 41,
+    "slots": 425
+  },
+  {
+    "effect": 42,
+    "slots": 238
+  },
+  {
+    "effect": 43,
+    "slots": 14
+  },
+  {
+    "effect": 44,
+    "slots": 89
+  },
+  {
+    "effect": 45,
+    "slots": 17
+  },
+  {
+    "effect": 46,
+    "slots": 32
+  },
+  {
+    "effect": 47,
+    "slots": 56
+  },
+  {
+    "effect": 48,
+    "slots": 1
+  },
+  {
+    "effect": 49,
+    "slots": 1
+  },
+  {
+    "effect": 50,
+    "slots": 84
+  },
+  {
+    "effect": 52,
+    "slots": 1
+  },
+  {
+    "effect": 53,
+    "slots": 362
+  },
+  {
+    "effect": 54,
+    "slots": 97
+  },
+  {
+    "effect": 55,
+    "slots": 2
+  },
+  {
+    "effect": 56,
+    "slots": 38
+  },
+  {
+    "effect": 57,
+    "slots": 73
+  },
+  {
+    "effect": 58,
+    "slots": 256
+  },
+  {
+    "effect": 59,
+    "slots": 85
+  },
+  {
+    "effect": 60,
+    "slots": 30
+  },
+  {
+    "effect": 61,
+    "slots": 196
+  },
+  {
+    "effect": 62,
+    "slots": 51
+  },
+  {
+    "effect": 63,
+    "slots": 141
+  },
+  {
+    "effect": 64,
+    "slots": 403
+  },
+  {
+    "effect": 67,
+    "slots": 23
+  },
+  {
+    "effect": 68,
+    "slots": 57
+  },
+  {
+    "effect": 69,
+    "slots": 3
+  },
+  {
+    "effect": 70,
+    "slots": 1
+  },
+  {
+    "effect": 71,
+    "slots": 2
+  },
+  {
+    "effect": 72,
+    "slots": 4
+  },
+  {
+    "effect": 73,
+    "slots": 3
+  },
+  {
+    "effect": 74,
+    "slots": 11
+  },
+  {
+    "effect": 75,
+    "slots": 1
+  },
+  {
+    "effect": 76,
+    "slots": 179
+  },
+  {
+    "effect": 77,
+    "slots": 356
+  },
+  {
+    "effect": 78,
+    "slots": 1
+  },
+  {
+    "effect": 79,
+    "slots": 12
+  },
+  {
+    "effect": 80,
+    "slots": 87
+  },
+  {
+    "effect": 81,
+    "slots": 3
+  },
+  {
+    "effect": 82,
+    "slots": 2
+  },
+  {
+    "effect": 83,
+    "slots": 1
+  },
+  {
+    "effect": 84,
+    "slots": 1
+  },
+  {
+    "effect": 85,
+    "slots": 3
+  },
+  {
+    "effect": 86,
+    "slots": 149
+  },
+  {
+    "effect": 87,
+    "slots": 35
+  },
+  {
+    "effect": 88,
+    "slots": 23
+  },
+  {
+    "effect": 89,
+    "slots": 20
+  },
+  {
+    "effect": 90,
+    "slots": 18
+  },
+  {
+    "effect": 91,
+    "slots": 2
+  },
+  {
+    "effect": 92,
+    "slots": 13
+  },
+  {
+    "effect": 93,
+    "slots": 4
+  },
+  {
+    "effect": 94,
+    "slots": 11
+  },
+  {
+    "effect": 95,
+    "slots": 4
+  },
+  {
+    "effect": 96,
+    "slots": 57
+  },
+  {
+    "effect": 97,
+    "slots": 271
+  },
+  {
+    "effect": 98,
+    "slots": 159
+  },
+  {
+    "effect": 99,
+    "slots": 2
+  },
+  {
+    "effect": 100,
+    "slots": 16
+  },
+  {
+    "effect": 101,
+    "slots": 2
+  },
+  {
+    "effect": 102,
+    "slots": 1
+  },
+  {
+    "effect": 103,
+    "slots": 63
+  },
+  {
+    "effect": 104,
+    "slots": 17
+  },
+  {
+    "effect": 105,
+    "slots": 2
+  },
+  {
+    "effect": 108,
+    "slots": 34
+  },
+  {
+    "effect": 109,
+    "slots": 2
+  },
+  {
+    "effect": 110,
+    "slots": 2
+  },
+  {
+    "effect": 111,
+    "slots": 7
+  },
+  {
+    "effect": 112,
+    "slots": 14
+  },
+  {
+    "effect": 113,
+    "slots": 22
+  },
+  {
+    "effect": 114,
+    "slots": 10
+  },
+  {
+    "effect": 115,
+    "slots": 6
+  },
+  {
+    "effect": 116,
+    "slots": 2
+  },
+  {
+    "effect": 117,
+    "slots": 1
+  },
+  {
+    "effect": 118,
+    "slots": 80
+  },
+  {
+    "effect": 119,
+    "slots": 47
+  },
+  {
+    "effect": 120,
+    "slots": 2
+  },
+  {
+    "effect": 121,
+    "slots": 57
+  },
+  {
+    "effect": 122,
+    "slots": 1
+  },
+  {
+    "effect": 123,
+    "slots": 7
+  },
+  {
+    "effect": 124,
+    "slots": 9
+  },
+  {
+    "effect": 125,
+    "slots": 3
+  },
+  {
+    "effect": 126,
+    "slots": 2
+  },
+  {
+    "effect": 128,
+    "slots": 3
+  },
+  {
+    "effect": 129,
+    "slots": 12
+  },
+  {
+    "effect": 130,
+    "slots": 1
+  },
+  {
+    "effect": 132,
+    "slots": 8
+  },
+  {
+    "effect": 133,
+    "slots": 28
+  },
+  {
+    "effect": 134,
+    "slots": 46
+  }
+]

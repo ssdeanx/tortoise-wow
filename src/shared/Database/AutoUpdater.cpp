@@ -234,8 +234,10 @@ namespace DBUpdater
             if (!ExecuteUpdate(update, targetDatabase))
             {
                 sLog.outError("[DB Auto-Updater] Migration %s with hash %s failed to apply.", update.Name.c_str(), update.Hash.c_str());
-                std::string line;
-                std::getline(std::cin, line);
+                // (removed a leftover std::getline(std::cin) here that paused startup
+                // waiting for Enter after a failed migration - blocks a service /
+                // pipeline start with an open stdin; the return below already aborts.
+                // The intentional crash-pause getline in Log.cpp is untouched.)
                 return false;
            }
         }

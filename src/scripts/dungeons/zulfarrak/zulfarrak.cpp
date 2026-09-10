@@ -225,7 +225,13 @@ void initBlyCrewMember(InstanceData* pInstance, uint32 entry, float x, float y, 
         crew->SetHomePosition(x, y, z, 4.7f);
         crew->GetMotionMaster()->MovePoint(1, x, y, z, MOVE_PATHFINDING | MOVE_WALK_MODE);
         crew->SetFactionTemplateId(FACTION_FREED);
+        sLog.outInfo("[ZF] pyramid: crew %u (%s) freed at (%.1f,%.1f,%.1f) alive=%u -> walking to the stairs",
+                     entry, crew->GetName(), crew->GetPositionX(), crew->GetPositionY(), crew->GetPositionZ(),
+                     crew->IsAlive() ? 1u : 0u);
     }
+    else
+        sLog.outInfo("[ZF] pyramid: crew %u NOT FOUND (guid %u) - the stair walk cannot start",
+                     entry, uint32(creaGUID & 0xFFFFFFFF));
 }
 
 
@@ -233,6 +239,11 @@ bool OnGossipHello_go_troll_cage(Player* pPlayer, GameObject* pGo)
 {
     if (InstanceData* pInstance = pGo->GetInstanceData())
     {
+        // INFO, deliberately: bot parties opened the cages and no wave ever
+        // followed, with nothing between the click and the waves visible in
+        // the journal (2026-09-05).
+        sLog.outInfo("[ZF] pyramid: cage %s used by %s, phase before %u",
+                     pGo->GetGuidStr().c_str(), pPlayer->GetName(), pInstance->GetData(EVENT_PYRAMID));
         pInstance->SetData(EVENT_PYRAMID, PYRAMID_CAGES_OPEN);
         //set bly & co to aggressive & start moving to top of stairs
         initBlyCrewMember(pInstance, ENTRY_BLY, 1887.17f, 1263.72f, 41.484f);
@@ -383,6 +394,9 @@ struct npc_weegli_blastfuseAI : public ScriptedAI
 
     void MovementInform(uint32 type, uint32 id) override
     {
+        if (type == POINT_MOTION_TYPE)   // chase informs arrive by the thousand during the waves
+            sLog.outInfo("[ZF] pyramid: %s MovementInform type %u id %u, phase %u",
+                         m_creature->GetName(), type, id, pInstance ? pInstance->GetData(EVENT_PYRAMID) : 99u);
         if (pInstance)
         {
             if (pInstance->GetData(EVENT_PYRAMID) == PYRAMID_CAGES_OPEN)

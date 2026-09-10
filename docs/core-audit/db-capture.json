@@ -1,0 +1,6 @@
+{
+  "schema": "tw_world",
+  "note": "Sequential read-only SELECT snapshots; no account/character data.",
+  "consistent_transaction": false,
+  "captured_utc": "2026-09-05T19:53:42.7746473Z"
+}

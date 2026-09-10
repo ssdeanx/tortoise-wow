@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "missing_reference",
+    "store": 50112,
+    "reference": 150112
+  },
+  {
+    "kind": "missing_reference",
+    "store": 50112,
+    "reference": 30171
+  },
+  {
+    "kind": "missing_reference",
+    "store": 61376,
+    "reference": 30559
+  },
+  {
+    "kind": "missing_reference",
+    "store": 61377,
+    "reference": 30559
+  },
+  {
+    "kind": "missing_reference",
+    "store": 61378,
+    "reference": 30559
+  },
+  {
+    "kind": "missing_reference",
+    "store": 61379,
+    "reference": 30559
+  }
+]

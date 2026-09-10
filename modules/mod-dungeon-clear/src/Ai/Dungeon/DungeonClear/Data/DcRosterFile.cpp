@@ -30,6 +30,8 @@ namespace
         std::vector<uint32> credits;
         std::vector<DcBossOrderRow> order;
         std::unordered_set<uint32> dropped;
+        // Entries the file protects from a compiled BossRosterPatch::remove.
+        std::unordered_set<uint32> kept;
         // Maps whose order the file owns outright - see the header note on
         // per-map replacement.
         std::unordered_set<uint32> authoredMaps;
@@ -144,6 +146,21 @@ namespace
                     complain("drop without an entry on line " + std::to_string(lineNo));
                 accepted += onThisLine;
             }
+            else if (directive == "keep")
+            {
+                uint32 entry = 0;
+                uint32 onThisLine = 0;
+                while (ls >> entry)
+                {
+                    if (!entry)
+                        continue;
+                    out.kept.insert(entry);
+                    ++onThisLine;
+                }
+                if (!onThisLine)
+                    complain("keep without an entry on line " + std::to_string(lineNo));
+                accepted += onThisLine;
+            }
             else
             {
                 complain("unknown directive '" + directive + "' on line " + std::to_string(lineNo));
@@ -210,6 +227,14 @@ std::vector<DcBossOrderRow> DcRosterFile::OrderRows()
                              [](DcBossOrderRow const& r) { return Data().dropped.count(r.entry) != 0; }),
               out.end());
     return out;
+}
+
+bool DcRosterFile::IsKept(uint32 entry)
+{
+    std::lock_guard<std::mutex> guard(Lock());
+    EnsureLoaded();
+    // drop wins over keep, as it wins over everything else in this file.
+    return Data().kept.count(entry) != 0 && Data().dropped.count(entry) == 0;
 }
 
 uint32 DcRosterFile::Reload(std::string* error)

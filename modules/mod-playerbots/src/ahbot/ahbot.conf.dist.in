@@ -1,191 +1,51 @@
-################################################
-# MANGOS Auction House Bot Configuration file  #
-################################################
-
-[AhbotConf]
-ConfVersion=2019051400
-
-###################################################################################################################
-# AUCTION HOUSE BOT SETTINGS
-#
-###################################################################################################################
-
-# Disable original AuctionHouseBot
-AuctionHouseBot.Seller.Enabled = 0
-AuctionHouseBot.Buyer.Enabled = 0
-
-# Replace with the new AhBot.
-#
-# Off by default, because it cannot work until AhBot.GUID below names a real
-# character: with a GUID of 0 it has no bidder, starts posting auctions with no
-# item behind them, and eventually takes the server down through the C runtime's
-# invalid-parameter handler. Create a character for it, put its guid below, then
-# turn this on.
-AhBot.Enabled = 0
-
-# Character GUID of the AHBot player. Must be set to a valid character GUID for each server instance.
-AhBot.GUID = 0
-
-AhBot.MaxItemLevel = 500
-AhBot.MaxRequiredLevel = 80
-
-AhBot.PriceMultiplier = 0.35
-AhBot.DefaultMinPrice = 20
-AhBot.PriceQualityMultiplier = 1.0
-AhBot.AlwaysAvailableMoney = 2000000
-AhBot.SendMail = 1
-
-# Intervals
-# The time between buying/selling items of the same type or category.
-# AhBot.ItemBuyMinInterval  = 600
-# AhBot.ItemBuyMinInterval  = 7200
-AhBot.ItemSellMinInterval = 60
-AhBot.ItemSellMaxInterval = 300
-# The maxium time 
-# AhBot.MaxSellInterval     = 28800
-
-#
-# Misc
-#
-
-#
-# Maximum items of a specific <category> the AH bot will sell at any time.
-# Quality or sub-type amounts are overrides, commented rows are defaults
-#
-# AhBot.MaxAuctionCount.<category> = <int>
-# AhBot.MaxAuctionCount.<category>.green = <int
-# AhBot.MaxAuctionCount.<category>.blue = <int>
-# AhBot.MaxAuctionCount.<category>.epic = <int>
-# Maximum of a specific itemtype or stack the AH bot will sell at any time.
-# AhBot.MaxItemTypeCount.<category> = <int>
-# AhBot.MaxItemTypeCount.<category>.white = <int>
-# AhBot.MaxItemTypeCount.<category>.green = <int>
-# AhBot.MaxItemTypeCount.<category>.blue = <int>
-# AhBot.MaxItemTypeCount.<category>.epic = <int>
-# AhBot.PriceMultiplier.Sell.<category> = <float>
-# AhBot.PriceMultiplier.Buy.<category> = <float>
-# AhBot.PricingStrategy.<category> = <strategy>
-
-# AhBot.MaxAuctionCount.equip = 5
-# AhBot.MaxItemTypeCount.equip = 1
-AhBot.MaxAuctionCount.equip.white = 500
-AhBot.MaxAuctionCount.equip.green = 500
-AhBot.MaxAuctionCount.equip.blue = 100
-AhBot.MaxAuctionCount.equip.epic = 10
-AhBot.MaxItemTypeCount.equip.white = 20
-AhBot.MaxItemTypeCount.equip.green = 10
-AhBot.MaxItemTypeCount.equip.blue = 5
-AhBot.MaxItemTypeCount.equip.epic = 2
-AhBot.PriceMultiplier.Sell.equip = 2.5
-AhBot.PriceMultiplier.Buy.equip = 2.5
-AhBot.PricingStrategy.equip = buyOnlyRare
-
-# AhBot.MaxAuctionCount.reagent = 5
-# AhBot.MaxItemTypeCount.reagent = 1
-AhBot.MaxAuctionCount.reagent.white = 6
-AhBot.MaxAuctionCount.reagent.green = 2
-
-# AhBot.MaxAuctionCount.quiver = 5
-# AhBot.MaxItemTypeCount.quiver = 1
-AhBot.MaxAuctionCount.quiver.white = 2
-AhBot.MaxAuctionCount.quiver.green = 1
-AhBot.MaxAuctionCount.quiver.blue = 1
-AhBot.MaxAuctionCount.quiver.epic = 1
-
-# AhBot.MaxAuctionCount.container = 5
-# AhBot.MaxItemTypeCount.container = 1
-AhBot.MaxAuctionCount.container.white = 6
-AhBot.MaxAuctionCount.container.green = 2
-AhBot.MaxAuctionCount.container.blue = 2
-AhBot.MaxAuctionCount.container.epic = 1
-
-# AhBot.MaxAuctionCount.recipe = 5
-# AhBot.MaxItemTypeCount.recipe = 1
-AhBot.MaxAuctionCount.recipe.white = 8
-AhBot.MaxAuctionCount.recipe.green = 4
-AhBot.MaxAuctionCount.recipe.blue = 2
-AhBot.MaxAuctionCount.recipe.epic = 2
-AhBot.PriceMultiplier.Sell.recipe = 5.0
-AhBot.PriceMultiplier.Buy.recipe = 5.0
-
-# AhBot.MaxAuctionCount.quest = 5
-# AhBot.MaxItemTypeCount.quest = 1
-AhBot.MaxAuctionCount.quest.white = 14
-AhBot.MaxAuctionCount.quest.green = 2
-AhBot.MaxAuctionCount.quest.blue = 2
-
-# AhBot.MaxAuctionCount.devices = 5
-# AhBot.MaxItemTypeCount.devices = 1
-AhBot.MaxAuctionCount.devices.white = 20
-AhBot.MaxAuctionCount.devices.green = 10
-AhBot.MaxAuctionCount.devices.blue = 4
-
-#
-# Consumables
-#
-
-# AhBot.MaxAuctionCount.consumables = 5
-# AhBot.MaxItemTypeCount.consumables = 10
-
-AhBot.MaxAuctionCount.consumables.alchemy.white = 20
-AhBot.MaxAuctionCount.consumables.alchemy.green = 10
-AhBot.MaxAuctionCount.consumables.alchemy.blue = 5
-AhBot.PriceMultiplier.Sell.consumables.alchemy = 2.0
-AhBot.PriceMultiplier.Buy.consumables.alchemy = 2.0
-
-AhBot.MaxAuctionCount.consumables.scroll.white = 10
-AhBot.MaxAuctionCount.consumables.scroll.green = 5
-AhBot.MaxAuctionCount.consumables.scroll.blue = 2
-
-AhBot.MaxAuctionCount.consumables.food.white = 40
-
-AhBot.MaxAuctionCount.consumables.bandage.white = 10
-
-AhBot.MaxAuctionCount.consumables.enchant.white = 10
-AhBot.MaxAuctionCount.consumables.enchant.green = 5
-
-
-
-#
-# Trade
-#
-
-# AhBot.MaxAuctionCount.trade = 5
-# AhBot.MaxItemTypeCount.trade = 5
-
-AhBot.MaxAuctionCount.trade.jewelcrafting.white = 100
-AhBot.MaxAuctionCount.trade.jewelcrafting.green = 20
-AhBot.MaxAuctionCount.trade.jewelcrafting.blue = 6
-AhBot.MaxAuctionCount.trade.jewelcrafting.epic = 1
-
-AhBot.MaxAuctionCount.trade.firstaid.white = 50
-AhBot.MaxAuctionCount.trade.tailoring.white = 250
-AhBot.MaxAuctionCount.trade.tailoring.green = 100
-AhBot.MaxAuctionCount.trade.tailoring.blue = 6
-
-AhBot.MaxAuctionCount.trade.skinning.white = 250
-AhBot.MaxAuctionCount.trade.leatherworking.white = 100
-AhBot.MaxAuctionCount.trade.leatherworking.green = 20
-AhBot.MaxAuctionCount.trade.leatherworking.blue = 6
-
-AhBot.MaxAuctionCount.trade.alchemy.white = 100
-AhBot.MaxAuctionCount.trade.alchemy.green = 14
-AhBot.MaxAuctionCount.trade.herbalism.white = 250
-AhBot.MaxAuctionCount.trade.herbalism.green = 100
-
-AhBot.MaxAuctionCount.trade.cooking.white = 40
-AhBot.MaxAuctionCount.trade.fishing.white = 40
-
-AhBot.MaxAuctionCount.trade.mining.white = 250
-AhBot.MaxAuctionCount.trade.blacksmithing.white = 100
-AhBot.MaxAuctionCount.trade.blacksmithing.green = 20
-AhBot.MaxAuctionCount.trade.blacksmithing.blue = 6
-
-AhBot.MaxAuctionCount.trade.engineering.white = 20
-AhBot.MaxAuctionCount.trade.engineering.green = 10
-AhBot.MaxAuctionCount.trade.engineering.blue = 4
-
-AhBot.MaxAuctionCount.trade.enchanting.white = 40
-AhBot.MaxAuctionCount.trade.enchanting.green = 20
-AhBot.MaxAuctionCount.trade.enchanting.blue = 20
-
+# CMaNGOS-style auction supplier/buyer, adapted to Turtle native transactions.
+# Old AhBot category/maximum-count settings no longer apply.
+# This template matches the sampled Classic market settings (2026-09-06).
+# Random-bot characters own stock; real player accounts are never synthetic bidders.
+[AhBotConf]
+ConfVersion = 2021011201
+AhBot.Enabled = 1
+AuctionHouseBot.Chance.Sell = 10
+AuctionHouseBot.Chance.Buy = 10
+# Four numbers: template selections min/max, repeat loot rolls min/max.
+# A negative selection minimum makes an entire source probabilistic.
+AuctionHouseBot.Loot.Creature.Normal = 30,35,8,12
+AuctionHouseBot.Loot.Creature.Rare = 0,10,1,1
+AuctionHouseBot.Loot.Creature.Elite = 30,34,1,2
+AuctionHouseBot.Loot.Creature.RareElite = -10,2,1,1
+AuctionHouseBot.Loot.Creature.WorldBoss = -20,1,1,1
+AuctionHouseBot.Loot.Disenchant = 10,12,1,1
+AuctionHouseBot.Loot.Fishing = 3,5,30,40
+AuctionHouseBot.Loot.Gameobject = 13,16,7,11
+AuctionHouseBot.Loot.Skinning = 3,5,50,50
+# Craft selections min/max; quantity as percent of the item's maximum stack.
+AuctionHouseBot.Items.Profession = 80,90,0,50
+# Percentages by CMaNGOS item class (17 columns; Turtle uses classes 0-15).
+AuctionHouseBot.Value.Poor = 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+AuctionHouseBot.Value.Normal = 100,100,0,100,0,100,100,100,0,100,0,100,100,100,0,100,100
+AuctionHouseBot.Value.Uncommon = 200,200,200,200,200,200,200,200,0,200,0,200,200,200,0,200,200
+AuctionHouseBot.Value.Rare = 400,400,400,400,400,400,400,400,0,400,0,400,400,400,0,400,400
+AuctionHouseBot.Value.Epic = 800,800,800,800,800,800,800,800,0,800,0,800,800,800,0,800,800
+AuctionHouseBot.Value.Legendary = 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+AuctionHouseBot.Value.Artifact = 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+AuctionHouseBot.Value.Vendor = 1
+AuctionHouseBot.Value.Variance = 10
+AuctionHouseBot.Bid.Min = 75
+AuctionHouseBot.Bid.Max = 90
+AuctionHouseBot.Time.Min = 2
+AuctionHouseBot.Time.Max = 24
+# Applied to buyer valuation; zero disables profitable bids/buyouts.
+AuctionHouseBot.Buy.Value = 80
+AuctionHouseBot.Level.DynamicMaxRequired = 0
+AuctionHouseBot.Level.IgnoreGmAccounts = 0
+AuctionHouseBot.Level.DynamicRefreshInterval = 10
+AuctionHouseBot.Level.MaxRequired = 60
+# Cooperative world-owner maintenance budget, not a stock cap.
+# Single native operations are indivisible; status reports observed slice costs.
+AuctionHouseBot.Work.BudgetUs = 2000
+AuctionHouseBot.Work.MaxOperations = 32
+# Commands: .ahbot reload; .ahbot rebuild [all]; .ahbot status [all];
+# .ahbot item <id> [value [chance [min [max]]]]; .ahbot item <id> reset
+# Rebuild preserves player bids unless 'all', uses native expiry, then simulates
+# average stock age with CMaNGOS's mean-duration * 90 sell-only checks.
+# Resulting stock volume depends on Turtle loot/crafting content and drop rates.

@@ -142,6 +142,10 @@ private:
     // the moment one is present.
     static bool BotOnly(Group* group);
 
+    // Volumes only the leader may fire (their script seals the area behind the
+    // party, e.g. the Ring of Law arena gates).
+    static bool LeaderOnlyVolume(uint32 entry);
+
     std::vector<Volume> _volumes;
     uint32 _relayed = 0;
     bool _armed = false;

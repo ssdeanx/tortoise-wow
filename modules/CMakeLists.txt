@@ -7,6 +7,16 @@ set(MODULES_DYNAMIC_MODULES)
 set(MODULES_DYNAMIC_PROJECTS)
 set(MODULES_ENABLED_MODULES)
 
+# mod-playerbots alone is large enough that folding it into the shared
+# `modules` static archive pushes that archive's COFF size past the 4GB
+# LNK1248 limit (full type/line debug info per object, MSVC Release build).
+# It gets its own static library instead - still fully static-linked into
+# mangosd (no export/import boundary, since core and playerbots call into
+# each other directly with no dllexport plumbing), just a second archive.
+set(MODULES_SPLIT_STATIC_MODULES mod-playerbots)
+set(MODULES_PLAYERBOTS_STATIC_SOURCES)
+set(MODULES_PLAYERBOTS_PUBLIC_INCLUDES)
+
 if(MODULES STREQUAL "dynamic")
   set(MODULES_DEFAULT_LINKAGE "dynamic")
 elseif(MODULES STREQUAL "static")
@@ -167,10 +177,17 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
   if(MODULE_LINKAGE STREQUAL "static")
     CollectModuleSourceFiles("${MODULE_SOURCE_PATH}" MODULE_SOURCE_FILES)
     CollectModuleIncludeDirectories("${MODULE_SOURCE_PATH}" MODULE_INCLUDE_DIRS)
-    list(APPEND MODULES_STATIC_SOURCES ${MODULE_SOURCE_FILES})
-    list(APPEND MODULES_STATIC_SOURCES ${MODULE_EXTRA_SCRIPT_SOURCES})
-    list(APPEND MODULES_PUBLIC_INCLUDES ${MODULE_INCLUDE_DIRS})
-    list(APPEND MODULES_PUBLIC_INCLUDES ${MODULE_EXTRA_SCRIPT_INCLUDE_DIRS})
+    if(SOURCE_MODULE IN_LIST MODULES_SPLIT_STATIC_MODULES)
+      list(APPEND MODULES_PLAYERBOTS_STATIC_SOURCES ${MODULE_SOURCE_FILES})
+      list(APPEND MODULES_PLAYERBOTS_STATIC_SOURCES ${MODULE_EXTRA_SCRIPT_SOURCES})
+      list(APPEND MODULES_PLAYERBOTS_PUBLIC_INCLUDES ${MODULE_INCLUDE_DIRS})
+      list(APPEND MODULES_PLAYERBOTS_PUBLIC_INCLUDES ${MODULE_EXTRA_SCRIPT_INCLUDE_DIRS})
+    else()
+      list(APPEND MODULES_STATIC_SOURCES ${MODULE_SOURCE_FILES})
+      list(APPEND MODULES_STATIC_SOURCES ${MODULE_EXTRA_SCRIPT_SOURCES})
+      list(APPEND MODULES_PUBLIC_INCLUDES ${MODULE_INCLUDE_DIRS})
+      list(APPEND MODULES_PUBLIC_INCLUDES ${MODULE_EXTRA_SCRIPT_INCLUDE_DIRS})
+    endif()
     list(APPEND MODULES_STATIC_MODULES "${SOURCE_MODULE}")
   elseif(MODULE_LINKAGE STREQUAL "dynamic")
     CollectModuleSourceFiles("${MODULE_SOURCE_PATH}" MODULE_SOURCE_FILES)
@@ -235,6 +252,22 @@ target_link_libraries(modules
     game)
 
 set_target_properties(modules PROPERTIES FOLDER "modules")
+
+if(MODULES_PLAYERBOTS_STATIC_SOURCES)
+  add_library(modules_playerbots STATIC
+    ${MODULES_PLAYERBOTS_STATIC_SOURCES})
+
+  target_include_directories(modules_playerbots
+    PUBLIC
+      ${MODULES_COMMON_INCLUDES}
+      ${MODULES_PLAYERBOTS_PUBLIC_INCLUDES})
+
+  target_link_libraries(modules_playerbots
+    PUBLIC
+      game)
+
+  set_target_properties(modules_playerbots PROPERTIES FOLDER "modules")
+endif()
 
 ProcessModuleConfigCopies(modules)
 

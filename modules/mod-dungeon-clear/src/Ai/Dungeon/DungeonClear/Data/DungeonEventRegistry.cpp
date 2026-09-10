@@ -40,6 +40,12 @@ EventBuilder& EventBuilder::Conditional(EventCondition condition)
     return *this;
 }
 
+EventBuilder& EventBuilder::CompletedWhen(EventCondition completed)
+{
+    _ev.completedWhen = std::move(completed);
+    return *this;
+}
+
 EventBuilder& EventBuilder::Optional()
 {
     _ev.required = false;
@@ -184,6 +190,13 @@ EventBuilder& EventBuilder::WhileHolding(uint32 hookId)
 {
     if (!_ev.steps.empty())
         _ev.steps.back().hookId = hookId;
+    return *this;
+}
+
+EventBuilder& EventBuilder::EngageWhileHolding(float radius)
+{
+    if (!_ev.steps.empty())
+        _ev.steps.back().holdEngageRadius = radius;
     return *this;
 }
 
@@ -424,7 +437,10 @@ namespace
             RegisterSteamvaultEvents(t);
             RegisterArcatrazEvents(t);
             RegisterSethekkHallsEvents(t);
+#ifndef MANGOSBOT_ZERO   // TBC Black Morass (map 269); Turtle WoW has its own
+                         // level-60 dungeon on that map id (token black-morass-tw)
             RegisterBlackMorassEvents(t);
+#endif
             RegisterUtgardeKeepEvents(t);
             RegisterNexusEvents(t);
             RegisterAzjolNerubEvents(t);

@@ -264,7 +264,12 @@ void AccountMgr::SetSecurity(uint32 accId, AccountTypes sec)
 bool AccountMgr::GetName(uint32 acc_id, std::string &name)
 {
     auto itr = m_accountData.find(acc_id);
-    if (itr != m_accountData.end())
+    // Only trust a cached name when it is actually populated. Several loaders
+    // (LastIP on login, bans, e-mail, ...) create an m_accountData entry via
+    // operator[] with an empty Username; GetName then returned that empty name,
+    // so ChangePassword hashed SHA1(":"+pass) and silently locked the account
+    // out while reporting success. Fall through to the DB, which has the name.
+    if (itr != m_accountData.end() && !itr->second.Username.empty())
     {
         name = itr->second.Username;
         return true;

@@ -1669,8 +1669,16 @@ void GameObject::Use(Unit* user)
                 {
                     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Goober ScriptStart id %u for GO entry %u (GUID %u).", info->goober.eventId, GetEntry(), GetGUIDLow());
 
-                    if (!sScriptMgr.OnProcessEvent(info->goober.eventId, player, this, true))
+                    bool const handledByScript = sScriptMgr.OnProcessEvent(info->goober.eventId, player, this, true);
+                    if (!handledByScript)
                         GetMap()->ScriptsStart(sEventScripts, info->goober.eventId, player->GetObjectGuid(), GetObjectGuid());
+                    // INFO, deliberately: a bot party rang Zul'Farrak's gong (141832, event
+                    // 2488) and Gahz'rilla never appeared, with nothing between the click and
+                    // the summon visible in the journal (2026-09-05).
+                    sLog.outInfo("[GO] goober %u (%s) used by %s -> event %u %s, lootState %u, cooldownTime %u",
+                                 GetEntry(), GetName(), player->GetName(), info->goober.eventId,
+                                 handledByScript ? "handled by a C++ script" : "started as a DB event script",
+                                 uint32(getLootState()), uint32(m_cooldownTime));
                 }
                 else
                     GetMap()->ScriptsStart(sGameObjectScripts, GetGUIDLow(), user->GetObjectGuid(), GetObjectGuid());
@@ -1890,6 +1898,7 @@ void GameObject::Use(Unit* user)
             SetGoState(GO_STATE_ACTIVE);
 
             spellId = info->summoningRitual.spellId;
+            sLog.outInfo("[GO] ritual %u complete: %u unique users, casting spell %u by %s", GetEntry(), GetUniqueUseCount(), spellId, spellCaster ? spellCaster->GetName() : "nobody");
 
             // spell have reagent and mana cost but it not expected use its
             // it triggered spell in fact casted at currently channeled GO
@@ -2119,7 +2128,13 @@ void GameObject::Use(Unit* user)
     else
         targets.setUnitTarget(user);
 
-    spell->prepare(std::move(targets));
+    SpellCastResult const prepared = spell->prepare(std::move(targets));
+    // Rituals only: with bot parties the altar completed and nothing followed
+    // (2026-09-04, Uldaman keepers). The result code names the check that
+    // refused the cast.
+    if (GetGoType() == GAMEOBJECT_TYPE_SUMMONING_RITUAL && prepared != SPELL_CAST_OK)
+        sLog.outInfo("[GO] ritual %u spell %u refused: SpellCastResult %u (caster %s)",
+                     GetEntry(), spellId, uint32(prepared), spellCaster ? spellCaster->GetName() : "?");
 }
 
 // overwrite WorldObject function for proper name localization

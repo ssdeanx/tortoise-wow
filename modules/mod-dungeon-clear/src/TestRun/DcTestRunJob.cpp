@@ -44,19 +44,85 @@
 #include "Ai/Dungeon/DungeonClear/Data/DungeonBossInfo.h"
 #include "Ai/Dungeon/DungeonClear/DcPullContext.h"
 #include "Ai/Dungeon/DungeonClear/DcValueKeys.h"
+#include "Ai/Dungeon/DungeonClear/Util/DungeonEventExecutor.h"
+#include "Ai/Dungeon/DungeonClear/Util/DcLeaderSignal.h"
 #include "Ai/Dungeon/DungeonClear/Settings/DcSettings.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcRun.h"
 #include "Ai/Dungeon/DungeonClear/Util/DcTargeting.h"
 #include "TestRun/DcDiagSnapshot.h"
 #include "TestRun/DcTestComp.h"
+#include "Config.h"
+#include <cstdlib>
+#include <fstream>
 
 // Characters that took a claim, were handed to AddPlayerBot and never entered
 // the world. The claim walks the player cache in guid order, so the first
 // eligible character of a class is picked run after run; when that one cannot
 // log in, every run needing the class fails identically. Live 2026-09-04
 // 08:22-09:52: guid 886 "failed to enter world" 7 times, 7 of 18 ladder starts
-// lost at spawning_bots. Session-local on purpose - a restart re-tries it.
+// lost at spawning_bots.
+//
+// Was session-local on purpose so a restart re-tries it. Measured 2026-09-05:
+// the same guid 886 (Sirina, the character the auction bot lists its wares
+// under) failed 14 times in 14 restarts - the retry never succeeds and every
+// restart costs one run slot for 180 s. So the set is now PERSISTED next to
+// the roster file (dc_login_failed.txt, one guid per line, `#` comments),
+// loaded on first use and appended on every new failure. Delete a line there
+// after repairing the character to let the pool try it again.
 static std::unordered_set<uint32> g_loginFailedGuids;
+
+namespace
+{
+    std::string LoginFailedGuidsFile()
+    {
+        std::string const roster = sConfig.GetStringDefault("DungeonClear.RosterFile", "");
+        if (roster.empty())
+            return "";
+        std::string::size_type const slash = roster.find_last_of("/\\");
+        std::string const dir = slash == std::string::npos ? std::string(".") : roster.substr(0, slash);
+        return dir + "/dc_login_failed.txt";
+    }
+
+    void LoadLoginFailedGuidsOnce()
+    {
+        static bool loaded = false;
+        if (loaded)
+            return;
+        loaded = true;
+        std::string const path = LoginFailedGuidsFile();
+        if (path.empty())
+            return;
+        std::ifstream in(path);
+        if (!in.is_open())
+            return;
+        std::string line;
+        uint32 n = 0;
+        while (std::getline(in, line))
+        {
+            std::string::size_type const hash = line.find('#');
+            if (hash != std::string::npos)
+                line.erase(hash);
+            uint32 const guid = static_cast<uint32>(std::strtoul(line.c_str(), nullptr, 10));
+            if (guid && g_loginFailedGuids.insert(guid).second)
+                ++n;
+        }
+        if (n)
+            LOG_INFO("playerbots.dungeonclear",
+                     "TESTRUN login blacklist: {} character(s) from {} will not be claimed", n, path);
+    }
+
+    void RememberLoginFailedGuid(uint32 guid, std::string const& runId, std::string const& role)
+    {
+        std::string const path = LoginFailedGuidsFile();
+        if (path.empty())
+            return;
+        std::ofstream out(path, std::ios::app);
+        if (!out.is_open())
+            return;
+        out << guid << "    # " << role << " slot, never entered the world in run " << runId
+            << " (" << TimeToTimestampStr(time(nullptr)) << ")\n";
+    }
+}
 
 namespace
 {
@@ -379,6 +445,7 @@ std::unique_ptr<DcTestRunJob> DcTestRunJob::Create(Player* gm, DcTestDungeonRegi
             // to a run's minutes, and _reservedGuids covers run-vs-run).
             if (rotationGuids.count(cacheEntry.first))
                 continue;
+            LoadLoginFailedGuidsOnce();
             if (g_loginFailedGuids.count(cacheEntry.first))
                 continue;
             if ((Player::TeamForRace(uint8(data->uiRace)) == ALLIANCE) != isAlliance)
@@ -824,10 +891,14 @@ void DcTestRunJob::TickSpawning()
             if (bot && bot->IsInWorld() && GET_PLAYERBOT_AI(bot))
                 continue;
             if (slot.guid && g_loginFailedGuids.insert(slot.guid.GetCounter()).second)
+            {
+                RememberLoginFailedGuid(slot.guid.GetCounter(), _record.runId, slot.role);
                 LOG_INFO("playerbots.dungeonclear",
                          "TESTRUN {} guid {} ({} slot) never entered the world — excluded from "
-                         "claims until restart; check the character row (map, position, online flag)",
+                         "claims (persisted in dc_login_failed.txt); check the character row "
+                         "(map, position, online flag)",
                          _record.runId, slot.guid.GetCounter(), slot.role);
+            }
         }
         FailSetup("bots did not finish logging in (addclass pool empty, "
                   "maxAddedBots cap, or login failure — see server log)");
@@ -1585,10 +1656,13 @@ void DcTestRunJob::SweepPartyGeometry()
                                 // to the tank instead; if it cannot get
                                 // there, the run fails honestly.
                                 LOG_INFO("playerbots.dungeonclear",
-                                         "TESTRUN {} distance fence: {} is {}yd behind — sending it "
+                                         "TESTRUN {} distance fence: {} is {}yd behind at "
+                                         "{:.0f},{:.0f},{:.0f} (tank at {:.0f},{:.0f},{:.0f}) — sending it "
                                          "running to the tank",
                                          _record.runId, bot->GetName(),
-                                         int(tank->GetDistance(bot)));
+                                         int(tank->GetDistance(bot)),
+                                         bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),
+                                         tank->GetPositionX(), tank->GetPositionY(), tank->GetPositionZ());
                                 bot->GetMotionMaster()->Clear();
                                 bot->GetMotionMaster()->MovePoint(0, tank->GetPositionX(),
                                                                   tank->GetPositionY(),
@@ -1722,7 +1796,19 @@ void DcTestRunJob::TickStarting()
 
     // Retry `dc on` each tick until the enabled flag sticks (roster/context
     // timing) or the stage times out.
-    tankAI->DoSpecificAction("dc on", Event("dc", "", FindGm()), true);
+    bool const dcOnOk = tankAI->DoSpecificAction("dc on", Event("dc", "", FindGm()), true);
+    if (!dcOnOk && (!_dcOnFalseLoggedAt || getMSTimeDiff(_dcOnFalseLoggedAt, getMSTime()) > 10000))
+    {
+        // "dc on did not take" left no trace 3x a night: neither DcRefuse nor the
+        // not-leader branch logged, so the action never ran at all. Name the
+        // state the tank is in when DoSpecificAction says no (2026-09-05).
+        _dcOnFalseLoggedAt = getMSTime();
+        LOG_INFO("playerbots.dungeonclear",
+                 "TESTRUN {} dc on: DoSpecificAction returned false for {} (inWorld {}, map {}, teleporting {}, group {}, dcLeader {}, gm {}, stage {}s)",
+                 _record.runId, tank->GetName(), tank->IsInWorld() ? 1 : 0, tank->GetMapId(),
+                 tank->IsBeingTeleported() ? 1 : 0, tank->GetGroup() ? 1 : 0,
+                 DcLeaderSignal::IsDungeonClearLeader(tank) ? 1 : 0, FindGm() ? 1 : 0, _stageMs / 1000);
+    }
     if (DcRun::Of(ctx).enabled)
     {
         _lastMask = DcEncounterMask::Get(tank->FindMap());
@@ -2151,6 +2237,24 @@ void DcTestRunJob::TickMonitoring(uint32 dt)
                 progressed = true;
             }
             _lastMask = mask;
+        }
+        // A scripted encounter advancing (Zul'Farrak's pyramid phases, a wave
+        // counter) and an event step advancing are HARD progress too. Without
+        // this, a party holding the temple ramp through the waves closed no
+        // distance and flipped no bit for the whole encounter, and the cap
+        // ended five runs mid-event (arch16, 2026-09-05).
+        {
+            uint32 sig = 2166136261u;
+            if (InstanceData* inst = tank->FindMap() ? tank->FindMap()->GetInstanceData() : nullptr)
+                for (uint32 i = 0; i < 10; ++i)
+                    sig = (sig ^ inst->GetData(i)) * 16777619u;
+            if (_lastInstanceDataSig && sig != _lastInstanceDataSig)
+                progressed = true;
+            _lastInstanceDataSig = sig;
+            uint32 const evMs = ctx->GetValue<DungeonEventProgress&>(DcKey::EventProgress)->Get().progressMs;
+            if (_lastEventProgressMs && evMs != _lastEventProgressMs)
+                progressed = true;
+            _lastEventProgressMs = evMs;
         }
         if (anchors > _lastAnchors)
         {

@@ -47,6 +47,14 @@
 // instance at all. A rare is never an objective. drop wins over everything
 // else, including an order line in the same file.
 //
+//     keep   <entry> [<entry> ...]     protect entries from a COMPILED removal
+//
+// `keep` is the counterpart to a BossRosterPatch::remove in the module
+// (MaraudonEvents.cpp takes Rotgrip out because he lives in open water).
+// The owner decides what is an objective; `keep 13596` puts such a boss
+// back without a rebuild. `drop` still wins over `keep` - a rare stays out
+// no matter what (2026-09-05).
+//
 // An `order` line credits its entry as well, so a boss the curated list never
 // carried needs nothing but the order line.
 //
@@ -67,6 +75,10 @@ namespace DcRosterFile
     // free in any sense that matters.
     std::vector<uint32> CreditEntries();
     std::vector<DcBossOrderRow> OrderRows();
+
+    // True when the file protects `entry` from a compiled BossRosterPatch::remove
+    // (and does not also drop it).
+    bool IsKept(uint32 entry);
 
     // Re-read the file. Returns the number of accepted directives; `error`, if
     // given, receives the first complaint.

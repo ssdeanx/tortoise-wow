@@ -134,6 +134,13 @@ void WorldSession::SendAuctionBidderNotification(AuctionEntry* auction, bool won
 // this void causes on client to display: "Your auction sold"
 void WorldSession::SendAuctionOwnerNotification(AuctionEntry* auction, bool sold)
 {
+    // A bot owner (AHBot / playerbots) has no client and no socket. Building and
+    // sending this client-UI packet for a socketless session crashed the world
+    // thread when AHBot-owned auctions expired (ExpireAuction -> SendAuctionExpiredMail
+    // -> here). Real players still get notified; bots do not need it.
+    if (!GetSocket())
+        return;
+
     WorldPacket data(SMSG_AUCTION_OWNER_NOTIFICATION, (7 * 4));
     data << uint32(auction->Id);
     data << uint32(auction->bid);                           // if 0, client shows ERR_AUCTION_EXPIRED_S, else ERR_AUCTION_SOLD_S (works only when guid==0)
@@ -174,38 +181,9 @@ void WorldSession::SendAuctionRemovedNotification(AuctionEntry* auction)
 
 
 // this function sends mail to old bidder
-void WorldSession::SendAuctionOutbiddedMail(AuctionEntry *auction)
+void WorldSession::SendAuctionOutbiddedMail(AuctionEntry* auction)
 {
-    ObjectGuid oldBidder_guid = ObjectGuid(HIGHGUID_PLAYER, auction->bidder);
-    Player *oldBidder = sObjectMgr.GetPlayer(oldBidder_guid);
-
-    uint32 oldBidder_accId = 0;
-    if (!oldBidder)
-        oldBidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(oldBidder_guid);
-
-    bool isHardcore = false;
-
-    if (oldBidder)
-        isHardcore = oldBidder->IsHardcore();
-    else
-        isHardcore = IsPlayerHardcore(auction->bidder);
-
-    if (isHardcore)
-        return; // let bid silently expire, don't mail money to now-HC chars.
-
-    // old bidder exist
-    if (oldBidder || oldBidder_accId)
-    {
-        std::ostringstream msgAuctionOutbiddedSubject;
-        msgAuctionOutbiddedSubject << auction->itemTemplate << ":0:" << AUCTION_OUTBIDDED;
-
-        if (oldBidder)
-            oldBidder->GetSession()->SendAuctionBidderNotification(auction, false);
-
-        MailDraft(msgAuctionOutbiddedSubject.str())
-        .SetMoney(auction->bid)
-        .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
-    }
+    sAuctionMgr.SendAuctionOutbiddedMail(auction);
 }
 
 // this function sends mail, when auction is cancelled to old bidder
@@ -690,6 +668,13 @@ public:
             Player *player = sess->GetPlayer();
             if (!player || !player->IsInWorld())
                 return;
+
+            // Auction entries and their raw Item pointers form one read
+            // snapshot. Keep both native indexes locked until the packet is
+            // fully built; otherwise a map-owned buyout/expiry can erase and
+            // destroy an Item immediately after GetAItem returns.
+            AuctionHouseObject::Guard auctionGuard(auctionHouse->GetLock());
+            AuctionHouseMgr::ItemGuard itemGuard(sAuctionMgr.GetItemsLock());
 
             WorldPacket data(0, 12);
             uint32 count = 0;

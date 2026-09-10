@@ -61,6 +61,11 @@ bool ProcessEventId_event_awaken_stone_keeper(uint32 eventId, Object* source, Ob
     if (!target)
         return true;
 
+    // INFO, deliberately: with bot parties the ritual completed at the altar
+    // while the keepers stayed stoned, and nothing between the third click
+    // and this handler was visible in the log (2026-09-04).
+    sLog.outInfo("[ULD] awaken_stone_keeper event %u from %s (target %s)", eventId,
+                 ((Player*)source)->GetName(), target ? "set" : "null");
     if (ScriptedInstance* instance = dynamic_cast<ScriptedInstance*>(((Player*)source)->GetInstanceData()))
         instance->SetData(ULDAMAN_ENCOUNTER_STONE_KEEPERS, IN_PROGRESS);
 

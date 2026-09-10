@@ -1,0 +1,86 @@
+-- ==============================================
+-- FILE: disenchant_ids_on_undisenchantable_items.sql
+-- GENERATED: 20260906174121
+-- ==============================================
+-- Four items carry a disenchant_id they can never use:
+--
+--     Item (Entry: 1973) has wrong item class (15) for disenchanting, remove disenchanting loot id.
+--     Item (Entry: 4143) has wrong item class (9) for disenchanting, remove disenchanting loot id.
+--     Item (Entry: 1973)/(61549) ... class (11) ...
+--     Item (Entry: 9400) has wrong quality (1) for disenchanting, remove disenchanting loot id.
+--
+-- ObjectMgr clears the id at load, so nothing is disenchantable either way - this
+-- only stops the data claiming otherwise.
+--
+--     1973  Orb of Deception       class 15 Miscellaneous  - not disenchantable
+--     4143  Tome of Conjure Food II class 9 Recipe         - not disenchantable
+--     61549 Swiftfeather Quiver    class 11 Quiver         - not disenchantable
+--     9400  Baelog's Shortbow      weapon, but quality 1   - needs uncommon or better
+--
+-- Where the values came from: 20260802210000_world.sql ("Restore the disenchant ids
+-- this database had lost") refilled 8404 items from sql/base after disenchanting had
+-- stopped working entirely. It took every value from that file and overwrote nothing,
+-- so it was right by its own rule - sql/base is simply stale for these four.
+-- Confirmed with its author: the restore was the quick way out of a broken feature
+-- and was not checked item by item.
+--
+-- 1973 is the clearest case. sql/base still describes it as class 4 Armor with
+-- inventory_type 12 (trinket), where a disenchant id belongs. Penqle's 20260505222630
+-- ("Updated items to 1.18.1") reclassified it to class 15 with inventory_type 0 - not
+-- equippable - and cleared the id along with it. The 2026-08-02 restore then refilled
+-- it from base, which had never been updated to match.
+--
+-- Turtle's own item database confirms the endpoint: Orb of Deception is filed under
+-- Miscellaneous -> Junk, its tooltip reads "Use: Adds a toy to the player's toy
+-- collection", and it lists Disenchant ID: 0 (octowow.st/db/?item=1973). It is a toy,
+-- not a trinket, which is why it has no enchanting yield to give.
+--
+-- The same values are being removed from sql/base in this change, so a future restore
+-- from that file cannot bring them back.
+UPDATE `item_template` SET `disenchant_id` = 0
+WHERE `entry` IN (1973, 4143, 9400, 61549) AND `disenchant_id` <> 0;
+
+-- ==============================================
+-- FILE: gameobject_944_linked_trap.sql
+-- ==============================================
+-- Gameobject 944 "Place centrale de DarrowShire" is a GAMEOBJECT_TYPE_SPELL_FOCUS,
+-- whose data2 names a linked trap. It holds 1, and gameobject 1 is not a trap:
+--
+--     Gameobject (Entry: 944 GoType: 8) have data2=1 but GO (Entry 1) have not
+--     GAMEOBJECT_TYPE_TRAP (6) type.
+--
+-- No trap fires today and none will after this; the object is spawned once and the
+-- reference has been wrong since the first commit in this repository, so there is no
+-- intended trap to recover. Cleared here and in sql/base.
+UPDATE `gameobject_template` SET `data2` = 0
+WHERE `entry` = 944 AND `data2` = 1;
+
+-- ==============================================
+-- FILE: item_template_entry_zero.sql
+-- ==============================================
+-- item_template carries a row with entry 0, every column empty:
+--
+--     Item (Entry: 0) has wrong value in stackable (0), replace by default 1.
+--
+-- It is the last tuple of the REPLACE in 20260505222630_world.sql ("Updated items
+-- to 1.18.1"), written as all NULLs and stored as zeroes - the trailing blank row
+-- an export leaves behind. sql/base has no such row; it appears only after that
+-- migration runs, which is why a database built from base alone looks clean until
+-- the updates are applied.
+--
+-- Entry 0 is not a valid item id, and nothing references it: checked every column
+-- in tw_world and tw_char that can hold one, and no character inventory, mail,
+-- auction, guild bank, loot or deleted-item row has ever held entry 0.
+--
+-- It is not merely untidy. ObjectMgr::GetItemPrototype does a plain map lookup with
+-- no guard on 0, and this row is loaded into that map - so GetItemPrototype(0)
+-- returns a valid pointer to an empty prototype instead of nullptr. Item::CreateItem
+-- checks only `count < 1` and then trusts that lookup to reject unknown ids, so with
+-- this row present a stray 0 anywhere upstream creates a phantom item rather than
+-- failing safely. Callers guard the sentinel themselves today (quest rewards test
+-- `if (pQuest->RewItemId[i])` before use), which is exactly what makes one missing
+-- guard enough. Removing the row restores the fail-safe at the funnel.
+--
+-- The source migration is deliberately left alone: it has been applied and recorded
+-- on live databases, and changing its content would change its hash.
+DELETE FROM `item_template` WHERE `entry` = 0;

@@ -1,0 +1,42 @@
+[
+  {
+    "actor": 50319,
+    "field": "ReqCreatureOrGOId1",
+    "quest": 50319
+  },
+  {
+    "actor": 50320,
+    "field": "ReqCreatureOrGOId1",
+    "quest": 50320
+  },
+  {
+    "actor": 50329,
+    "field": "ReqCreatureOrGOId2",
+    "quest": 50319
+  },
+  {
+    "actor": 50330,
+    "field": "ReqCreatureOrGOId2",
+    "quest": 50320
+  },
+  {
+    "actor": 50339,
+    "field": "ReqCreatureOrGOId3",
+    "quest": 50319
+  },
+  {
+    "actor": 50340,
+    "field": "ReqCreatureOrGOId3",
+    "quest": 50320
+  },
+  {
+    "actor": 50349,
+    "field": "ReqCreatureOrGOId4",
+    "quest": 50319
+  },
+  {
+    "actor": 50350,
+    "field": "ReqCreatureOrGOId4",
+    "quest": 50320
+  }
+]

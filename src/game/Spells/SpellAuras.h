@@ -24,8 +24,10 @@
 #define MANGOS_SPELLAURAS_H
 
 #include "SpellAuraDefines.h"
+#include "UnitDefines.h"
 #include "DBCEnums.h"
 #include "ObjectGuid.h"
+#include "UnitDefines.h"
 #include <vector>
 
 /**
@@ -76,8 +78,10 @@ struct HeartBeatData
 };
 
 class Unit;
+class Player;
 class Item;
 class WorldObject;
+class DynamicObject;
 class SpellEntry;
 struct AuraScript;
 struct SpellModifier;
@@ -146,6 +150,7 @@ class SpellAuraHolder
         // FIN NOSTALRIUS
 
         bool IsPermanent() const { return m_permanent; }
+        bool CanDeferIdleUpdate() const;
         void SetPermanent(bool permanent) { m_permanent = permanent; }
         bool IsPassive() const { return m_isPassive; }
         void SetPassive(bool on) { m_isPassive = on; }
@@ -237,7 +242,7 @@ class SpellAuraHolder
 
         void UpdateAuraDuration() const;
 
-        void SetAura(uint32 slot, bool remove) { m_target->SetUInt32Value(UNIT_FIELD_AURA + slot, remove ? 0 : GetId()); }
+        void SetAura(uint32 slot, bool remove);
         void SetAuraFlag(uint32 slot, bool add);
         void SetAuraLevel(uint32 slot, uint32 level);
 

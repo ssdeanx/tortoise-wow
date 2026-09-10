@@ -223,6 +223,10 @@ struct EventStep
     uint32 hookId{0};        // Custom -> ObjectiveHookRegistry; on a garrison MoveTo,
                              // the hook to re-run each tick WHILE it holds (see
                              // EventBuilder::WhileHolding). 0 => none.
+    // Garrison MoveTo only. > 0: while the hold waits on its gate, the tank
+    // engages the nearest hostile within this radius of the hold point (see
+    // EventBuilder::EngageWhileHolding). The gate alone still ends the step.
+    float holdEngageRadius{0.0f};
 
     // --- EscortCreature only ----------------------------------------------
     // The escortee (creatureEntry) is the NPC to protect; `radius` is the grid
@@ -309,6 +313,13 @@ struct DungeonEvent
     EventActivation activation{EventActivation::Anchored};
     uint32 orderIndex{0};    // Anchored: the objective's encounter slot (doc only)
     EventCondition condition{};  // Conditional: the per-tick activation predicate
+    // Conditional only, optional. When set, a due -> not-due transition of
+    // `condition` counts as COMPLETION only while this reads true. Without it
+    // any flicker of the activation predicate (the seal scanning out of range
+    // while the tank chases trash, the boss briefly not found) latches the
+    // event done before it ever ran: Uldaman 2026-09-04, 42 latches, 33
+    // keystone clicks, 8 runs idle at the shut seal.
+    EventCondition completedWhen{};
 
     // Difficulty gate. A HeroicOnly event never fires (and never surfaces in the
     // panel) on a normal run, and vice versa. For an ANCHORED event the primary
@@ -450,6 +461,8 @@ public:
 
     EventBuilder& Anchored(uint32 orderIndex);
     EventBuilder& Conditional(EventCondition condition);
+    // See DungeonEvent::completedWhen.
+    EventBuilder& CompletedWhen(EventCondition completed);
     EventBuilder& Optional();
     EventBuilder& Repeatable();
     EventBuilder& Persistent();
@@ -507,6 +520,10 @@ public:
     // bosses are already dead by the time the party drops combat).
     EventBuilder& MoveToHoldUntilInstanceData(float x, float y, float z, float radius,
                                               uint32 dataId, uint32 minValue);
+    // Fight while the PRECEDING garrison holds: engage any hostile within
+    // `radius` of the hold point. For wave encounters whose trolls go for a
+    // friendly NPC band, never for the party (Zul'Farrak's temple stairs).
+    EventBuilder& EngageWhileHolding(float radius);
     // Garrison variant gated on the InstanceScript PERSISTENT-data store: hold at
     // (x,y,z) until GetPersistentData(dataId) >= minValue. Use it when the map's
     // counter lives in the persistent vector and the script never overrides GetData

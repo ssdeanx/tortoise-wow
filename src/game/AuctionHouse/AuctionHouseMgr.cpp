@@ -55,6 +55,7 @@ bool IsPlayerHardcore(uint32 lowGuid)
 
 bool AuctionHouseObject::RemoveAuction(AuctionEntry* entry)
 {
+    Guard g(m_auctionsLock);
     // Clean up multimaps before final erasure
     auto bounds = OrderedAuctionMap.equal_range(entry->buyout);
     for (AuctionMultiMap::iterator itr = bounds.first; itr != bounds.second; ++itr)
@@ -88,6 +89,7 @@ bool AuctionHouseObject::RemoveAuction(AuctionEntry* entry)
 
 void AuctionHouseObject::RemoveAllAuctions(Player* player)
 {
+    Guard g(m_auctionsLock);
     std::vector<AuctionEntry*> deletableEntries;
     auto bounds = AccountAuctionMap.equal_range(player->GetSession()->GetAccountId());
     for (auto itr = bounds.first; itr != bounds.second; ++itr)
@@ -108,6 +110,7 @@ void AuctionHouseObject::RemoveAllAuctions(Player* player)
 
 void AuctionHouseObject::AddAuction(AuctionEntry *ah)
 {
+    Guard g(m_auctionsLock);
     MANGOS_ASSERT(ah);
     AuctionsMap[ah->Id] = ah;
     OrderedAuctionMap.emplace(std::pair<uint32, AuctionEntry*>(ah->buyout, ah));
@@ -117,6 +120,41 @@ void AuctionHouseObject::AddAuction(AuctionEntry *ah)
     {
         script->OnAuctionAdd(this, ah);
     });
+}
+
+std::vector<AuctionSnapshot> AuctionHouseObject::GetAuctionsSnapshot() const
+{
+    return GetAuctionsSnapshotPage(0, std::numeric_limits<uint32>::max());
+}
+
+std::vector<AuctionSnapshot> AuctionHouseObject::GetAuctionsSnapshotPage(uint32 afterId, uint32 limit) const
+{
+    Guard g(m_auctionsLock);
+
+    std::vector<AuctionSnapshot> out;
+    out.reserve(std::min<size_t>(AuctionsMap.size(), limit));
+    for (auto itr = AuctionsMap.upper_bound(afterId); itr != AuctionsMap.end() && out.size() < limit; ++itr)
+    {
+        AuctionEntry const* e = itr->second;
+        if (!e)
+            continue;
+
+        AuctionSnapshot s;
+        s.Id            = e->Id;
+        s.itemGuidLow   = e->itemGuidLow;
+        s.itemTemplate  = e->itemTemplate;
+        s.owner         = e->owner;
+        s.ownerAccount  = e->ownerAccount;
+        s.startbid      = e->startbid;
+        s.bid           = e->bid;
+        s.buyout        = e->buyout;
+        s.bidder        = e->bidder;
+        s.houseId       = e->auctionHouseEntry ? e->auctionHouseEntry->houseId : 0;
+        s.itemCount     = e->itemCount;
+        s.expireTime    = e->expireTime;
+        out.push_back(s);
+    }
+    return out;
 }
 
 AuctionHouseMgr::AuctionHouseMgr()
@@ -549,6 +587,7 @@ void AuctionHouseMgr::LoadAuctions()
 
 void AuctionHouseMgr::AddAItem(Item* it)
 {
+    ItemGuard g(m_itemsLock);
     MANGOS_ASSERT(it);
     MANGOS_ASSERT(mAitems.find(it->GetGUIDLow()) == mAitems.end());
     mAitems[it->GetGUIDLow()] = it;
@@ -556,6 +595,7 @@ void AuctionHouseMgr::AddAItem(Item* it)
 
 bool AuctionHouseMgr::RemoveAItem(uint32 id)
 {
+    ItemGuard g(m_itemsLock);
     ItemMap::iterator i = mAitems.find(id);
     if (i == mAitems.end())
         return false;
@@ -686,74 +726,107 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTem
     return sAuctionHouseStore.LookupEntry(houseid);
 }
 
+void AuctionHouseObject::ExpireAuction(AuctionEntry* entry)
+{
+    Guard g(m_auctionsLock);
+    if (!entry || GetAuction(entry->Id) != entry)
+        return;
+    ///- Either cancel the auction if there was no bidder
+    if (entry->bidder == 0)
+    {
+        ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+        {
+            script->OnAuctionExpire(this, entry);
+        });
+        sAuctionMgr.SendAuctionExpiredMail(entry);
+    }
+    ///- Or perform the transaction
+    else
+    {
+        ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
+        {
+            script->OnAuctionSuccessful(this, entry);
+        });
+
+        PlayerTransactionData data;
+        data.type = "Bid";
+        data.parts[0].lowGuid = entry->owner;
+        data.parts[0].itemsEntries[0] = entry->itemTemplate;
+        Item* item = sAuctionMgr.GetAItem(entry->itemGuidLow);
+        data.parts[0].itemsCount[0] = item ? item->GetCount() : 0;
+        data.parts[0].itemsGuid[0] = entry->itemGuidLow;
+        data.parts[1].lowGuid = entry->bidder;
+        data.parts[1].money = entry->bid;
+
+        //we should send an "item sold" message if the seller is online
+        //we send the item to the winner
+        //we send the money to the seller
+        sAuctionMgr.SendAuctionSuccessfulMail(entry);
+        sAuctionMgr.SendAuctionWonMail(entry);
+    }
+
+    ///- In any case clear the auction
+    entry->DeleteFromDB();
+    sAuctionMgr.RemoveAItem(entry->itemGuidLow);
+    // Invalidates the ref to itr, cannot call delete on itr->second
+    // after removal
+    RemoveAuction(entry);
+
+    delete entry;
+
+}
+
 void AuctionHouseObject::Update()
 {
+    Guard g(m_auctionsLock);
     time_t curTime = sWorld.GetGameTime();
-    ///- Handle expired auctions
-    AuctionEntryMap::iterator next;
-    // Store a ref to the entry and use it rather than derefencing the itr.
-    // Also required to properly erase the itr and delete the entry if
-    // necessary
-    AuctionEntry* entry = nullptr;
-    for (AuctionEntryMap::iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); itr = next)
+    for (auto itr = AuctionsMap.begin(); itr != AuctionsMap.end();)
     {
-        entry = itr->second;
-        if (entry->depositTime + 5*60 < curTime) // Locked for 5 minutes on IP to prevent AH snipping
+        AuctionEntry* entry = (itr++)->second;
+        if (entry->depositTime + 5*60 < curTime)
             entry->lockedIpAddress.clear();
+        if (curTime > entry->expireTime)
+            ExpireAuction(entry);
+    }
+}
 
-        next = itr;
-        ++next;
-        if (curTime > (entry->expireTime))
-        {
-            ///- Either cancel the auction if there was no bidder
-            if (entry->bidder == 0)
-            {
-                ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
-                {
-                    script->OnAuctionExpire(this, entry);
-                });
-                sAuctionMgr.SendAuctionExpiredMail(entry);
-            }
-            ///- Or perform the transaction
-            else
-            {
-                ScriptRegistry<AuctionHouseScript>::ForEach([&](AuctionHouseScript* script)
-                {
-                    script->OnAuctionSuccessful(this, entry);
-                });
+void AuctionHouseMgr::SendAuctionOutbiddedMail(AuctionEntry *auction)
+{
+    ObjectGuid oldBidder_guid = ObjectGuid(HIGHGUID_PLAYER, auction->bidder);
+    Player *oldBidder = sObjectMgr.GetPlayer(oldBidder_guid);
 
-                PlayerTransactionData data;
-                data.type = "Bid";
-                data.parts[0].lowGuid = entry->owner;
-                data.parts[0].itemsEntries[0] = entry->itemTemplate;
-                Item* item = sAuctionMgr.GetAItem(entry->itemGuidLow);
-                data.parts[0].itemsCount[0] = item ? item->GetCount() : 0;
-                data.parts[0].itemsGuid[0] = entry->itemGuidLow;
-                data.parts[1].lowGuid = entry->bidder;
-                data.parts[1].money = entry->bid;
+    uint32 oldBidder_accId = 0;
+    if (!oldBidder)
+        oldBidder_accId = sObjectMgr.GetPlayerAccountIdByGUID(oldBidder_guid);
 
-                //we should send an "item sold" message if the seller is online
-                //we send the item to the winner
-                //we send the money to the seller
-                sAuctionMgr.SendAuctionSuccessfulMail(entry);
-                sAuctionMgr.SendAuctionWonMail(entry);
-            }
+    bool isHardcore = false;
 
-            ///- In any case clear the auction
-            entry->DeleteFromDB();
-            sAuctionMgr.RemoveAItem(entry->itemGuidLow);
-            // Invalidates the ref to itr, cannot call delete on itr->second
-            // after removal
-            RemoveAuction(entry);
+    if (oldBidder)
+        isHardcore = oldBidder->IsHardcore();
+    else
+        isHardcore = IsPlayerHardcore(auction->bidder);
 
-            delete entry;
-            entry = nullptr;
-        }
+    if (isHardcore)
+        return; // let bid silently expire, don't mail money to now-HC chars.
+
+    // old bidder exist
+    if (oldBidder || oldBidder_accId)
+    {
+        std::ostringstream msgAuctionOutbiddedSubject;
+        msgAuctionOutbiddedSubject << auction->itemTemplate << ":0:" << AUCTION_OUTBIDDED;
+
+        if (oldBidder)
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction, false);
+
+        MailDraft(msgAuctionOutbiddedSubject.str())
+        .SetMoney(auction->bid)
+        .SendMailTo(MailReceiver(oldBidder, oldBidder_guid), auction, MAIL_CHECK_MASK_COPIED);
     }
 }
 
 void AuctionHouseObject::BuildListBidderItems(WorldPacket& data, Player* player, uint32 listfrom, uint32& count, uint32& totalcount)
 {
+    Guard g(m_auctionsLock);
     for (const auto& itr : AuctionsMap)
     {
         AuctionEntry* auctionEntry = itr.second;
@@ -770,6 +843,7 @@ void AuctionHouseObject::BuildListBidderItems(WorldPacket& data, Player* player,
 
 void AuctionHouseObject::BuildListOwnerItems(WorldPacket& data, Player* player, uint32 listfrom, uint32& count, uint32& totalcount)
 {
+    Guard g(m_auctionsLock);
     auto bounds = AccountAuctionMap.equal_range(player->GetSession()->GetAccountId());
     for (auto itr = bounds.first; itr != bounds.second; ++itr)
     {
@@ -788,6 +862,7 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
         AuctionHouseClientQuery const& query,
         uint32& count, uint32& totalcount)
 {
+    Guard g(m_auctionsLock);
     // Happening often, and easy to deal with
     if (query.auctionMainCategory == 0xffffffff && query.auctionSubCategory == 0xffffffff && query.auctionSlotID == 0xffffffff &&
         query.quality == 0xffffffff && query.levelmin == 0x00 && query.levelmax == 0x00 && query.usable == 0x00 && query.wsearchedname.empty())
@@ -826,6 +901,12 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
 
         {
             ItemPrototype const *proto = item->GetProto();
+            if (!proto)
+            {
+                sLog.outError("Auction %u has item GUID %u with an invalid template; skipped in client search.",
+                              auctionEntry->Id, auctionEntry->itemGuidLow);
+                continue;
+            }
 
             if (query.auctionMainCategory != 0xffffffff && proto->Class != query.auctionMainCategory)
                 continue;

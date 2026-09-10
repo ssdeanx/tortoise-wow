@@ -1,5 +1,7 @@
 
 #include "playerbot/playerbot.h"
+#include "BoundedBotThrottle.h"
+#include "ArchitectureDiagnostics.h"
 #include "playerbot/strategy/values/PositionValue.h"
 #include "MovementActions.h"
 #include "Battlegrounds/BattleGround.h"
@@ -75,9 +77,18 @@ enum BattleBotWsgWaitSpot
     BB_WSG_WAIT_SPOT_RIGHT
 };
 
-std::vector<uint32> const vFlagsAB = { BG_AB_BANNER_ALLIANCE , BG_AB_BANNER_CONTESTED_A , BG_AB_BANNER_HORDE , BG_AB_BANNER_CONTESTED_H ,
-                                       BG_AB_BANNER_STABLE, BG_AB_BANNER_BLACKSMITH, BG_AB_BANNER_FARM, BG_AB_BANNER_LUMBER_MILL,
-                                       BG_AB_BANNER_MINE };
+// REAL GameObject entries, not the cmangos-compat-shim's BG_AB_BANNER_* which
+// are small indices (ALLIANCE 0, HORDE 1, CONTESTED_A 2, CONTESTED_H 3;
+// STABLE 0 .. MINE 4). atFlag matches these against go->GetEntry(), and a real
+// AB banner entry is 180058-180061 (assault) or 180087-180091 (neutral node).
+// With the shim indices the find() never matched: "banners raw 0" on every AB
+// tick, no bot ever saw a banner, none was ever captured (test realm
+// 2026-09-06, 6806 atFlag samples, 0 banners in list). BattleGroundAB spawns
+// one of these per node in the DB gameobject table (five of each state).
+//   180058 Alliance | 180059 Contested(A) | 180060 Horde | 180061 Contested(H)
+//   180087 Stables | 180088 Blacksmith | 180089 Farm | 180090 Lumber Mill | 180091 Mine (neutral)
+std::vector<uint32> const vFlagsAB = { 180058, 180059, 180060, 180061,
+                                       180087, 180088, 180089, 180090, 180091 };
 
 std::vector<uint32> const vFlagsWS = { GO_WS_SILVERWING_FLAG, GO_WS_WARSONG_FLAG, GO_WS_SILVERWING_FLAG_DROP, GO_WS_WARSONG_FLAG_DROP };
 static std::map<uint32, GameObject*> botSelectedObjectives;
@@ -2725,7 +2736,23 @@ bool BGTactics::Execute(Event& event)
 #endif
 
     // disable buffin during BG to save mana
-    if (bg->GetStatus() == STATUS_IN_PROGRESS)
+    //
+    // Only when "buff" is actually still there. ChangeStrategy routes to
+    // Engine::Init() on this very non-combat engine - the one whose action
+    // queue is being iterated right now, from inside this call - and Init()
+    // begins with Reset(), which drains and deletes every queued action.
+    // Unconditionally, that meant the first BGTactics action of each tick
+    // (usually "check flag" at relevance 70) wiped every remaining action out
+    // from under the loop before even testing whether the flag was in reach:
+    // queue.Size() went 8 -> 0 in one iteration. Nothing survived to fall back
+    // on, every tick, forever - which is why bots stood on their spawn for a
+    // whole match while the AI itself kept running. The wipe is a one-time
+    // cost now instead of a per-tick one.
+    //
+    // Note this only became fatal with d886c5c, which added the closing Init()
+    // to Engine::ChangeStrategy; before that the call here was harmless.
+    // Diagnosis and fix: Melhart9, Shyalya/tortoise-wow#1.
+    if (bg->GetStatus() == STATUS_IN_PROGRESS && ai->HasStrategy("buff", BotState::BOT_STATE_NON_COMBAT))
         ai->ChangeStrategy("-buff", BotState::BOT_STATE_NON_COMBAT);
 
     // Both stay null for any battleground type without a case below
@@ -4434,7 +4461,59 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
     case BATTLEGROUND_IC:
 #endif
     {
-        closeObjects = *context->GetValue<std::list<ObjectGuid> >("closest game objects static los");
+        // NOT "closest game objects static los": that value probes VMAP line of
+        // sight from the banner's BASE to the bot's FEET with no height offset
+        // (WorldPosition::IsInStaticLineOfSight, heightMod 0). On the AB node
+        // platforms that ray grazes the stone and the banner 1.5 yd away is
+        // filtered out. Tester log 2026-09-05: 2049 atFlag samples, closeObjects
+        // empty in 2015 of them, 84 of those with the objective inside 5 yd - so
+        // the bots stood at the banner and never clicked. The core itself lifts
+        // both ends by ~2 yd for its LOS checks. A banner within interaction range
+        // needs no line-of-sight test at all: take the no-LOS list and keep what
+        // is in reach.
+        {
+            std::list<ObjectGuid> const noLos =
+                *context->GetValue<std::list<ObjectGuid> >("nearest game objects no los");
+            uint32 rawNoLos = 0, bannersInReach = 0, bannersRaw = 0;
+            for (ObjectGuid const& guid : noLos)
+            {
+                ++rawNoLos;
+                GameObject* go = ai->GetGameObject(guid);
+                if (!go)
+                    continue;
+                bool const isBanner =
+                    std::find(vFlagIds.begin(), vFlagIds.end(), go->GetEntry()) != vFlagIds.end();
+                if (isBanner)
+                    ++bannersRaw;
+                if (bot->IsWithinDistInMap(go, INTERACTION_DISTANCE))
+                {
+                    closeObjects.push_back(guid);
+                    if (isBanner)
+                        ++bannersInReach;
+                }
+            }
+            // Entry diagnostic: atFlag IS being called for AB, but no [BG:AB]
+            // banner line ever fired on the test realm (37 bots in live AB, 0
+            // captures, 2026-09-06). This says where it breaks BEFORE the banner
+            // loop: rawNoLos 0 = the value has no objects at all; bannersRaw 0 =
+            // no banner among them (wrong value / entries); bannersInReach 0 with
+            // bannersRaw > 0 = a banner is near but beyond INTERACTION_DISTANCE.
+            // Throttled 10 s per bot.
+            if (bgType == BATTLEGROUND_AB)
+            {
+                static std::unordered_map<uint32, uint32> s_entrySaidAt;
+                uint32 const nowE = WorldTimer::getMSTime();
+                uint32& atE = s_entrySaidAt[bot->GetGUIDLow()];
+                if (!atE || WorldTimer::getMSTimeDiff(atE, nowE) >= 10000)
+                {
+                    atE = nowE;
+                    sLog.outInfo("[BG:AB] atFlag %s: nolos objects %u, in reach %u, banners raw %u, "
+                                 "banners in reach %u (interact dist %.1f)",
+                                 bot->GetName(), rawNoLos, uint32(closeObjects.size()), bannersRaw,
+                                 bannersInReach, (float)INTERACTION_DISTANCE);
+                }
+            }
+        }
         closePlayers = *context->GetValue<std::list<ObjectGuid> >("closest friendly players");
         flagRange = INTERACTION_DISTANCE;
         break;
@@ -4481,11 +4560,55 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
         if (f == vFlagIds.end())
             continue;
 
-        if (!sServerFacade.isSpawned(go) || go->IsInUse() || go->GetGoState() != GO_STATE_READY)
+        // Arathi Basin banners only: say WHY a banner in reach is skipped, once per
+        // 10 s per bot. A tester saw both teams circling one node without ever
+        // capturing (2026-09-05); the skip reasons below were invisible.
+        auto abSay = [&](char const* why)
+        {
+            if (bgType != BATTLEGROUND_AB || !TurtleDiagnostics::enabled.load(std::memory_order_relaxed))
+                return;
+            static BoundedBotThrottle s_abSaidAt;
+            uint32 const nowAb = WorldTimer::getMSTime();
+            if (!s_abSaidAt.Allow(bot->GetGUIDLow(), nowAb, 10000))
+                return;
+            sLog.outInfo("[BG:AB] banner %u (%s) %.1fyd from %s: %s (spawned %u, inUse %u, state %u, inCombat %u)",
+                         go->GetEntry(), go->GetName(), bot->GetDistance(go), bot->GetName(), why,
+                         sServerFacade.isSpawned(go) ? 1u : 0u, go->IsInUse() ? 1u : 0u, uint32(go->GetGoState()),
+                         bot->IsInCombat() ? 1u : 0u);
+        };
+        // Arathi Basin: skip only an UNSPAWNED banner. A controlled or contested
+        // assault banner (180058-180061, GO type BUTTON) can read IsInUse or a
+        // non-READY GoState yet still be capturable - the capture runs through
+        // SPELL_CAPTURE_BANNER -> EventPlayerClickedOnFlag(go), which the core
+        // validates on its own (status, node event index, ownership). Skipping it
+        // here on the client-interaction gate is what left Horde bots clustering at
+        // an Alliance node without ever re-taking it (tester 2026-09-06). Neutral
+        // GOOBER banners already pass, so this only ADDS attempts on assault
+        // banners; the core rejects a truly invalid one harmlessly. Other BGs keep
+        // the full gate.
+        bool const abBanner = (bgType == BATTLEGROUND_AB);
+        if (!sServerFacade.isSpawned(go))
+        {
+            abSay("skipped: not spawned");
             continue;
+        }
+        if (!abBanner && (go->IsInUse() || go->GetGoState() != GO_STATE_READY))
+        {
+            abSay("skipped: in use / not READY");
+            continue;
+        }
+        if (abBanner && (go->IsInUse() || go->GetGoState() != GO_STATE_READY))
+            abSay("assault banner in use / not READY -> attempting capture anyway");
 
-        if (!bot->CanInteract(go) && bgType != BATTLEGROUND_WS)
+        // Test the cheap side first: CanInteract logs a core error when the bot
+        // is out of range, so with the operands the other way round every
+        // Warsong bot produced one per tick regardless of distance - 15000+ a
+        // session - while only the continue was ever gated on bgType.
+        if (bgType != BATTLEGROUND_WS && !bot->CanInteract(go))
+        {
+            abSay("skipped: CanInteract false (out of interact distance / dead / lost control)");
             continue;
+        }
         
         if (flagRange)
             if (!bot->IsWithinDistInMap(go, flagRange))
@@ -4518,6 +4641,25 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
             //bot->Say(out.str(), LANG_UNIVERSAL);
             //SetDuration(10000);
 
+            // Cast throttle. With banners finally in the list (entry fix), a bot
+            // stands on a node and re-casts SPELL_CAPTURE_BANNER every tick -
+            // measured 2026-09-06 at ~18 casts/second per bot, 80k in 25 min. The
+            // core assault is near-instant and a re-cast on a banner the node has
+            // already flipped to your own team is rejected by EventPlayerClickedOnFlag
+            // anyway; the spam just glues the bot to the node instead of moving to the
+            // next (the "clustering and looping" the tester saw). Skip this banner for
+            // a few seconds after a cast so the objective/movement logic drives on.
+            {
+                static std::unordered_map<uint32, uint32> s_abCastAt;
+                uint32 const nowAbCast = WorldTimer::getMSTime();
+                uint32& lastAbCast = s_abCastAt[bot->GetGUIDLow()];
+                if (lastAbCast && WorldTimer::getMSTimeDiff(lastAbCast, nowAbCast) < 4000)
+                {
+                    abSay("recent cast -> throttled, moving on");
+                    continue;
+                }
+                lastAbCast = nowAbCast;
+            }
             // cast banner spell
             ai->StopMoving();
 
@@ -4528,6 +4670,9 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
             Spell *spell = new Spell(bot, spellInfo, false);
             spell->m_targets.setGOTarget(go);
             spell->SpellStart(&spell->m_targets);
+            if (bgType == BATTLEGROUND_AB && TurtleDiagnostics::enabled.load(std::memory_order_relaxed))
+                sLog.outInfo("[BG:AB] %s casts the banner spell on %u (%s) at %.1fyd, spell state %u",
+                             bot->GetName(), go->GetEntry(), go->GetName(), bot->GetDistance(go), uint32(spell->getState()));
             ai->WaitForSpellCast(spell);
 
             //WorldPacket data(CMSG_GAMEOBJ_USE);

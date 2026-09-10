@@ -1,0 +1,38 @@
+[
+  {
+    "ref": 150112,
+    "kind": "missing_reference",
+    "owner": 50112,
+    "table": "creature_loot_template"
+  },
+  {
+    "ref": 30171,
+    "kind": "missing_reference",
+    "owner": 50112,
+    "table": "creature_loot_template"
+  },
+  {
+    "ref": 30559,
+    "kind": "missing_reference",
+    "owner": 61376,
+    "table": "creature_loot_template"
+  },
+  {
+    "ref": 30559,
+    "kind": "missing_reference",
+    "owner": 61377,
+    "table": "creature_loot_template"
+  },
+  {
+    "ref": 30559,
+    "kind": "missing_reference",
+    "owner": 61378,
+    "table": "creature_loot_template"
+  },
+  {
+    "ref": 30559,
+    "kind": "missing_reference",
+    "owner": 61379,
+    "table": "creature_loot_template"
+  }
+]

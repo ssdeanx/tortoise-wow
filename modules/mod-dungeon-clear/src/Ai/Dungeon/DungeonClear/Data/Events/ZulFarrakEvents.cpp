@@ -71,9 +71,16 @@ namespace
     // grabs them first. Coords interpolate the staircase (head y1263/z41.5 ->
     // bottom y1228/z~10, verified from initBlyCrewMember + the PRE_WAVE_3 NPC
     // moves); a generous arrive radius tolerates the per-step z of the stairs.
-    constexpr float ZF_RAMP_X = 1886.0f;
-    constexpr float ZF_RAMP_Y = 1250.0f;
-    constexpr float ZF_RAMP_Z = 30.0f;
+    // Hold at the FOOT of the temple stairs, not on the ramp. The wave adds
+    // spawn at the foot (x 1873-1898, y 1204-1225, z 8.9) and the ones that
+    // never walk up wait there; from the ramp (z 30) neither the party's path
+    // test nor EngageDirect reached them, so IsWaveAllDead() stayed false in
+    // 7 of 9 instances (arch20-22, 2026-09-05). Bly's band comes down to
+    // (1887, 1228, 10) for wave 3 and the two temple bosses spawn at the foot,
+    // so everything the party has to touch happens here.
+    constexpr float ZF_RAMP_X = 1887.0f;
+    constexpr float ZF_RAMP_Y = 1216.0f;
+    constexpr float ZF_RAMP_Z = 9.5f;
 
     // The wave sequence (cages open -> wave 3 / bosses spawn) runs several
     // minutes; a generous timeout keeps the long survive-the-waves wait from
@@ -89,8 +96,13 @@ namespace
     // continuous combat (the event engine is dormant in combat) and the bosses are
     // already dead by the time it drops combat, the gate still reads "past WAVE_3"
     // and releases — the kill steps then no-op and the run reaches the gossips.
-    // (Mirrors enums ZFPyramidData::DATA_PYRAMID / ZFPyramidPhases in zulfarrak.h.)
-    constexpr uint32 ZF_DATA_PYRAMID = 0;
+    // THIS core (vmangos/Turtle src/scripts/dungeons/zulfarrak/zulfarrak.h):
+    // instance data type EVENT_PYRAMID = 1 (0 is not a type; GetData(0) reads
+    // a permanent 0, which is why the ramp hold never released and every
+    // temple attempt ran into the harness cap - 2026-09-05). Phases:
+    // NOT_STARTED 0, CAGES_OPEN 1, ARRIVED_AT_STAIR 2, WAVE_1 3, PRE_WAVE_2 4,
+    // WAVE_2 5, PRE_WAVE_3 6, WAVE_3 7, KILLED_ALL_TROLLS 8.
+    constexpr uint32 ZF_DATA_PYRAMID = 1;
     constexpr uint32 ZF_PHASE_WAVE_3 = 7;
     // Lead time between gossiping Weegli (door) and Bly (fight) — enough that
     // Bly's faction-flip of the crew can't catch Weegli mid-walk (live-verified).
@@ -147,6 +159,26 @@ namespace
     // second attempt deadlocked exactly as before. The condition ends the loop by
     // itself the moment he is hostile (or dead), so the repeat is self-limiting.
     constexpr uint32 ZF_ZUMRAH = 7271;
+    // --- Farraki Arena (Turtle 1.18.0) ---------------------------------
+    // Champion Razjal the Quick stands in the arena with a gossip flag. The
+    // gossip (any option) fires ACTION_ARENA_START in farraki_arena.cpp: after
+    // a 5 s intro Kath'zen the Brutal loses his immunity and turns hostile,
+    // then Juthza the Cunning, then Razjal himself (Sandfury Scorpid adds mid
+    // fight). All three are static spawns; before their phase they are
+    // immune and friendly, which the engage step's hostility guard waits
+    // out. A wipe resets the arena and restores the gossip flag.
+    constexpr uint32 ZF_RAZJAL  = 62498;
+    constexpr uint32 ZF_KATHZEN = 62496;
+    constexpr uint32 ZF_JUTHZA  = 62497;
+    // Where Razjal STANDS while idle (observed 2026-09-05: leaders next to him
+    // at 1484.5/1011.5/12.0). His channel spot (1512.21, 1016.05, 11.68) is
+    // 28yd away; anchored there the leader sat at 12-16yd from him, HopTo
+    // never closed the gap against the arrive hold, and the gossip step
+    // (5yd) stalled in every run that reached the arena.
+    constexpr float  ZF_ARENA_X = 1485.0f;
+    constexpr float  ZF_ARENA_Y = 1011.5f;
+    constexpr float  ZF_ARENA_Z = 12.0f;
+    constexpr uint32 ZF_ARENA_TIMEOUT = 900000;  // 15 min for three fights
     // Comfortably beyond boss engage range so the event fires as soon as boss-nav
     // parks the tank at him, before the engage loop settles into its deadlock —
     // but near enough that it can never fire from across the dungeon.
@@ -174,9 +206,13 @@ void RegisterZulFarrakEvents(std::vector<DungeonEvent>& out)
                       //    WAVE_3 (bosses spawned); gated on the monotonic phase
                       //    rather than "boss alive" so a fight straight through
                       //    wave 3 can't leave it waiting on an already-dead boss.
-                      .MoveToHoldUntilInstanceData(ZF_RAMP_X, ZF_RAMP_Y, ZF_RAMP_Z, /*radius*/ 10.0f,
+                      .MoveToHoldUntilInstanceData(ZF_RAMP_X, ZF_RAMP_Y, ZF_RAMP_Z, /*radius*/ 12.0f,
                                                    ZF_DATA_PYRAMID, ZF_PHASE_WAVE_3)
                           .Timeout(ZF_WAVES_TIMEOUT)
+                          // The waves go for Bly's band on the stairs (13yd up
+                          // from the ramp), not for the party; hold AND fight, or
+                          // wave 1 never dies (arch15, 2026-09-05).
+                          .EngageWhileHolding(45.0f)
                       // 3. Descend and help the crew kill the temple bosses.
                       .KillCreatureEngage(ZF_NEKRUM, /*count*/ 1, /*searchRadius*/ 250.0f)
                       .KillCreatureEngage(ZF_SEZZIZ, /*count*/ 1, /*searchRadius*/ 250.0f)
@@ -225,6 +261,24 @@ void RegisterZulFarrakEvents(std::vector<DungeonEvent>& out)
                       .Repeatable()
                       .PanelBeforeBoss(ZF_ZUMRAH)
                       .Custom(ZF_HOOK_WAKE_ZUMRAH)
+                      .Build());
+    // Farraki Arena: one anchored objective carries the whole challenge, the
+    // way the Temple Summit carries Bly's band. Gossip Razjal, then the three
+    // fights in the order the script runs them. Razjal is also a credited
+    // boss (dc_roster.txt, order 11 -> bit 10) so his death counts; the
+    // objective shares that key and sorts first, so the party reaches the
+    // arena through the event and the boss anchor is already done after it.
+    out.push_back(EventBuilder(209, 4, "Farraki Arena (Razjal's challenge)")
+                      .Anchored(10)
+                      .Persistent()
+                      .Gossip(ZF_RAZJAL, /*option*/ 0, /*searchRadius*/ 40.0f)
+                          .Timeout(ZF_NPC_TIMEOUT).WaitTargetStill()
+                      .KillCreatureEngage(ZF_KATHZEN, /*count*/ 1, /*searchRadius*/ 80.0f)
+                          .EngageOnlyWhenActive().Timeout(ZF_ARENA_TIMEOUT)
+                      .KillCreatureEngage(ZF_JUTHZA, /*count*/ 1, /*searchRadius*/ 80.0f)
+                          .EngageOnlyWhenActive().Timeout(ZF_ARENA_TIMEOUT)
+                      .KillCreatureEngage(ZF_RAZJAL, /*count*/ 1, /*searchRadius*/ 80.0f)
+                          .EngageOnlyWhenActive().Timeout(ZF_ARENA_TIMEOUT)
                       .Build());
 }
 
@@ -313,6 +367,13 @@ void RegisterZulFarrakRoster(std::vector<BossRosterPatch>& t)
                           1650.91f, 1171.88f, 10.901f,
                           /*arriveRadius*/ 12.0f, /*gateEntry*/ 0,
                           /*hook*/ 0, /*eventId*/ 2, /*orderOverride*/ 7),
+            // Farraki Arena, last (owner's order 2026-09-04). Key 11 = Razjal's
+            // roster order; the objective ties with the boss and sorts first.
+            MakeObjective(OBJ(3), /*encounterIndex*/ 10, 209,
+                          "Farraki Arena (Razjal's challenge)",
+                          ZF_ARENA_X, ZF_ARENA_Y, ZF_ARENA_Z,
+                          /*arriveRadius*/ 6.0f, /*gateEntry*/ 0,
+                          /*hook*/ 0, /*eventId*/ 4, /*orderOverride*/ 11),
         };
         t.push_back(std::move(p));
     }

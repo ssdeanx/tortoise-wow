@@ -1,0 +1,1967 @@
+[
+  {
+    "kind": "quest_reward",
+    "owner": 96,
+    "spell": 5394
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 889,
+    "spell": 16618
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1470,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1471,
+    "spell": 697
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1485,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1504,
+    "spell": 697
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1518,
+    "spell": 8071
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1521,
+    "spell": 8071
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1527,
+    "spell": 3599
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1598,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1599,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1652,
+    "spell": 5502
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1661,
+    "spell": 13819
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1689,
+    "spell": 697
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1785,
+    "spell": 7328
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1788,
+    "spell": 7328
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 4490,
+    "spell": 5784
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5042,
+    "spell": 16612
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5043,
+    "spell": 17013
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5044,
+    "spell": 7764
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5045,
+    "spell": 10767
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5046,
+    "spell": 16610
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5525,
+    "spell": 23321
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5627,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5628,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5629,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5630,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5631,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5632,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5633,
+    "spell": 19350
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5634,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5635,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5636,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5637,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5638,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5639,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5641,
+    "spell": 51742
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5642,
+    "spell": 19331
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5643,
+    "spell": 19331
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5644,
+    "spell": 2946
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5645,
+    "spell": 51742
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5646,
+    "spell": 2946
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5652,
+    "spell": 19325
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5654,
+    "spell": 19325
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5655,
+    "spell": 19325
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5656,
+    "spell": 19325
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5657,
+    "spell": 19325
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5658,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5660,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5661,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5662,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5663,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5672,
+    "spell": 52638
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5673,
+    "spell": 52638
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5674,
+    "spell": 52638
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5675,
+    "spell": 52638
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5676,
+    "spell": 19345
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5677,
+    "spell": 19345
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5679,
+    "spell": 2946
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5680,
+    "spell": 19331
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6032,
+    "spell": 19435
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6081,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6082,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6085,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6086,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6088,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6089,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6102,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6103,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6607,
+    "spell": 18248
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6610,
+    "spell": 18260
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 7429,
+    "spell": 23321
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 7463,
+    "spell": 10140
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 7583,
+    "spell": 18540
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 7603,
+    "spell": 1122
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 7631,
+    "spell": 23161
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 9364,
+    "spell": 28272
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5659,
+    "spell": 19318
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 3581,
+    "spell": 12566
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6622,
+    "spell": 10846
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 6624,
+    "spell": 10846
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1474,
+    "spell": 712
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1513,
+    "spell": 712
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1739,
+    "spell": 712
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 1795,
+    "spell": 691
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 50002,
+    "spell": 5670
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 50004,
+    "spell": 5671
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 50005,
+    "spell": 10165
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 50006,
+    "spell": 10166
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 50230,
+    "spell": 46050
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60009,
+    "spell": 17284
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80735,
+    "spell": 22430
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80736,
+    "spell": 22434
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60011,
+    "spell": 1888
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60012,
+    "spell": 1888
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5640,
+    "spell": 19338
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5678,
+    "spell": 19345
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 5647,
+    "spell": 51742
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60060,
+    "spell": 46063
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60061,
+    "spell": 46063
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80121,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80755,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80333,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80334,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80342,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80343,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 80388,
+    "spell": 50006
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 40262,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41133,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41134,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60162,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 60163,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41179,
+    "spell": 23356
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41180,
+    "spell": 23357
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41208,
+    "spell": 688
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41282,
+    "spell": 57551
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41292,
+    "spell": 57552
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41398,
+    "spell": 51398
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41551,
+    "spell": 57553
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 41552,
+    "spell": 57551
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 42041,
+    "spell": 46056
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 42057,
+    "spell": 52949
+  },
+  {
+    "kind": "quest_reward",
+    "owner": 42059,
+    "spell": 52926
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5061,
+    "spell": 1446
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 96,
+    "spell": 5396
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 99,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 31,
+    "spell": 1446
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 421,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 422,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 423,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 424,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 755,
+    "spell": 1126
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 772,
+    "spell": 1126
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 873,
+    "spell": 5325
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 881,
+    "spell": 5320
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 882,
+    "spell": 5321
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 883,
+    "spell": 5322
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 884,
+    "spell": 5323
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 885,
+    "spell": 5324
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 889,
+    "spell": 16618
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8434,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1014,
+    "spell": 1460
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1470,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1471,
+    "spell": 11520
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1485,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1498,
+    "spell": 8121
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1504,
+    "spell": 11520
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1518,
+    "spell": 8073
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1521,
+    "spell": 8073
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1527,
+    "spell": 2075
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1531,
+    "spell": 8385
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1532,
+    "spell": 8385
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1598,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1599,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1652,
+    "spell": 5503
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1661,
+    "spell": 13820
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1665,
+    "spell": 8121
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1678,
+    "spell": 8121
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1683,
+    "spell": 8121
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1689,
+    "spell": 11520
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1719,
+    "spell": 8616
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1785,
+    "spell": 7329
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1788,
+    "spell": 7329
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1819,
+    "spell": 8121
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2203,
+    "spell": 11522
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2359,
+    "spell": 2995
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2480,
+    "spell": 2995
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2501,
+    "spell": 11522
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2581,
+    "spell": 10670
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2583,
+    "spell": 10671
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2585,
+    "spell": 10672
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2601,
+    "spell": 10690
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2603,
+    "spell": 10691
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2771,
+    "spell": 11203
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2772,
+    "spell": 11204
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 2773,
+    "spell": 11205
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8433,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8432,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8431,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8430,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3421,
+    "spell": 12521
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3567,
+    "spell": 12242
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3636,
+    "spell": 2791
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3639,
+    "spell": 20221
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3641,
+    "spell": 20220
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3643,
+    "spell": 20220
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 4083,
+    "spell": 14894
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 4490,
+    "spell": 1710
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5042,
+    "spell": 16612
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5043,
+    "spell": 17013
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5044,
+    "spell": 7764
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5045,
+    "spell": 10767
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5046,
+    "spell": 16610
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5141,
+    "spell": 10657
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5143,
+    "spell": 10661
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5144,
+    "spell": 10659
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5145,
+    "spell": 10657
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5146,
+    "spell": 10659
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5148,
+    "spell": 10661
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5217,
+    "spell": 10937
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8429,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5220,
+    "spell": 10937
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8428,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5223,
+    "spell": 10937
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5226,
+    "spell": 10938
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8427,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5230,
+    "spell": 23947
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5232,
+    "spell": 23947
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5234,
+    "spell": 23947
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5236,
+    "spell": 23948
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5283,
+    "spell": 9790
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5284,
+    "spell": 9789
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5301,
+    "spell": 9790
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 5302,
+    "spell": 9789
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6001,
+    "spell": 19179
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6002,
+    "spell": 19179
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6032,
+    "spell": 19437
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6081,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6082,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6085,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6086,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6088,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6089,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6102,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6103,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6125,
+    "spell": 8947
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6130,
+    "spell": 8947
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6607,
+    "spell": 18249
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6610,
+    "spell": 18261
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6741,
+    "spell": 21163
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6781,
+    "spell": 21163
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8426,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8407,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8408,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8406,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8405,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8404,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8403,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8402,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8401,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8400,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7223,
+    "spell": 21163
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7224,
+    "spell": 21163
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8399,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8398,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7463,
+    "spell": 10143
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7487,
+    "spell": 22877
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7493,
+    "spell": 19213
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7497,
+    "spell": 19213
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7583,
+    "spell": 20700
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7603,
+    "spell": 1413
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7631,
+    "spell": 23160
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7647,
+    "spell": 23215
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8397,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8396,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8395,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8394,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8393,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8392,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8391,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8390,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8389,
+    "spell": 24960
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8388,
+    "spell": 24966
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8387,
+    "spell": 24923
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8385,
+    "spell": 24966
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8386,
+    "spell": 24960
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8384,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8383,
+    "spell": 24923
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8375,
+    "spell": 24923
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8374,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8372,
+    "spell": 24960
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7848,
+    "spell": 22877
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8371,
+    "spell": 24966
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8370,
+    "spell": 24961
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8369,
+    "spell": 24923
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8368,
+    "spell": 24960
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8367,
+    "spell": 24966
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8250,
+    "spell": 12510
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8257,
+    "spell": 9884
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8313,
+    "spell": 24802
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8970,
+    "spell": 5017
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 9121,
+    "spell": 28006
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 9122,
+    "spell": 28006
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 9123,
+    "spell": 28006
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 9233,
+    "spell": 28288
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 9364,
+    "spell": 28285
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 7946,
+    "spell": 23852
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8619,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8635,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8636,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8642,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8643,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8644,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8645,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8646,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8647,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8648,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8649,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8650,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8651,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8652,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8653,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8654,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8670,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8671,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8672,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8673,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8674,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8675,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8676,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8677,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8679,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8680,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8681,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8682,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8683,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8684,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8685,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8686,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8688,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8713,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8714,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8715,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8716,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8717,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8718,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8719,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8720,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8721,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8722,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8723,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8724,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8725,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8726,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8727,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8798,
+    "spell": 26012
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8866,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3581,
+    "spell": 12821
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8435,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8436,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8437,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8438,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8439,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8440,
+    "spell": 24962
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8441,
+    "spell": 24963
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8442,
+    "spell": 24964
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8443,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 8678,
+    "spell": 25716
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6622,
+    "spell": 10847
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 6624,
+    "spell": 10847
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3381,
+    "spell": 12510
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3503,
+    "spell": 12510
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1474,
+    "spell": 11519
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1513,
+    "spell": 11519
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1739,
+    "spell": 11519
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 1795,
+    "spell": 1373
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 50005,
+    "spell": 10167
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 50006,
+    "spell": 10168
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 50230,
+    "spell": 46051
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 3580,
+    "spell": 16618
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80735,
+    "spell": 22432
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80736,
+    "spell": 22435
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80121,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80755,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80333,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80334,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80342,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 80343,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40127,
+    "spell": 10157
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40262,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40348,
+    "spell": 45500
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40353,
+    "spell": 45504
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40534,
+    "spell": 45519
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 40004,
+    "spell": 46440
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41107,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41108,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41109,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41110,
+    "spell": 24965
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41133,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41134,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 60162,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 60163,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41179,
+    "spell": 1579
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41180,
+    "spell": 5300
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41208,
+    "spell": 7763
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41282,
+    "spell": 57551
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41292,
+    "spell": 57552
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41398,
+    "spell": 51419
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41551,
+    "spell": 57552
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 41552,
+    "spell": 57550
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 42041,
+    "spell": 46057
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 42057,
+    "spell": 52950
+  },
+  {
+    "kind": "quest_reward_cast",
+    "owner": 42059,
+    "spell": 52927
+  }
+]

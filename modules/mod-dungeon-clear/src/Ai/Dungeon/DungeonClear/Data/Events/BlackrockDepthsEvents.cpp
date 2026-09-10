@@ -56,7 +56,11 @@ namespace
     // Instance-data accessor + state (mirrors instance_blackrock_depths.cpp's
     // TYPE_RING_OF_LAW / EncounterState; kept local so this TU needn't pull the
     // core BRD header). GetData(TYPE_RING_OF_LAW) returns the live state.
-    constexpr uint32 BRD_TYPE_RING_OF_LAW = 1;  // DataTypes::TYPE_RING_OF_LAW
+    constexpr uint32 BRD_TYPE_RING_OF_LAW = 0;  // DataTypes::TYPE_RING_OF_LAW on this core
+                                                // (blackrock_depths.h: RING_OF_LAW 0, VAULT 1,
+                                                // ROCKNOT 2, TOMB_OF_SEVEN 3, LYCEUM 4). Was 1 -
+                                                // that is TYPE_VAULT here, so the hold never saw
+                                                // DONE and ran into its 600 s timeout (2026-09-06).
     constexpr uint32 BRD_RING_DONE = 3;          // EncounterState::DONE
 
     // Arena centre = area trigger 1526 (x,y from AreaTrigger.dbc; z on the floor
@@ -105,6 +109,50 @@ namespace
     // read, not a proximity gate.
     constexpr float BRD_GIANT_DOOR_SCAN = 200.0f;
     constexpr uint32 BRD_GIANT_DOOR_TIMEOUT_MS = 30000;
+
+    // --- Tomb of the Seven ----------------------------------------------------
+    // Doom'rel (9039) offers exactly one gossip item ("Your bondage is at an end,
+    // Doom'rel. I challenge you!", boss_tomb_of_seven.cpp) while TYPE_TOMB_OF_SEVEN
+    // is NOT_STARTED; selecting it sets IN_PROGRESS and the seven dwarves turn
+    // hostile one after another. DONE once all seven are dead; a wipe FAILs and
+    // the script resets to NOT_STARTED, so the event can be re-run. The dwarves
+    // come to the party (same shape as the Ring of Law): hold the tomb floor and
+    // fight whoever arrives. turtle_world 2026-09-06: Doom'rel 1281,-282,-78, the
+    // brothers 1215..1287 / -190..-292 on the same floor.
+    constexpr uint32 BRD_DOOMREL = 9039;
+    constexpr uint32 BRD_TYPE_TOMB_OF_SEVEN = 3;   // DataTypes::TYPE_TOMB_OF_SEVEN
+    constexpr uint32 BRD_TOMB_DONE = 3;             // EncounterState::DONE
+    constexpr float BRD_TOMB_X = 1268.0f;
+    constexpr float BRD_TOMB_Y = -268.0f;
+    constexpr float BRD_TOMB_Z = -78.0f;
+    constexpr float BRD_TOMB_RADIUS = 12.0f;
+    constexpr float BRD_TOMB_ENGAGE = 45.0f;
+    constexpr uint32 BRD_TOMB_TIMEOUT_MS = 900000;
+    // The instance script CLOSES the tomb's entrance door (170576) the moment
+    // TYPE_TOMB_OF_SEVEN goes IN_PROGRESS and reopens it only at DONE. A
+    // follower still outside when the tank talks to Doom'rel is locked out for
+    // the whole fight. Give the party time to close in on the tank inside the
+    // tomb before the gossip fires.
+    constexpr uint32 BRD_TOMB_GATHER_MS = 15000;
+
+    // --- The Lyceum braziers ----------------------------------------------------
+    // Two Shadowforge Braziers (GO type BUTTON, 174744 at 1330,-509,-89 and
+    // 174745 at 1431,-509,-89). Using the first sets TYPE_LYCEUM IN_PROGRESS, the
+    // second DONE (blackrock_depths.cpp), and the instance opens the Golem Room
+    // doors (170573/170574) to Magmus and the Imperial Seat. Without them every
+    // run ends in front of a closed door after Flamelash.
+    constexpr uint32 BRD_GO_BRAZIER_W = 174744;
+    constexpr uint32 BRD_GO_BRAZIER_E = 174745;
+    constexpr uint32 BRD_GO_GOLEM_ROOM_N = 170573;
+    constexpr uint32 BRD_GO_STATE_ACTIVE = 0;       // door open
+    constexpr float BRD_BRAZIER_W_X = 1330.0f;
+    constexpr float BRD_BRAZIER_W_Y = -509.0f;
+    constexpr float BRD_BRAZIER_W_Z = -89.0f;
+    constexpr float BRD_BRAZIER_E_X = 1431.0f;
+    constexpr float BRD_BRAZIER_E_Y = -509.0f;
+    constexpr float BRD_BRAZIER_E_Z = -89.0f;
+    constexpr float BRD_BRAZIER_RADIUS = 4.0f;
+    constexpr uint32 BRD_GOLEM_DOOR_TIMEOUT_MS = 30000;
 }
 
 void RegisterBlackrockDepthsEvents(std::vector<DungeonEvent>& out)
@@ -173,6 +221,41 @@ void RegisterBlackrockDepthsEvents(std::vector<DungeonEvent>& out)
             .WaitForGOState(BRD_GO_GIANT_DOORS, BRD_GO_STATE_READY,
                             BRD_GIANT_DOOR_TIMEOUT_MS, BRD_GIANT_DOOR_SCAN)
             .Build());
+
+    // --- Event 3: Tomb of the Seven (orderIndex 16, after Flamelash 15) ----------
+    out.push_back(
+        EventBuilder(230, 3, "Tomb of the Seven")
+            .Anchored(/*orderIndex*/ 16)
+            .Wait(BRD_TOMB_GATHER_MS)
+            // Option is passed to the core gossip handler as the ACTION (see
+            // DungeonEventExecutor::SelectGossip empty-menu fallback -> OnGossipSelect
+            // sender 0, action = option). GossipSelect_boss_doomrel only starts the
+            // Tomb on GOSSIP_ACTION_INFO_DEF (1000) + 1 = 1001 ("I challenge you!");
+            // option 0 hit the switch default and did nothing, so the seven stayed
+            // friendly and the hold below never saw IN_PROGRESS (25 stalls at step 1,
+            // 6 runs stalled_timeout 10/16, 2026-09-06 07:32-10:32).
+            .Gossip(BRD_DOOMREL, /*option = GOSSIP_ACTION_INFO_DEF + 1*/ 1001, /*searchRadius*/ 40.0f)
+            .MoveToHoldUntilInstanceData(BRD_TOMB_X, BRD_TOMB_Y, BRD_TOMB_Z, BRD_TOMB_RADIUS,
+                                         BRD_TYPE_TOMB_OF_SEVEN, /*minValue*/ BRD_TOMB_DONE)
+            .EngageWhileHolding(BRD_TOMB_ENGAGE)
+            .Timeout(BRD_TOMB_TIMEOUT_MS)
+            .Build());
+
+    // --- Events 4/5: the Lyceum braziers (orderIndex 17, before Magmus 17) ------
+    out.push_back(
+        EventBuilder(230, 4, "Lyceum Brazier (west)")
+            .Anchored(/*orderIndex*/ 17)
+            .MoveTo(BRD_BRAZIER_W_X, BRD_BRAZIER_W_Y, BRD_BRAZIER_W_Z, BRD_BRAZIER_RADIUS)
+            .UseGO(BRD_GO_BRAZIER_W, /*searchRadius*/ 12.0f)
+            .Build());
+    out.push_back(
+        EventBuilder(230, 5, "Lyceum Brazier (east)")
+            .Anchored(/*orderIndex*/ 17)
+            .MoveTo(BRD_BRAZIER_E_X, BRD_BRAZIER_E_Y, BRD_BRAZIER_E_Z, BRD_BRAZIER_RADIUS)
+            .UseGO(BRD_GO_BRAZIER_E, /*searchRadius*/ 12.0f)
+            .WaitForGOState(BRD_GO_GOLEM_ROOM_N, BRD_GO_STATE_ACTIVE,
+                            BRD_GOLEM_DOOR_TIMEOUT_MS, /*searchRadius*/ 200.0f)
+            .Build());
 }
 
 // --- roster patch (relocated from BossRosterRegistry) --------------------
@@ -218,6 +301,20 @@ void RegisterBlackrockDepthsRoster(std::vector<BossRosterPatch>& t)
             MakeObjective(OBJ(2), /*encounterIndex*/ 9, 230, "Shadowforge Lock",
                           615.61f, -49.78f, -59.82f, /*arriveRadius*/ 8.0f,
                           /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 2),
+            // Tomb of the Seven at Doom'rel (key 16, after Flamelash 15): the
+            // gossip that starts the fight, then hold the floor until DONE.
+            MakeObjective(OBJ(3), /*orderIndex*/ 16, 230, "Tomb of the Seven",
+                          1281.0f, -282.0f, -78.0f, /*arriveRadius*/ 10.0f,
+                          /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 3),
+            // The two Lyceum braziers share Magmus's key 17; objectives sort
+            // before the boss at an equal key, so both are lit before the group
+            // walks to the (then open) Golem Room doors.
+            MakeObjective(OBJ(4), /*orderIndex*/ 17, 230, "Lyceum Brazier (west)",
+                          BRD_BRAZIER_W_X, BRD_BRAZIER_W_Y, BRD_BRAZIER_W_Z, /*arriveRadius*/ 8.0f,
+                          /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 4),
+            MakeObjective(OBJ(5), /*orderIndex*/ 17, 230, "Lyceum Brazier (east)",
+                          BRD_BRAZIER_E_X, BRD_BRAZIER_E_Y, BRD_BRAZIER_E_Z, /*arriveRadius*/ 8.0f,
+                          /*gateEntry*/ 0, /*hook*/ 0, /*eventId*/ 5),
         };
         t.push_back(std::move(p));
     }

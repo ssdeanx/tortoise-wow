@@ -61,6 +61,10 @@ public:
 
     // Drop a route that has proven unwalkable. Returns true if one was there.
     static bool Forget(uint32 mapId, Difficulty difficulty, uint32 bossEntry);
+    // Same, but the stuck ladder names the instance it wedged in: a learned
+    // route is only dropped once TWO different instances wedged on it. One
+    // leader standing off the navmesh is not evidence against the route.
+    static bool Forget(uint32 mapId, Difficulty difficulty, uint32 bossEntry, uint32 instanceId);
 
     // PINNED routes are exempt from both ways a route normally disappears:
     // Forget() (the stuck ladder dropping a route it could not follow) and
@@ -100,6 +104,8 @@ private:
     static std::unordered_map<Key, std::vector<WaypointHint>, KeyHash>& FallbackStore();
     static std::mutex& RegistryLock();
     static std::unordered_set<Key, KeyHash>& PinnedSet();
+    // Stuck-ladder strikes per learned route: the instance ids that wedged on it.
+    static std::unordered_map<Key, std::unordered_set<uint32>, KeyHash>& StrikeSet();
 };
 
 #endif

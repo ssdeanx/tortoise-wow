@@ -1,0 +1,27 @@
+{
+  "captured_utc": "2026-09-05T21:34:02.1808402Z",
+  "source_commit": "b2d5a8549194f7ffa38e324dcb7a82ccc0ba2132",
+  "spell_dbc_sha256": "7D9F83E7A6A3AE642D23597A1A0BC4216FA3D688D00428DD3B5D1F47465AF27F",
+  "spell_dbc_records": 27917,
+  "counts": [
+    {
+      "pools": 1777,
+      "events": 97,
+      "quests": 6708,
+      "skills": 6771,
+      "creatures": 88841,
+      "templates": 14339,
+      "spell_chains": 1148
+    }
+  ],
+  "spell_reference_gaps": 1,
+  "quest_link_gaps": 0,
+  "chain_spell_gaps": 0,
+  "spell_dispatch_gaps": 0,
+  "learn_effect_gaps": 25,
+  "loot_cycles": 0,
+  "event_reference_gaps": 0,
+  "pool_reference_gaps": 0,
+  "missing_route_maps": 0,
+  "note": "Read-only structural checks, not gameplay certification; spell IDs checked against supplied Spell.dbc, not unused SQL spell tables."
+}

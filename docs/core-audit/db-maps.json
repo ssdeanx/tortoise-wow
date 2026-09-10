@@ -1,0 +1,562 @@
+[
+  {
+    "name": "Eastern Kingdoms",
+    "type": 0,
+    "entry": 0,
+    "script": "",
+    "creature_spawns": 35258,
+    "gameobject_spawns": 32941
+  },
+  {
+    "name": "Kalimdor",
+    "type": 0,
+    "entry": 1,
+    "script": "",
+    "creature_spawns": 35234,
+    "gameobject_spawns": 26847
+  },
+  {
+    "name": "Testing",
+    "type": 0,
+    "entry": 13,
+    "script": "",
+    "creature_spawns": 9,
+    "gameobject_spawns": 2
+  },
+  {
+    "name": "Scott Test",
+    "type": 0,
+    "entry": 25,
+    "script": "",
+    "creature_spawns": 1,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Blood Ring",
+    "type": 3,
+    "entry": 26,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 4
+  },
+  {
+    "name": "Sunnyglade Valley",
+    "type": 3,
+    "entry": 27,
+    "script": "",
+    "creature_spawns": 6,
+    "gameobject_spawns": 33
+  },
+  {
+    "name": "CashTest",
+    "type": 1,
+    "entry": 29,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Alterac Valley",
+    "type": 3,
+    "entry": 30,
+    "script": "",
+    "creature_spawns": 2521,
+    "gameobject_spawns": 1334
+  },
+  {
+    "name": "PVPZone01OG",
+    "type": 0,
+    "entry": 31,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Shadowfang Keep",
+    "type": 1,
+    "entry": 33,
+    "script": "instance_shadowfang_keep",
+    "creature_spawns": 180,
+    "gameobject_spawns": 45
+  },
+  {
+    "name": "Stormwind Stockade",
+    "type": 1,
+    "entry": 34,
+    "script": "",
+    "creature_spawns": 93,
+    "gameobject_spawns": 6
+  },
+  {
+    "name": "Stormwind Vault",
+    "type": 1,
+    "entry": 35,
+    "script": "instance_stormwind_vault",
+    "creature_spawns": 137,
+    "gameobject_spawns": 130
+  },
+  {
+    "name": "Deadmines",
+    "type": 1,
+    "entry": 36,
+    "script": "instance_deadmines",
+    "creature_spawns": 252,
+    "gameobject_spawns": 44
+  },
+  {
+    "name": "Azshara Crater",
+    "type": 0,
+    "entry": 37,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 47
+  },
+  {
+    "name": "Collin's Test",
+    "type": 0,
+    "entry": 42,
+    "script": "",
+    "creature_spawns": 28,
+    "gameobject_spawns": 4
+  },
+  {
+    "name": "Wailing Caverns",
+    "type": 1,
+    "entry": 43,
+    "script": "instance_wailing_caverns",
+    "creature_spawns": 384,
+    "gameobject_spawns": 107
+  },
+  {
+    "name": "Old Scarlet Citadel",
+    "type": 2,
+    "entry": 44,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Scarlet Citadel",
+    "type": 2,
+    "entry": 45,
+    "script": "instance_scarlet_citadel",
+    "creature_spawns": 23,
+    "gameobject_spawns": 12
+  },
+  {
+    "name": "Razorfen Kraul",
+    "type": 1,
+    "entry": 47,
+    "script": "instance_razorfen_kraul",
+    "creature_spawns": 201,
+    "gameobject_spawns": 94
+  },
+  {
+    "name": "Blackfathom Deeps",
+    "type": 1,
+    "entry": 48,
+    "script": "instance_blackfathom_deeps",
+    "creature_spawns": 237,
+    "gameobject_spawns": 41
+  },
+  {
+    "name": "Quel'Thalas Cut Scene",
+    "type": 0,
+    "entry": 49,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Silvermoon City Raid",
+    "type": 0,
+    "entry": 50,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Uldaman",
+    "type": 1,
+    "entry": 70,
+    "script": "instance_uldaman",
+    "creature_spawns": 327,
+    "gameobject_spawns": 190
+  },
+  {
+    "name": "Gnomeregan",
+    "type": 1,
+    "entry": 90,
+    "script": "instance_gnomeregan",
+    "creature_spawns": 403,
+    "gameobject_spawns": 97
+  },
+  {
+    "name": "Sunken Temple",
+    "type": 1,
+    "entry": 109,
+    "script": "instance_sunken_temple",
+    "creature_spawns": 316,
+    "gameobject_spawns": 57
+  },
+  {
+    "name": "Razorfen Downs",
+    "type": 1,
+    "entry": 129,
+    "script": "instance_razorfen_downs",
+    "creature_spawns": 297,
+    "gameobject_spawns": 74
+  },
+  {
+    "name": "Tamamo Map",
+    "type": 0,
+    "entry": 150,
+    "script": "",
+    "creature_spawns": 15,
+    "gameobject_spawns": 92
+  },
+  {
+    "name": "Emerald Dream",
+    "type": 0,
+    "entry": 169,
+    "script": "",
+    "creature_spawns": 1,
+    "gameobject_spawns": 7
+  },
+  {
+    "name": "Scarlet Monastery",
+    "type": 1,
+    "entry": 189,
+    "script": "instance_scarlet_monastery",
+    "creature_spawns": 440,
+    "gameobject_spawns": 123
+  },
+  {
+    "name": "Zul'Farrak",
+    "type": 1,
+    "entry": 209,
+    "script": "instance_zulfarrak",
+    "creature_spawns": 300,
+    "gameobject_spawns": 91
+  },
+  {
+    "name": "Blackrock Spire",
+    "type": 1,
+    "entry": 229,
+    "script": "instance_blackrock_spire",
+    "creature_spawns": 600,
+    "gameobject_spawns": 235
+  },
+  {
+    "name": "Blackrock Depths",
+    "type": 1,
+    "entry": 230,
+    "script": "instance_blackrock_depths",
+    "creature_spawns": 1088,
+    "gameobject_spawns": 469
+  },
+  {
+    "name": "Onyxia's Lair",
+    "type": 2,
+    "entry": 249,
+    "script": "instance_onyxia_lair",
+    "creature_spawns": 6,
+    "gameobject_spawns": 149
+  },
+  {
+    "name": "Black Morass",
+    "type": 1,
+    "entry": 269,
+    "script": "instance_black_morass",
+    "creature_spawns": 330,
+    "gameobject_spawns": 13
+  },
+  {
+    "name": "Scholomance",
+    "type": 1,
+    "entry": 289,
+    "script": "instance_scholomance",
+    "creature_spawns": 407,
+    "gameobject_spawns": 72
+  },
+  {
+    "name": "Zul'Gurub",
+    "type": 2,
+    "entry": 309,
+    "script": "instance_zulgurub",
+    "creature_spawns": 823,
+    "gameobject_spawns": 211
+  },
+  {
+    "name": "Stratholme",
+    "type": 1,
+    "entry": 329,
+    "script": "instance_stratholme",
+    "creature_spawns": 487,
+    "gameobject_spawns": 251
+  },
+  {
+    "name": "Maraudon",
+    "type": 1,
+    "entry": 349,
+    "script": "instance_maraudon",
+    "creature_spawns": 625,
+    "gameobject_spawns": 45
+  },
+  {
+    "name": "Deeprun Tram",
+    "type": 0,
+    "entry": 369,
+    "script": "",
+    "creature_spawns": 28,
+    "gameobject_spawns": 105
+  },
+  {
+    "name": "Ragefire Chasm",
+    "type": 1,
+    "entry": 389,
+    "script": "",
+    "creature_spawns": 132,
+    "gameobject_spawns": 13
+  },
+  {
+    "name": "Molten Core",
+    "type": 2,
+    "entry": 409,
+    "script": "instance_molten_core",
+    "creature_spawns": 267,
+    "gameobject_spawns": 61
+  },
+  {
+    "name": "Dire Maul",
+    "type": 1,
+    "entry": 429,
+    "script": "instance_dire_maul",
+    "creature_spawns": 837,
+    "gameobject_spawns": 148
+  },
+  {
+    "name": "Champions' Hall",
+    "type": 0,
+    "entry": 449,
+    "script": "",
+    "creature_spawns": 13,
+    "gameobject_spawns": 20
+  },
+  {
+    "name": "Hall of Legends",
+    "type": 0,
+    "entry": 450,
+    "script": "",
+    "creature_spawns": 12,
+    "gameobject_spawns": 9
+  },
+  {
+    "name": "Development Land",
+    "type": 0,
+    "entry": 451,
+    "script": "",
+    "creature_spawns": 85,
+    "gameobject_spawns": 318
+  },
+  {
+    "name": "Blackwing Lair",
+    "type": 2,
+    "entry": 469,
+    "script": "instance_blackwing_lair",
+    "creature_spawns": 284,
+    "gameobject_spawns": 91
+  },
+  {
+    "name": "Warsong Gulch",
+    "type": 3,
+    "entry": 489,
+    "script": "",
+    "creature_spawns": 2,
+    "gameobject_spawns": 31
+  },
+  {
+    "name": "Ruins of Ahn'Qiraj",
+    "type": 2,
+    "entry": 509,
+    "script": "instance_ruins_of_ahnqiraj",
+    "creature_spawns": 309,
+    "gameobject_spawns": 7
+  },
+  {
+    "name": "Arathi Basin",
+    "type": 3,
+    "entry": 529,
+    "script": "",
+    "creature_spawns": 110,
+    "gameobject_spawns": 254
+  },
+  {
+    "name": "Ahn'Qiraj Temple",
+    "type": 2,
+    "entry": 531,
+    "script": "instance_temple_of_ahnqiraj",
+    "creature_spawns": 542,
+    "gameobject_spawns": 17
+  },
+  {
+    "name": "Lower Karazhan Halls",
+    "type": 2,
+    "entry": 532,
+    "script": "instance_lower_karazhan_halls",
+    "creature_spawns": 436,
+    "gameobject_spawns": 25
+  },
+  {
+    "name": "Naxxramas",
+    "type": 2,
+    "entry": 533,
+    "script": "instance_naxxramas",
+    "creature_spawns": 1052,
+    "gameobject_spawns": 248
+  },
+  {
+    "name": "Karazhan Crypt",
+    "type": 1,
+    "entry": 800,
+    "script": "instance_karazhan_crypt",
+    "creature_spawns": 250,
+    "gameobject_spawns": 117
+  },
+  {
+    "name": "Secret Cow Level",
+    "type": 0,
+    "entry": 801,
+    "script": "",
+    "creature_spawns": 11,
+    "gameobject_spawns": 1
+  },
+  {
+    "name": "Crescent Grove",
+    "type": 1,
+    "entry": 802,
+    "script": "instance_crescent_grove",
+    "creature_spawns": 459,
+    "gameobject_spawns": 14
+  },
+  {
+    "name": "Eldrethalas",
+    "type": 0,
+    "entry": 804,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Frostmane Retreat",
+    "type": 1,
+    "entry": 806,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Emerald Sanctum",
+    "type": 2,
+    "entry": 807,
+    "script": "instance_emerald_sanctum",
+    "creature_spawns": 158,
+    "gameobject_spawns": 3
+  },
+  {
+    "name": "Hateforge Quarry",
+    "type": 1,
+    "entry": 808,
+    "script": "",
+    "creature_spawns": 346,
+    "gameobject_spawns": 44
+  },
+  {
+    "name": "Gnomeshrink",
+    "type": 0,
+    "entry": 809,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 2
+  },
+  {
+    "name": "Winter Veil Vale",
+    "type": 0,
+    "entry": 813,
+    "script": "",
+    "creature_spawns": 180,
+    "gameobject_spawns": 66
+  },
+  {
+    "name": "Tower of Karazhan",
+    "type": 2,
+    "entry": 814,
+    "script": "",
+    "creature_spawns": 225,
+    "gameobject_spawns": 11
+  },
+  {
+    "name": "Gilneas City",
+    "type": 1,
+    "entry": 815,
+    "script": "instance_gilneas_city",
+    "creature_spawns": 340,
+    "gameobject_spawns": 269
+  },
+  {
+    "name": "Dragonmaw Retreat",
+    "type": 1,
+    "entry": 816,
+    "script": "instance_dragonmaw_retreat",
+    "creature_spawns": 462,
+    "gameobject_spawns": 302
+  },
+  {
+    "name": "Tamotest2",
+    "type": 0,
+    "entry": 817,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Stormwrought Ruins",
+    "type": 1,
+    "entry": 818,
+    "script": "instance_stormwrought_ruins",
+    "creature_spawns": 564,
+    "gameobject_spawns": 26
+  },
+  {
+    "name": "Timbermaw Hold",
+    "type": 2,
+    "entry": 819,
+    "script": "",
+    "creature_spawns": 282,
+    "gameobject_spawns": 11
+  },
+  {
+    "name": "Windhorn Canyon",
+    "type": 1,
+    "entry": 820,
+    "script": "",
+    "creature_spawns": 278,
+    "gameobject_spawns": 50
+  },
+  {
+    "name": "Thorn Gorge",
+    "type": 3,
+    "entry": 821,
+    "script": "",
+    "creature_spawns": 0,
+    "gameobject_spawns": 0
+  },
+  {
+    "name": "Frostmane Hollow",
+    "type": 1,
+    "entry": 822,
+    "script": "",
+    "creature_spawns": 148,
+    "gameobject_spawns": 12
+  }
+]

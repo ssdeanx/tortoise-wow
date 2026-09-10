@@ -60,6 +60,19 @@ void DcTestAreaTriggers::Disarm()
     _armed = false;
 }
 
+// Volumes whose script seals the area (gates close on entry): only the leader
+// may fire them, see Tick().
+bool DcTestAreaTriggers::LeaderOnlyVolume(uint32 entry)
+{
+    switch (entry)
+    {
+        case 1526:   // BRD Ring of Law (at_ring_of_law): the arena gates close
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool DcTestAreaTriggers::BotOnly(Group* group)
 {
     for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
@@ -98,21 +111,35 @@ void DcTestAreaTriggers::Tick(Player* leader)
         // teleport are skipped: DC's own scripted events hop the party across
         // the map (the Underbog two-hop drop is one), and a position read
         // inside that window is the position they left.
+        // Leader first. A volume that SEALS something behind the party must not
+        // be fired by a follower who ran in ahead: BRD 2026-09-06, three tanks
+        // stood "door_blocked" 35 yd outside the closed ArenaGate01 because a
+        // follower had crossed the Ring of Law trigger (1526) first and the
+        // gates slammed shut with the tank outside. For such volumes only the
+        // leader fires; for every other volume any member still does (the tank
+        // does not always cross them itself), but the leader is checked first.
+        // Same containment test (and 5y slack) the areatrigger opcode handler
+        // applies - there is no Player::IsInAreaTriggerRadius here.
         Player* inside = nullptr;
-        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        if (leader->IsInWorld() && !leader->IsBeingTeleported() && leader->GetSession() &&
+            IsPointInAreaTriggerZone(at, leader->GetMapId(), leader->GetPositionX(),
+                                     leader->GetPositionY(), leader->GetPositionZ(), 5.0f))
+            inside = leader;
+        if (!inside && !LeaderOnlyVolume(volume.entry))
         {
-            Player* member = ref->GetSource();
-            if (!member || !member->IsInWorld() || member->IsBeingTeleported())
-                continue;
-            if (!member->GetSession())
-                continue;
-            // Same containment test (and 5y slack) the areatrigger opcode
-            // handler applies - there is no Player::IsInAreaTriggerRadius here.
-            if (IsPointInAreaTriggerZone(at, member->GetMapId(), member->GetPositionX(),
-                                         member->GetPositionY(), member->GetPositionZ(), 5.0f))
+            for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
             {
-                inside = member;
-                break;
+                Player* member = ref->GetSource();
+                if (!member || !member->IsInWorld() || member->IsBeingTeleported())
+                    continue;
+                if (!member->GetSession())
+                    continue;
+                if (IsPointInAreaTriggerZone(at, member->GetMapId(), member->GetPositionX(),
+                                             member->GetPositionY(), member->GetPositionZ(), 5.0f))
+                {
+                    inside = member;
+                    break;
+                }
             }
         }
 
