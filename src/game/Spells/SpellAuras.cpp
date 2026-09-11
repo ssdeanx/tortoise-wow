@@ -301,6 +301,11 @@ pAuraHandler AuraHandler[TOTAL_AURAS] =
     &Aura::HandleNoImmediateEffect,                         //230 chain damage taken: native spell/melee damage-taken paths
 };
 
+void SpellAuraHolder::SetAura(uint32 slot, bool remove)
+{
+    m_target->SetUInt32Value(UNIT_FIELD_AURA + slot, remove ? 0 : GetId());
+}
+
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
 
 Aura::Aura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem) :
@@ -7560,11 +7565,6 @@ void SpellAuraHolder::SetAuraFlag(uint32 slot, bool add)
         val |= (flags << byte);
     }
     m_target->SetUInt32Value(UNIT_FIELD_AURAFLAGS + index, val);
-}
-
-void SpellAuraHolder::SetAura(uint32 slot, bool remove)
-{
-    m_target->SetUInt32Value(UNIT_FIELD_AURA + slot, remove ? 0 : GetId());
 }
 
 void SpellAuraHolder::SetAuraLevel(uint32 slot, uint32 level)
