@@ -1,38 +1,22 @@
 # Tortoise-WoW Master Game Master & Playerbot Command Portal
 
-> **Target Platform**: Turtle-WoW 1.18.1 (Build 7272)
-> **Architecture**: CMaNGOS + PlayerBots (ike3 / r-o-sh) + Dynamic Module System
+> **Target Platform**: Turtle-WoW 1.18.1 (Build 7272)  
+> **Architecture**: CMaNGOS + PlayerBots (ike3 / r-o-sh) + Dynamic Module System + Eluna  
 > **Coverage**: 100% of all 539 core commands documented & verified live.
 
 ---
 
-## 📚 Modular Enterprise Reference Sitemaps
+## 📚 Unified 5-Volume Master Reference Architecture
 
-To provide deep technical parameters and copy-paste in-game macro templates for every domain, the command manual is organized into 20 specialized reference modules (00 through 19):
+To provide deep technical parameters, command tables, and copy-paste in-game macro templates without multi-file hopping, the command manual is organized into **5 comprehensive Master Handbooks**:
 
-| # | Reference Module | Scope & Core Topics | Ready Macros |
-| :-: | :--- | :--- | :-: |
-| **00** | [**Self & Own Character Commands**](references/00_self_and_player_commands.md) | **100% dedicated to your own character** (level 60 boost, level-scaled random gear/enchants/consumes, bank/mail, god mode, flight). | [Macro Card](references/00_self_and_player_commands.md#1-categorized-in-game-lua-macros-top-priority) |
-| **01** | [**Security Ranks, Accounts & Permissions**](references/01_security_and_account.md) | Security Levels 0–6, account creation, password/IP locks, GM permissions. | [Macro Card](references/01_security_and_account.md#1-categorized-in-game-lua-macros-top-priority) |
-| **02** | [**Server Operations, Lifecycle & Live Reloads**](references/02_server_and_reloads.md) | `.server` restarts/shutdowns, 106+ `.reload` tables (configs, items, spells, strings, `.reload eluna`). | [Macro Card](references/02_server_and_reloads.md#1-categorized-in-game-lua-macros-top-priority) |
-| **03** | [**Movement, Teleportation & Turtle-WoW Map Directory**](references/03_teleports_and_movement.md) | `.tele` tokens (647+ destinations), custom Turtle dungeons & raids, `.go xyz`, `.hover`. | [Macro Card](references/03_teleports_and_movement.md#1-categorized-in-game-lua-macros-top-priority) |
-| **04** | [**Character Stats, Visuals & Modifications**](references/04_character_stats_and_visuals.md) | `.modify` suite (HP, Mana, Stats, Honor Currency, Morphs, Scales, Titles, Speed). | [Macro Card](references/04_character_stats_and_visuals.md#1-categorized-in-game-lua-macros-top-priority) |
-| **05** | [**Combat, Spells, Talents & Weapon Skills**](references/05_combat_spells_and_skills.md) | `.god`, `.revive`, `.die`, `.learn all_myspells`, `.maxskill`, `.cooldown`, `.aura`. | [Macro Card](references/05_combat_spells_and_skills.md#1-categorized-in-game-lua-macros-top-priority) |
-| **06** | [**Quests, Instances, Events & AQ War Effort**](references/06_quests_instances_and_events.md) | `.quest complete`, `.pet`, `.instance groupunbind`, `.bg`, `.wareffort`, holidays. | [Macro Card](references/06_quests_instances_and_events.md#1-categorized-in-game-lua-macros-top-priority) |
-| **07** | [**Items, Equipment, Economy & Remote Mail**](references/07_items_economy_and_mail.md) | `.additem`, `.additemset`, `.bank`, `.mailbox`, `.modify money`, `.send items`. | [Macro Card](references/07_items_economy_and_mail.md#1-categorized-in-game-lua-macros-top-priority) |
-| **08** | [**NPC Spawning, GameObjects & World Editing**](references/08_spawning_and_world_editing.md) | NPC spawning & editing (`.npc`), GameObjects (`.gobject`), `.wchange`, `.settime`. | [Macro Card](references/08_spawning_and_world_editing.md#1-categorized-in-game-lua-macros-top-priority) |
-| **09** | [**Moderation, Bans, Tickets & Anticheat**](references/09_moderation_tickets_and_anticheat.md) | `.kick`, `.freeze`, `.mute`, `.ban`, `.ticket`, `.pdump`, Warden telemetry. | [Macro Card](references/09_moderation_tickets_and_anticheat.md#1-categorized-in-game-lua-macros-top-priority) |
-| **10** | [**Turtle-WoW Custom Features & Vanity Systems**](references/10_turtle_custom_features.md) | Hardcore modes, Trainee challenges, Cartographer reveal, Custom Guild housing. | [Macro Card](references/10_turtle_custom_features.md#1-categorized-in-game-lua-macros-top-priority) |
-| **11** | [**Playerbot Control Suite (.bot)**](references/11_playerbot_suite.md) | Complete `.bot` verbs (`add`, `remove`, `summon`, `gear`, `train`, `p`, `create`). | [Macro Card](references/11_playerbot_suite.md#1-categorized-in-game-lua-macros-top-priority) |
-| **12** | [**RandomBot Population Manager (.rndbot)**](references/12_randombot_manager.md) | Autonomous bot pool verbs (`stats`, `init`, `upgrade`, `grind`, `rpg`, `clean map`). | [Macro Card](references/12_randombot_manager.md#1-categorized-in-game-lua-macros-top-priority) |
-| **13** | [**Bot In-Game Whispers, Party Controls & Macro Book**](references/13_bot_whispers_and_macros.md) | **26 Ready in-game macro book** for Attack, Tank Pull, Follow, Formations, Loot, and Trade. | [Macro Book](references/13_bot_whispers_and_macros.md#1-the-ultimate-26-in-game-macro-book-categorized) |
-| **14** | [**Bot Strategies, Tactical AI & Raid Tactics**](references/14_bot_strategies_and_tactics.md) | Strategy buckets (`co`, `nc`, `de`, `react`), **target-based (`%t`) class/spec macros**. | [Macro Card](references/14_bot_strategies_and_tactics.md#1-categorized-in-game-lua-macros-top-priority) |
-| **15** | [**Mod-Dungeon-Clear AI & Automated Route Engine**](references/15_dungeon_clear_module.md) | Autonomous dungeon clearing behavior trees, pull governors, spectator camera, `dc_roster.txt`. | [Macro Card](references/15_dungeon_clear_module.md#1-categorized-in-game-lua-macros-top-priority) |
-| **16** | [**Developer Diagnostics, Lookups & Engine Debugging**](references/16_developer_and_diagnostics.md) | Universal `.lookup` engine, `.list` inspectors, `.debug` profilers, field modifiers. | [Macro Card](references/16_developer_and_diagnostics.md#1-categorized-in-game-lua-macros-top-priority) |
-| **17** | [**Tier Sets & Endgame Equipment Directory**](references/17_tier_items_and_endgame_gear.md) | **Complete class item IDs** (Tier 1–3, legendaries, BiS weapons, trinkets, rings, shields). | [Macro Card](references/17_tier_items_and_endgame_gear.md#1-categorized-in-game-lua-macros-top-priority) |
-| **18** | [**Class Talent Specs & Raid Meta Builds**](references/18_class_talent_specs.md) | **19 High-performance specs & live interactive Turtle-WoW talent calculator links**. | [Spec Directory](references/18_class_talent_specs.md#1-warrior-talent-specs) |
-| **19** | [**Eluna Lua Engine & Scripting Framework**](references/19_eluna_lua_engine.md) | `.reload eluna [mapId]`, custom command hooks (Event 42), database-backed `SpellInfo` API. | [Macro Card](references/19_eluna_lua_engine.md#1-categorized-in-game-lua-macros-top-priority) |
-| **20** | [**Warrior DPS, Dungeons, Raids & Attunements**](references/20_warrior_dps_dungeons_and_raids.md) | **Deep-dive Warrior DPS manual**: Dual-Wield Fury (17/34/0), 2H Arms Cleave, Master Keyring, UBRS/Scarlet Citadel 10-mans, `/ra` commands, Turtle custom dungeons/raids, self-enchants, consumables, and world buffs. | [Master Card](references/20_warrior_dps_dungeons_and_raids.md#1-1-click-warrior-dps-master-bootstrap) |
+| Volume | Master Handbook | Scope & Core Topics | Ready Macros |
+| :---: | :--- | :--- | :---: |
+| **01** | [**Game Master & World Administration**](references/01_game_master_handbook.md) | **100% of GM commands**: Self progression/cheats (`.god`, `.fly`, `.levelup 60`), accounts, security (0–6), spawning (`.npc`, `.gobject`), economy, moderation, 106+ `.reload` tables & diagnostics. | [GM Macro Card](references/01_game_master_handbook.md#1-categorized-in-game-lua-macros-top-priority) |
+| **02** | [**Playerbot & Raid Automation**](references/02_playerbot_and_raid_automation.md) | **Complete Bot Control Center**: `.bot` & `.rndbot` suites, single-letter whisper shortcuts (`c`, `u`, `e`, `t`, `s`, `r`), strategy tokens (`co`/`nc`), `.dc` autonomous dungeon clear solver & raid macros. | [Bot Macro Deck](references/02_playerbot_and_raid_automation.md#1-master-macro-ui-cheat-sheet-copy-paste-ready) |
+| **03** | [**World, Dungeons & Teleports Directory**](references/03_turtle_world_and_teleports.md) | **647+ `.tele` tokens**: Kalimdor, Eastern Kingdoms, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), instant attunements & master keyring. | [Travel Macros](references/03_turtle_world_and_teleports.md#1-categorized-in-game-lua-macros-top-priority) |
+| **04** | [**Class Specs & Endgame Gear Directory**](references/04_class_specs_and_endgame_gear.md) | **All 9 Classes**: 1-Click BiS gear loadout macros, complete Tier 1/2/3 set IDs, BiS weapons, trinkets, enchants & verified 1.18.1 talent builds with interactive calculator URLs. | [BiS Loadouts](references/04_class_specs_and_endgame_gear.md#1-1-click-bis-class-loadouts-complete-1617-slot-sets) |
+| **05** | [**Eluna Scripting & Core Development Engine**](references/05_developer_eluna_and_engine.md) | **Eluna Lua API**: Live reloads (`.reload eluna`), Event 42 Custom Command dispatch, Turtle-WoW `SpellInfo` compatibility layer, and production server hook examples. | [Script Macros](references/05_developer_eluna_and_engine.md#1-categorized-in-game-lua-macros-top-priority) |
 
 ---
 
@@ -120,9 +104,6 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 .dc test watch next                    -- Tours next active test run in batch campaign without leaving
 .dc test watch off                     -- Stops camera, restores GM visibility, teleports back, drops binds
 .dc test stop [selector|all]           -- Aborts active test run, specific run by ID/token, or all runs
-.dc test plan start <spec>             -- Launches a batched multi-run campaign plan
-.dc test plan status                   -- Displays status of running test plans
-.dc test plan stop [planId|all]        -- Stops active test campaign plans
 ```
 
 ### ⚔️ 4. Main Tank Engage & DPS Attack
@@ -167,6 +148,22 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 .replenish
 ```
 
+### 🖥️ 9. Core Server Operations & Diagnostics
+
+```lua
+.server info                           -- Realm uptime, player count, active bot count, tick stats
+.server restart 60 Scheduled restart   -- Announces countdown and initiates clean server reboot
+.server shutdown 60 Server maintenance -- Announces countdown and initiates clean shutdown
+.server restart cancel                 -- Cancels active shutdown or restart timer
+.perf cpu                              -- Dumps thread CPU consumption and loop cycle benchmarks
+.perf memory                           -- Dumps VmRSS and VmSize resident process memory usage
+.pdump write backup.dmp <PlayerName>   -- Generates portable binary character dump in storage directory
+.pdump load backup.dmp <Account> <NewName> -- Restores portable character dump to target account
+.character deleted list name <pattern> -- Searches soft-deleted characters in world database
+.character deleted restore <name>      -- Restores soft-deleted character and restores inventory/spells
+.reload all                            -- Reloads all game configuration and database tables
+```
+
 ---
 
 ## 🔧 Bot Leveling & Population Optimization
@@ -178,27 +175,16 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 ---
 
-## 🧭 Complete Reference Navigation Matrix
+## 🧭 Direct Reference Navigation Matrix
 
-| # | Reference Module | Domain & Key Topics | Direct Link |
-| :-: | :--- | :--- | :-: |
-| **01** | [**01. Security Ranks & Accounts**](./references/01_security_and_account.md) | Permissions (0–6), Accounts, IP Locks, 2FA, GM Mode | [Open 01_security_and_account.md](./references/01_security_and_account.md) |
-| **02** | [**02. Server Operations & Reloads**](./references/02_server_and_reloads.md) | Server Operations, 106+ .reload Tables, Dynamic Modules | [Open 02_server_and_reloads.md](./references/02_server_and_reloads.md) |
-| **03** | [**03. Teleports & Movement Directory](./references/03_teleports_and_movement.md)** | 647+ .tele Tokens, Turtle Custom Dungeons & Raids | [Open 03_teleports_and_movement.md](./references/03_teleports_and_movement.md) |
-| **04** | [**04. Character Stats & Visuals](./references/04_character_stats_and_visuals.md)** | Reputations, Honor, Speeds, Scales, Demorph, Reset | [Open 04_character_stats_and_visuals.md](./references/04_character_stats_and_visuals.md) |
-| **05** | [**05. Combat, Spells & Skills](./references/05_combat_spells_and_skills.md)** | .god, .revive, .learn all_myspells, .maxskill | [Open 05_combat_spells_and_skills.md](./references/05_combat_spells_and_skills.md) |
-| **06** | [**06. Quests, Instances & Events](./references/06_quests_instances_and_events.md)** | .quest, .instance groupunbind, Events, Pets | [Open 06_quests_instances_and_events.md](./references/06_quests_instances_and_events.md) |
-| **07** | [**07. Items, Economy & Mail](./references/07_items_economy_and_mail.md)** | Tier 1/2/3 Sets, Ilvl/Quality Gearing, Bags, Bank | [Open 07_items_economy_and_mail.md](./references/07_items_economy_and_mail.md) |
-| **08** | [**08. NPC Spawning & World Editing](./references/08_spawning_and_world_editing.md)** | NPC Spawning (.npc), GameObjects (.gobject), Weather | [Open 08_spawning_and_world_editing.md](./references/08_spawning_and_world_editing.md) |
-| **09** | [**09. Moderation & Anticheat](./references/09_moderation_tickets_and_anticheat.md)** | .kick, .ban, .mute, .ticket, Warden Telemetry | [Open 09_moderation_tickets_and_anticheat.md](./references/09_moderation_tickets_and_anticheat.md) |
-| **10** | [**10. Turtle Custom Features](./references/10_turtle_custom_features.md)** | Hardcore Modes, Trainee, Cartographer, Guild Houses | [Open 10_turtle_custom_features.md](./references/10_turtle_custom_features.md) |
-| **11** | [**11. Playerbot Control Suite](./references/11_playerbot_suite.md)** | .bot add/remove/summon/gear/train/prep Suite | [Open 11_playerbot_suite.md](./references/11_playerbot_suite.md) |
-| **12** | [**12. RandomBot Population](./references/12_randombot_manager.md)** | Autonomous Bot Pool (.rndbot), PID, Grind, RPG | [Open 12_randombot_manager.md](./references/12_randombot_manager.md) |
-| **13** | [**13. Bot Whispers & Macro Book](./references/13_bot_whispers_and_macros.md)** | 32 Ready In-Game Party & Whisper Macros | [Open 13_bot_whispers_and_macros.md](./references/13_bot_whispers_and_macros.md) |
-| **14** | [**14. Bot Strategies & Tactics](./references/14_bot_strategies_and_tactics.md)** | Target-Based (%t) Macros for All 28 Class/Specs | [Open 14_bot_strategies_and_tactics.md](./references/14_bot_strategies_and_tactics.md) |
-| **15** | [**15. Dungeon Clear AI Module](./references/15_dungeon_clear_module.md)** | Autonomous Route Solver, Pull Governor, Door Policy | [Open 15_dungeon_clear_module.md](./references/15_dungeon_clear_module.md) |
-| **16** | [**16. Diagnostics & Lookups](./references/16_developer_and_diagnostics.md)** | Universal .lookup, .list Inspectors, .debug Tools | [Open 16_developer_and_diagnostics.md](./references/16_developer_and_diagnostics.md) |
+| Volume | Handbook Title | Domain & Key Topics | Direct Link |
+| :---: | :--- | :--- | :---: |
+| **01** | [**01. Game Master & World Administration**](./references/01_game_master_handbook.md) | 100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics | [Open Volume 01](./references/01_game_master_handbook.md) |
+| **02** | [**02. Playerbot & Raid Automation**](./references/02_playerbot_and_raid_automation.md) | Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros | [Open Volume 02](./references/02_playerbot_and_raid_automation.md) |
+| **03** | [**03. World, Dungeons & Teleports Directory**](./references/03_turtle_world_and_teleports.md) | 647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements | [Open Volume 03](./references/03_turtle_world_and_teleports.md) |
+| **04** | [**04. Class Specs & Endgame Gear Directory**](./references/04_class_specs_and_endgame_gear.md) | 1-Click BiS gear loadouts, Tier 1/2/3 set IDs, weapons, trinkets, enchants & verified 1.18.1 talent builds across all 9 classes | [Open Volume 04](./references/04_class_specs_and_endgame_gear.md) |
+| **05** | [**05. Eluna Scripting & Core Development Engine**](./references/05_developer_eluna_and_engine.md) | Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics | [Open Volume 05](./references/05_developer_eluna_and_engine.md) |
 
 ---
 
-[🏠 Master Portal (gm_commands.md)](./gm_commands.md) • [📖 Project Readme](./README.md) • [🎯 Bot Macro Book (13_bot_whispers_and_macros.md)](./references/13_bot_whispers_and_macros.md)
+[🏠 Master Portal (gm_commands.md)](./gm_commands.md) • [📖 Project Readme](./README.md) • [🤖 Bot Control Center (02_playerbot_and_raid_automation.md)](./references/02_playerbot_and_raid_automation.md)

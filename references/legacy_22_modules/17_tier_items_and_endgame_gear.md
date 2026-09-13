@@ -4,7 +4,7 @@
 
 ---
 
-## Complete 20-Module Reference Library
+## Complete 21-Module Reference Library
 
 | Security & Server | World & Characters | Gameplay & Items | Bots & Modules |
 | :--- | :--- | :--- | :--- |
@@ -12,271 +12,568 @@
 | [01. Security & Accounts](./01_security_and_account.md) | [04. Stats & Visuals](./04_character_stats_and_visuals.md) | [07. Items & Economy](./07_items_economy_and_mail.md) | [12. RandomBot Manager](./12_randombot_manager.md) |
 | [02. Server & Reloads](./02_server_and_reloads.md) | [05. Combat & Spells](./05_combat_spells_and_skills.md) | [08. Spawning & Editing](./08_spawning_and_world_editing.md) | [13. Bot Whispers & Macros](./13_bot_whispers_and_macros.md) |
 | [09. Moderation & Anticheat](./09_moderation_tickets_and_anticheat.md) | [10. Turtle Custom](./10_turtle_custom_features.md) | **[17. Tier Sets & Gear](./17_tier_items_and_endgame_gear.md)** | [14. Bot Strategies & Tactics](./14_bot_strategies_and_tactics.md) |
-| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | *(Standalone Portals)* | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
+| [16. Diagnostics & Lookups](./16_developer_and_diagnostics.md) | [18. Class Talent Specs](./18_class_talent_specs.md) | [20. Warrior Endgame & Raids](./20_warrior_dps_dungeons_and_raids.md) | [15. Dungeon Clear AI](./15_dungeon_clear_module.md) |
 | *(Server Scripting)* | *(Engine Core)* | *(Runtime Lua API)* | [19. Eluna Lua Engine](./19_eluna_lua_engine.md) |
+| *(Master Hub)* | *(Raid Commands)* | *(Bot Operations)* | **[21. Group & Raid Macros](./21_group_and_raid_management_macros.md)** |
 
 ---
 
-## 1. 1-Click BiS Class Loadouts (Top Priority)
+## 1. 1-Click BiS Class Loadouts (Complete 16–17 Slot Sets)
 
-Copy and paste these macros directly into your World of Warcraft **Macro UI** (`/m`) or chat box to instantly equip or populate your bags with the definitive Best-in-Slot endgame setup for your class/spec:
+Copy and paste these macros directly into your World of Warcraft **Macro UI** (`/m`) or chat box to instantly equip or populate your bags with the definitive Best-in-Slot endgame setup for your class/spec. **Every equipment slot is fully represented** (Head, Neck, Shoulders, Back, Chest, Wrists, Hands, Waist, Legs, Feet, Ring 1, Ring 2, Trinket 1, Trinket 2, Main Hand, Off Hand / Shield, and Ranged / Relic):
+
+---
 
 ### 🛡️ Protection Warrior (Main Tank BiS)
 
-Full 9-piece Dreadnaught, Thunderfury, The Face of Death shield, Drake Fang Talisman, Styleen's Impeding Scarab, Band of Accuria, and Prestor's Talisman:
+Full 9-piece Dreadnaught, Thunderfury, The Face of Death shield, Styleen's Impeding Scarab, Drake Fang Talisman, Mark of C'Thun, and Cryptfiend Silk Cloak:
 
 ```lua
-.additem 22416 1
-.additem 22417 1
-.additem 22418 1
-.additem 22419 1
-.additem 22420 1
-.additem 22421 1
-.additem 22422 1
-.additem 22423 1
-.additem 23059 1
-.additem 19019 1
-.additem 23043 1
-.additem 19406 1
-.additem 19431 1
-.additem 17063 1
-.additem 19377 1
+.additem 22417 1   -- Head: Dreadnaught Helmet
+.additem 22732 1   -- Neck: Mark of C'Thun
+.additem 22418 1   -- Shoulders: Dreadnaught Pauldrons
+.additem 23034 1   -- Back: Cryptfiend Silk Cloak
+.additem 22416 1   -- Chest: Dreadnaught Breastplate
+.additem 22423 1   -- Wrists: Dreadnaught Bracers
+.additem 22420 1   -- Hands: Dreadnaught Gauntlets
+.additem 22422 1   -- Waist: Dreadnaught Waistguard
+.additem 22421 1   -- Legs: Dreadnaught Legplates
+.additem 22419 1   -- Feet: Dreadnaught Sabatons
+.additem 23059 1   -- Ring 1: Band of the Dreadnaught
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 19431 1   -- Trinket 1: Styleen's Impeding Scarab
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 19019 1   -- Main Hand: Thunderfury, Blessed Blade of the Windseeker
+.additem 23043 1   -- Shield: The Face of Death
+.additem 22812 1   -- Ranged: Nerubian Slavemaker
 .repairitems
 ```
 
-### ⚔️ Dual-Wield Fury/Prot Tank Warrior (Max Threat BiS)
+---
 
-Thunderfury (MH), The Hungering Cold (OH), Drake Fang Talisman, Kiss of the Spider, Band of Accuria, Ring of the Fallen God, and Prestor's Talisman:
+### ⚔️ Dual-Wield Fury/Prot Warrior (Max Threat BiS)
+
+Thunderfury (MH), The Hungering Cold (OH), Breastplate of Annihilation, Lionheart Helm, Drake Fang Talisman, Kiss of the Spider, and Cloak of the Fallen God:
 
 ```lua
-.additem 22416 1
-.additem 22418 1
-.additem 22419 1
-.additem 22420 1
-.additem 19019 1
-.additem 23577 1
-.additem 19406 1
-.additem 22954 1
-.additem 17063 1
-.additem 21709 1
-.additem 19377 1
-.additem 22811 1
+.additem 12640 1   -- Head: Lionheart Helm
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 19394 1   -- Shoulders: Drake Talon Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 21814 1   -- Chest: Breastplate of Annihilation
+.additem 21618 1   -- Wrists: Hive Defiler Wristguards
+.additem 21581 1   -- Hands: Gauntlets of Annihilation
+.additem 21598 1   -- Waist: Girdle of the Menticide
+.additem 22385 1   -- Legs: Titanic Leggings
+.additem 19387 1   -- Feet: Chromatic Boots
+.additem 17063 1   -- Ring 1: Band of Accuria
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 19019 1   -- Main Hand: Thunderfury, Blessed Blade of the Windseeker
+.additem 23577 1   -- Off Hand: The Hungering Cold
+.additem 17069 1   -- Ranged: Striker's Mark
 .repairitems
 ```
+
+---
 
 ### ⚔️ Fury Warrior (Dual-Wield Melee DPS BiS)
 
-Gressil (Kel'Thuzad MH), The Hungering Cold (Kel'Thuzad OH), Kiss of the Spider, Drake Fang Talisman, Band of Accuria, Ring of the Fallen God, and Prestor's Talisman:
+Gressil (Kel'Thuzad MH), The Hungering Cold (Kel'Thuzad OH), Breastplate of Annihilation, Titanic Leggings, Kiss of the Spider, Drake Fang Talisman, and Cloak of the Fallen God:
 
 ```lua
-.additem 22418 1
-.additem 22419 1
-.additem 22420 1
-.additem 23054 1
-.additem 23577 1
-.additem 22954 1
-.additem 19406 1
-.additem 21709 1
-.additem 17063 1
-.additem 19377 1
-.additem 22811 1
+.additem 12640 1   -- Head: Lionheart Helm
+.additem 21664 1   -- Neck: Barbed Choker
+.additem 19394 1   -- Shoulders: Drake Talon Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 21814 1   -- Chest: Breastplate of Annihilation
+.additem 19146 1   -- Wrists: Wristguards of True Flight
+.additem 21581 1   -- Hands: Gauntlets of Annihilation
+.additem 21598 1   -- Waist: Girdle of the Menticide
+.additem 22385 1   -- Legs: Titanic Leggings
+.additem 19387 1   -- Feet: Chromatic Boots
+.additem 17063 1   -- Ring 1: Band of Accuria
+.additem 23038 1   -- Ring 2: Band of Unnatural Might
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 23054 1   -- Main Hand: Gressil, Dawn of Ruin
+.additem 23577 1   -- Off Hand: The Hungering Cold
+.additem 22811 1   -- Ranged: Soulstring
 .repairitems
 ```
+
+---
 
 ### 🔨 2-Handed Arms / Slam Warrior (Two-Handed Physical DPS BiS)
 
-Might of Menethil (2H Mace), Dreadnaught gear, Kiss of the Spider, Drake Fang Talisman, Band of Accuria, Ring of the Fallen God, Prestor's Talisman, and Soulstring:
+Might of Menethil (2H Mace), Lionheart Helm, Breastplate of Annihilation, Titanic Leggings, Kiss of the Spider, Drake Fang Talisman, and Shroud of Dominion:
 
 ```lua
-.additem 22416 1
-.additem 22417 1
-.additem 22418 1
-.additem 22419 1
-.additem 22420 1
-.additem 22421 1
-.additem 22798 1
-.additem 22954 1
-.additem 19406 1
-.additem 21709 1
-.additem 17063 1
-.additem 19377 1
-.additem 22811 1
+.additem 12640 1   -- Head: Lionheart Helm
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 19394 1   -- Shoulders: Drake Talon Pauldrons
+.additem 23045 1   -- Back: Shroud of Dominion
+.additem 21814 1   -- Chest: Breastplate of Annihilation
+.additem 21618 1   -- Wrists: Hive Defiler Wristguards
+.additem 21581 1   -- Hands: Gauntlets of Annihilation
+.additem 21598 1   -- Waist: Girdle of the Menticide
+.additem 22385 1   -- Legs: Titanic Leggings
+.additem 19387 1   -- Feet: Chromatic Boots
+.additem 23038 1   -- Ring 1: Band of Unnatural Might
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 22798 1   -- 2H Weapon: Might of Menethil
+.additem 22811 1   -- Ranged: Soulstring
 .repairitems
 ```
 
-### 🗡️ Combat / Daggers Rogue (Physical DPS BiS)
+---
 
-Full 9-piece Bonescythe, Kingsfall (Kel'Thuzad Dagger), Harbinger of Doom, Kiss of the Spider, Badge of the Swarmguard, Band of Accuria, and Nerubian Slavemaker:
+### 🗡️ Combat Swords Rogue (Physical DPS BiS)
+
+Full 9-piece Bonescythe, Gressil (MH), The Hungering Cold (OH), Kiss of the Spider, Drake Fang Talisman, Band of Accuria, and Cloak of the Fallen God:
 
 ```lua
-.additem 22476 1
-.additem 22477 1
-.additem 22478 1
-.additem 22479 1
-.additem 22480 1
-.additem 22481 1
-.additem 22482 1
-.additem 22483 1
-.additem 23060 1
-.additem 22802 1
-.additem 23044 1
-.additem 22954 1
-.additem 21670 1
-.additem 22812 1
+.additem 22478 1   -- Head: Bonescythe Helmet
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 22479 1   -- Shoulders: Bonescythe Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 22476 1   -- Chest: Bonescythe Breastplate
+.additem 22482 1   -- Wrists: Bonescythe Bracers
+.additem 22481 1   -- Hands: Bonescythe Gauntlets
+.additem 22483 1   -- Waist: Bonescythe Waistguard
+.additem 22477 1   -- Legs: Bonescythe Legplates
+.additem 22480 1   -- Feet: Bonescythe Sabatons
+.additem 23060 1   -- Ring 1: Band of Accuria
+.additem 23038 1   -- Ring 2: Band of Unnatural Might
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 23054 1   -- Main Hand: Gressil, Dawn of Ruin
+.additem 23577 1   -- Off Hand: The Hungering Cold
+.additem 22812 1   -- Ranged: Nerubian Slavemaker
 .repairitems
 ```
 
-### 🏹 Marksmanship Hunter (Ranged DPS BiS)
+---
 
-Full 9-piece Cryptstalker, Nerubian Slavemaker, The Eye of Nerub (2H Polearm), Kiss of the Spider, Drake Fang Talisman, Band of Accuria, and Ring of the Fallen God:
+### 🗡️ Combat Daggers Rogue (Physical DPS BiS)
+
+Full 9-piece Bonescythe, Kingsfall (Kel'Thuzad MH Dagger), Harbinger of Doom (OH Dagger), Kiss of the Spider, Slayer's Crest, Band of Accuria, and Cloak of the Fallen God:
 
 ```lua
-.additem 22436 1
-.additem 22437 1
-.additem 22438 1
-.additem 22439 1
-.additem 22440 1
-.additem 22441 1
-.additem 22442 1
-.additem 22443 1
-.additem 23067 1
-.additem 22812 1
-.additem 23039 1
-.additem 22954 1
-.additem 19406 1
-.additem 21709 1
+.additem 22478 1   -- Head: Bonescythe Helmet
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 22479 1   -- Shoulders: Bonescythe Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 22476 1   -- Chest: Bonescythe Breastplate
+.additem 22482 1   -- Wrists: Bonescythe Bracers
+.additem 22481 1   -- Hands: Bonescythe Gauntlets
+.additem 22483 1   -- Waist: Bonescythe Waistguard
+.additem 22477 1   -- Legs: Bonescythe Legplates
+.additem 22480 1   -- Feet: Bonescythe Sabatons
+.additem 17063 1   -- Ring 1: Band of Accuria
+.additem 23038 1   -- Ring 2: Band of Unnatural Might
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 23041 1   -- Trinket 2: Slayer's Crest
+.additem 22802 1   -- Main Hand: Kingsfall
+.additem 23044 1   -- Off Hand: Harbinger of Doom
+.additem 22812 1   -- Ranged: Nerubian Slavemaker
 .repairitems
 ```
 
-### 🔥 Fire / Frost Mage (Caster DPS BiS)
+---
 
-Full 9-piece Frostfire, Atiesh Greatstaff of the Guardian (Mage), Neltharion's Tear, Restrained Essence of Sapphiron, Band of Unnatural Forces, Ring of the Fallen God, Gem of Trapped Innocents, and Wand of the Whispering Dead:
+### 🏹 Marksmanship / Survival Hunter (Ranged DPS BiS)
+
+Full 9-piece Cryptstalker, Nerubian Slavemaker (Kel'Thuzad Crossbow), The Eye of Nerub (2H Polearm), Kiss of the Spider, Slayer's Crest, Band of Accuria, and Cloak of the Fallen God:
 
 ```lua
-.additem 22496 1
-.additem 22497 1
-.additem 22498 1
-.additem 22499 1
-.additem 22500 1
-.additem 22501 1
-.additem 22502 1
-.additem 22503 1
-.additem 23062 1
-.additem 22589 1
-.additem 19379 1
-.additem 23046 1
-.additem 23038 1
-.additem 21709 1
-.additem 23057 1
-.additem 23009 1
+.additem 22438 1   -- Head: Cryptstalker Headpiece
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 22439 1   -- Shoulders: Cryptstalker Spaulders
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 22436 1   -- Chest: Cryptstalker Tunic
+.additem 22442 1   -- Wrists: Cryptstalker Wristguards
+.additem 22441 1   -- Hands: Cryptstalker Handguards
+.additem 22443 1   -- Waist: Cryptstalker Girdle
+.additem 22437 1   -- Legs: Cryptstalker Legguards
+.additem 22440 1   -- Feet: Cryptstalker Boots
+.additem 23067 1   -- Ring 1: Band of the Cryptstalker
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 23041 1   -- Trinket 2: Slayer's Crest
+.additem 23039 1   -- 2H Weapon: The Eye of Nerub
+.additem 22812 1   -- Ranged: Nerubian Slavemaker
 .repairitems
 ```
+
+---
+
+### 🔥 Fire Mage (Caster Burst DPS BiS)
+
+Full 9-piece Frostfire, Atiesh Greatstaff of the Guardian (Mage), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, Ring of the Fallen God, and Wand of the Whispering Dead:
+
+```lua
+.additem 22498 1   -- Head: Frostfire Circlet
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22499 1   -- Shoulders: Frostfire Shoulderpads
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22496 1   -- Chest: Frostfire Robe
+.additem 22502 1   -- Wrists: Frostfire Bindings
+.additem 22501 1   -- Hands: Frostfire Gloves
+.additem 22503 1   -- Waist: Frostfire Belt
+.additem 22497 1   -- Legs: Frostfire Leggings
+.additem 22500 1   -- Feet: Frostfire Sandals
+.additem 23062 1   -- Ring 1: Ring of the Frostfire
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 22589 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Mage)
+.additem 23009 1   -- Wand: Wand of the Whispering Dead
+.repairitems
+```
+
+---
+
+### ❄️ Frost Mage (Caster Control / AoE DPS BiS)
+
+Full 9-piece Frostfire, Soulseeker (Kel'Thuzad Staff), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, and Gem of Trapped Innocents:
+
+```lua
+.additem 22498 1   -- Head: Frostfire Circlet
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22499 1   -- Shoulders: Frostfire Shoulderpads
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22496 1   -- Chest: Frostfire Robe
+.additem 22502 1   -- Wrists: Frostfire Bindings
+.additem 22501 1   -- Hands: Frostfire Gloves
+.additem 22503 1   -- Waist: Frostfire Belt
+.additem 22497 1   -- Legs: Frostfire Leggings
+.additem 22500 1   -- Feet: Frostfire Sandals
+.additem 23062 1   -- Ring 1: Ring of the Frostfire
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 22799 1   -- 2H Weapon: Soulseeker
+.additem 23009 1   -- Wand: Wand of the Whispering Dead
+.repairitems
+```
+
+---
 
 ### 💀 Affliction / Destruction Warlock (Shadow DPS BiS)
 
-Full 9-piece Plagueheart, Atiesh Greatstaff of the Guardian (Warlock), Neltharion's Tear, Restrained Essence of Sapphiron, Band of Unnatural Forces, Gem of Trapped Innocents, and Wand of the Whispering Dead:
+Full 9-piece Plagueheart, Atiesh Greatstaff of the Guardian (Warlock), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, Ring of the Fallen God, and Wand of the Whispering Dead:
 
 ```lua
-.additem 22504 1
-.additem 22505 1
-.additem 22506 1
-.additem 22507 1
-.additem 22508 1
-.additem 22509 1
-.additem 22510 1
-.additem 22511 1
-.additem 23063 1
-.additem 22630 1
-.additem 19379 1
-.additem 23046 1
-.additem 23038 1
-.additem 23057 1
-.additem 23009 1
+.additem 22506 1   -- Head: Plagueheart Circlet
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22507 1   -- Shoulders: Plagueheart Shoulderpads
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22504 1   -- Chest: Plagueheart Robe
+.additem 22510 1   -- Wrists: Plagueheart Bindings
+.additem 22509 1   -- Hands: Plagueheart Gloves
+.additem 22511 1   -- Waist: Plagueheart Belt
+.additem 22505 1   -- Legs: Plagueheart Leggings
+.additem 22508 1   -- Feet: Plagueheart Sandals
+.additem 23063 1   -- Ring 1: Ring of the Plagueheart
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 22630 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Warlock)
+.additem 23009 1   -- Wand: Wand of the Whispering Dead
 .repairitems
 ```
+
+---
 
 ### ✝️ Holy Priest (Raid Healer BiS)
 
-Full 9-piece Vestments of Faith, Atiesh Greatstaff of the Guardian (Priest), Eye of the Dead, Rejuvenating Gem, Ring of Faith, Gem of Trapped Innocents, and Wand of the Whispering Dead:
+Full 9-piece Vestments of Faith, Atiesh Greatstaff of the Guardian (Priest), Eye of the Dead, Rejuvenating Gem, Cloak of the Savior, Pure Elementium Band, and Wand of the Whispering Dead:
 
 ```lua
-.additem 22512 1
-.additem 22513 1
-.additem 22514 1
-.additem 22515 1
-.additem 22516 1
-.additem 22517 1
-.additem 22518 1
-.additem 22519 1
-.additem 23061 1
-.additem 22631 1
-.additem 23047 1
-.additem 19395 1
-.additem 23057 1
-.additem 23009 1
+.additem 22514 1   -- Head: Circlet of Faith
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22515 1   -- Shoulders: Shoulderpads of Faith
+.additem 23023 1   -- Back: Cloak of the Savior
+.additem 22512 1   -- Chest: Robe of Faith
+.additem 22518 1   -- Wrists: Bindings of Faith
+.additem 22517 1   -- Hands: Gloves of Faith
+.additem 22519 1   -- Waist: Belt of Faith
+.additem 22513 1   -- Legs: Leggings of Faith
+.additem 22516 1   -- Feet: Sandals of Faith
+.additem 23061 1   -- Ring 1: Ring of Faith
+.additem 19382 1   -- Ring 2: Pure Elementium Band
+.additem 23047 1   -- Trinket 1: Eye of the Dead
+.additem 19395 1   -- Trinket 2: Rejuvenating Gem
+.additem 22631 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Priest)
+.additem 23009 1   -- Wand: Wand of the Whispering Dead
 .repairitems
 ```
 
-### 🔨 Holy / Retribution Paladin (Support & Healer BiS)
+---
 
-Full 9-piece Redemption Armor, The End of Dreams (Kel'Thuzad 1H Mace), Shield of Condemnation, Eye of the Dead, Rejuvenating Gem, and Ring of Redemption:
+### 🔮 Shadow Priest (Shadow Caster DPS BiS)
+
+Plagueheart/Dark Storm set, Atiesh Greatstaff of the Guardian (Priest), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, and Eyestalk Waist Cord:
 
 ```lua
-.additem 22424 1
-.additem 22425 1
-.additem 22426 1
-.additem 22427 1
-.additem 22428 1
-.additem 22429 1
-.additem 22430 1
-.additem 22431 1
-.additem 23066 1
-.additem 22988 1
-.additem 22819 1
-.additem 23047 1
-.additem 19395 1
+.additem 22506 1   -- Head: Plagueheart Circlet
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22507 1   -- Shoulders: Plagueheart Shoulderpads
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22504 1   -- Chest: Plagueheart Robe
+.additem 22510 1   -- Wrists: Plagueheart Bindings
+.additem 21585 1   -- Hands: Dark Storm Gauntlets
+.additem 22730 1   -- Waist: Eyestalk Waist Cord
+.additem 22505 1   -- Legs: Plagueheart Leggings
+.additem 22508 1   -- Feet: Plagueheart Sandals
+.additem 23063 1   -- Ring 1: Ring of the Plagueheart
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 22631 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Priest)
+.additem 23009 1   -- Wand: Wand of the Whispering Dead
 .repairitems
 ```
 
-### ⚡ Restoration / Elemental Shaman (Healer & Caster BiS)
+---
 
-Full 9-piece The Earthshatterer, The End of Dreams, Shield of Condemnation, Eye of the Dead, Neltharion's Tear, and Ring of the Earthshatterer:
+### ✝️ Holy Paladin (Main Tank & Raid Healer BiS)
+
+Full 9-piece Redemption Armor, The End of Dreams (Kel'Thuzad 1H Mace), Shield of Condemnation, Eye of the Dead, Rejuvenating Gem, Cloak of the Savior, and Libram of Hope:
 
 ```lua
-.additem 22464 1
-.additem 22465 1
-.additem 22466 1
-.additem 22467 1
-.additem 22468 1
-.additem 22469 1
-.additem 22470 1
-.additem 22471 1
-.additem 23065 1
-.additem 22988 1
-.additem 22819 1
-.additem 23047 1
-.additem 19379 1
+.additem 22426 1   -- Head: Redemption Headpiece
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22427 1   -- Shoulders: Redemption Spaulders
+.additem 23023 1   -- Back: Cloak of the Savior
+.additem 22424 1   -- Chest: Redemption Tunic
+.additem 22430 1   -- Wrists: Redemption Wristguards
+.additem 22429 1   -- Hands: Redemption Handguards
+.additem 22431 1   -- Waist: Redemption Girdle
+.additem 22425 1   -- Legs: Redemption Legguards
+.additem 22428 1   -- Feet: Redemption Boots
+.additem 23066 1   -- Ring 1: Ring of Redemption
+.additem 19382 1   -- Ring 2: Pure Elementium Band
+.additem 23047 1   -- Trinket 1: Eye of the Dead
+.additem 19395 1   -- Trinket 2: Rejuvenating Gem
+.additem 22988 1   -- Main Hand: The End of Dreams
+.additem 22819 1   -- Shield: Shield of Condemnation
+.additem 22401 1   -- Relic: Libram of Hope
 .repairitems
 ```
 
-### 🐾 Restoration / Feral Druid (Healer & Tank BiS)
+---
 
-Full 9-piece Dreamwalker Raiment, Atiesh Greatstaff of the Guardian (Druid), Eye of the Dead, Rejuvenating Gem, Ring of the Dreamwalker, and Shroud of Dominion:
+### 🔨 Retribution Paladin (Two-Handed Melee DPS BiS)
+
+Corrupted Ashbringer (2H Sword), Lionheart Helm, Breastplate of Annihilation, Titanic Leggings, Kiss of the Spider, Drake Fang Talisman, Cloak of the Fallen God, and Libram of Fervor:
 
 ```lua
-.additem 22488 1
-.additem 22489 1
-.additem 22490 1
-.additem 22491 1
-.additem 22492 1
-.additem 22493 1
-.additem 22494 1
-.additem 22495 1
-.additem 23064 1
-.additem 22632 1
-.additem 23047 1
-.additem 19395 1
-.additem 23045 1
+.additem 12640 1   -- Head: Lionheart Helm
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 19394 1   -- Shoulders: Drake Talon Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 21814 1   -- Chest: Breastplate of Annihilation
+.additem 21618 1   -- Wrists: Hive Defiler Wristguards
+.additem 21581 1   -- Hands: Gauntlets of Annihilation
+.additem 21598 1   -- Waist: Girdle of the Menticide
+.additem 22385 1   -- Legs: Titanic Leggings
+.additem 19387 1   -- Feet: Chromatic Boots
+.additem 23038 1   -- Ring 1: Band of Unnatural Might
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 22691 1   -- 2H Weapon: Corrupted Ashbringer
+.additem 23203 1   -- Relic: Libram of Fervor
+.repairitems
+```
+
+---
+
+### 🛡️ Protection Paladin (AoE & Threat Tank BiS)
+
+Redemption Plate, The Face of Death shield, Thunderfury, Styleen's Impeding Scarab, Drake Fang Talisman, Mark of C'Thun, and Libram of Hope:
+
+```lua
+.additem 22426 1   -- Head: Redemption Headpiece
+.additem 22732 1   -- Neck: Mark of C'Thun
+.additem 22427 1   -- Shoulders: Redemption Spaulders
+.additem 23034 1   -- Back: Cryptfiend Silk Cloak
+.additem 22424 1   -- Chest: Redemption Tunic
+.additem 22430 1   -- Wrists: Redemption Wristguards
+.additem 22429 1   -- Hands: Redemption Handguards
+.additem 22431 1   -- Waist: Redemption Girdle
+.additem 22425 1   -- Legs: Redemption Legguards
+.additem 22428 1   -- Feet: Redemption Boots
+.additem 23066 1   -- Ring 1: Ring of Redemption
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 19431 1   -- Trinket 1: Styleen's Impeding Scarab
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 19019 1   -- Main Hand: Thunderfury, Blessed Blade of the Windseeker
+.additem 23043 1   -- Shield: The Face of Death
+.additem 22401 1   -- Relic: Libram of Hope
+.repairitems
+```
+
+---
+
+### ⚡ Restoration Shaman (Chain Healer BiS)
+
+Full 9-piece The Earthshatterer, The End of Dreams (Kel'Thuzad 1H Mace), Shield of Condemnation, Eye of the Dead, Rejuvenating Gem, Cloak of the Savior, and Totem of Life:
+
+```lua
+.additem 22466 1   -- Head: The Earthshatterer Headpiece
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22467 1   -- Shoulders: The Earthshatterer Spaulders
+.additem 23023 1   -- Back: Cloak of the Savior
+.additem 22464 1   -- Chest: The Earthshatterer Tunic
+.additem 22470 1   -- Wrists: The Earthshatterer Wristguards
+.additem 22469 1   -- Hands: The Earthshatterer Handguards
+.additem 22471 1   -- Waist: The Earthshatterer Girdle
+.additem 22465 1   -- Legs: The Earthshatterer Legguards
+.additem 22468 1   -- Feet: The Earthshatterer Boots
+.additem 23065 1   -- Ring 1: Ring of the Earthshatterer
+.additem 19382 1   -- Ring 2: Pure Elementium Band
+.additem 23047 1   -- Trinket 1: Eye of the Dead
+.additem 19395 1   -- Trinket 2: Rejuvenating Gem
+.additem 22988 1   -- Main Hand: The End of Dreams
+.additem 22819 1   -- Shield: Shield of Condemnation
+.additem 22396 1   -- Relic: Totem of Life
+.repairitems
+```
+
+---
+
+### ⚡ Elemental Shaman (Caster Burst DPS BiS)
+
+Full Earthshatterer Mail, Midnight Haze (Kel'Thuzad 1H Caster Dagger), Shield of Condemnation, Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, and Totem of the Storm:
+
+```lua
+.additem 22466 1   -- Head: The Earthshatterer Headpiece
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22467 1   -- Shoulders: The Earthshatterer Spaulders
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22464 1   -- Chest: The Earthshatterer Tunic
+.additem 22470 1   -- Wrists: The Earthshatterer Wristguards
+.additem 22469 1   -- Hands: The Earthshatterer Handguards
+.additem 22730 1   -- Waist: Eyestalk Waist Cord
+.additem 22465 1   -- Legs: The Earthshatterer Legguards
+.additem 22468 1   -- Feet: The Earthshatterer Boots
+.additem 23065 1   -- Ring 1: Ring of the Earthshatterer
+.additem 21709 1   -- Ring 2: Ring of the Fallen God
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 23028 1   -- Main Hand: Midnight Haze
+.additem 22819 1   -- Shield: Shield of Condemnation
+.additem 23199 1   -- Relic: Totem of the Storm
+.repairitems
+```
+
+---
+
+### ⚡ Enhancement Shaman (Melee Windfury DPS BiS)
+
+Might of Menethil (2H Mace), Crown of Destruction, Breastplate of Annihilation, Titanic Leggings, Kiss of the Spider, Drake Fang Talisman, Cloak of the Fallen God, and Totem of Rage:
+
+```lua
+.additem 18817 1   -- Head: Crown of Destruction
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 19394 1   -- Shoulders: Drake Talon Pauldrons
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 21814 1   -- Chest: Breastplate of Annihilation
+.additem 21618 1   -- Wrists: Hive Defiler Wristguards
+.additem 21581 1   -- Hands: Gauntlets of Annihilation
+.additem 21598 1   -- Waist: Girdle of the Menticide
+.additem 22385 1   -- Legs: Titanic Leggings
+.additem 19387 1   -- Feet: Chromatic Boots
+.additem 23038 1   -- Ring 1: Band of Unnatural Might
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 22798 1   -- 2H Weapon: Might of Menethil
+.additem 22395 1   -- Relic: Totem of Rage
+.repairitems
+```
+
+---
+
+### 🐾 Feral Druid (Cat Melee DPS & Bear Tank BiS)
+
+Wolfshead Helm (Energy on Powershift), Atiesh Greatstaff of the Guardian (Druid: +420 Feral AP), Malfurion's Blessed Bulwark, Leggings of Apocalypse, Kiss of the Spider, Drake Fang Talisman, and Cloak of the Fallen God:
+
+```lua
+.additem 8345 1    -- Head: Wolfshead Helm (Essential: +20 Energy on Cat Shift!)
+.additem 19377 1   -- Neck: Prestor's Talisman of Connivery
+.additem 21665 1   -- Shoulders: Shoulderpads of the Hidden Temple
+.additem 21710 1   -- Back: Cloak of the Fallen God
+.additem 19405 1   -- Chest: Malfurion's Blessed Bulwark
+.additem 21602 1   -- Wrists: Qiraji Execution Bracers
+.additem 23073 1   -- Hands: Gauntlets of the Righteous Champion
+.additem 21586 1   -- Waist: Belt of Never-ending Agony
+.additem 23071 1   -- Legs: Leggings of Apocalypse
+.additem 19381 1   -- Feet: Boots of the Shadow Flame
+.additem 23038 1   -- Ring 1: Band of Unnatural Might
+.additem 17063 1   -- Ring 2: Band of Accuria
+.additem 22954 1   -- Trinket 1: Kiss of the Spider
+.additem 19406 1   -- Trinket 2: Drake Fang Talisman
+.additem 22632 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Druid: +420 Feral AP)
+.additem 22397 1   -- Relic: Idol of Ferocity
+.repairitems
+```
+
+---
+
+### 🐾 Restoration Druid (HoT Raid Healer BiS)
+
+Full 9-piece Dreamwalker Raiment, Atiesh Greatstaff of the Guardian (Druid), Eye of the Dead, Rejuvenating Gem, Cloak of the Savior, Pure Elementium Band, and Idol of Rejuvenation:
+
+```lua
+.additem 22490 1   -- Head: Dreamwalker Headpiece
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22491 1   -- Shoulders: Dreamwalker Spaulders
+.additem 23023 1   -- Back: Cloak of the Savior
+.additem 22488 1   -- Chest: Dreamwalker Tunic
+.additem 22494 1   -- Wrists: Dreamwalker Wristguards
+.additem 22493 1   -- Hands: Dreamwalker Handguards
+.additem 22495 1   -- Waist: Dreamwalker Girdle
+.additem 22489 1   -- Legs: Dreamwalker Legguards
+.additem 22492 1   -- Feet: Dreamwalker Boots
+.additem 23064 1   -- Ring 1: Ring of the Dreamwalker
+.additem 19382 1   -- Ring 2: Pure Elementium Band
+.additem 23047 1   -- Trinket 1: Eye of the Dead
+.additem 19395 1   -- Trinket 2: Rejuvenating Gem
+.additem 22632 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Druid)
+.additem 22398 1   -- Relic: Idol of Rejuvenation
+.repairitems
+```
+
+---
+
+### 🌙 Balance Druid (Boomkin Caster DPS BiS)
+
+Atiesh Greatstaff of the Guardian (Druid), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necro-Knight, Ring of the Fallen God, and Idol of the Moon:
+
+```lua
+.additem 22498 1   -- Head: Frostfire Circlet / Mish'undare
+.additem 23057 1   -- Neck: Gem of Trapped Innocents
+.additem 22499 1   -- Shoulders: Frostfire Shoulderpads
+.additem 23017 1   -- Back: Cloak of the Necro-Knight
+.additem 22496 1   -- Chest: Frostfire Robe
+.additem 22502 1   -- Wrists: Frostfire Bindings
+.additem 21585 1   -- Hands: Dark Storm Gauntlets
+.additem 22730 1   -- Waist: Eyestalk Waist Cord
+.additem 22497 1   -- Legs: Frostfire Leggings
+.additem 22500 1   -- Feet: Frostfire Sandals
+.additem 21709 1   -- Ring 1: Ring of the Fallen God
+.additem 23038 1   -- Ring 2: Band of Unnatural Forces
+.additem 19379 1   -- Trinket 1: Neltharion's Tear
+.additem 23046 1   -- Trinket 2: Restrained Essence of Sapphiron
+.additem 22632 1   -- 2H Weapon: Atiesh, Greatstaff of the Guardian (Druid)
+.additem 23197 1   -- Relic: Idol of the Moon
 .repairitems
 ```
 

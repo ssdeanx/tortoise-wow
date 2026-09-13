@@ -1,15 +1,18 @@
-# Ultragoal Brief: Level 60 Warrior DPS, Dungeons, Raids, Attunements & Custom Content
+# Ultragoal Brief: Enterprise Reference Library — Eluna Deep Audit & Final Master Polish
 
 ## Objective
-Provide an exhaustive, end-to-end setup and reference suite for a Level 60 **DPS Warrior** (Dual-Wield Fury and Two-Handed Arms / Cleave) running both 5-man dungeons and 10/20/40-man raids (including classic instances and custom Turtle-WoW content). This includes:
-1. Warrior DPS combat mechanics (Heroic Strike queue miss bug, Bloodthirst/WW priority, Overpower stance dancing, Execute spam, Death Wish + Diamond Flask snapshotting, threat safety with bot tanks, hit/weapon skill caps).
-2. Complete Keyring and Attunement directory (UBRS Seal of Ascension, Scholomance Skeleton Key, Stratholme Key to the City, BRD Shadowforge Key, Dire Maul Crescent Key, Drakefire Amulet, Eternal Quintessence).
-3. Raid coordination mechanics (10-man UBRS/Scarlet Citadel/Karazhan, `/ra` vs `/p` channels, bot Main Tank assignment).
-4. Turtle-WoW custom dungeons (Hateforge Quarry, Alah'Thalas, Gilneas City, Crescent Grove) and custom raids (Scarlet Citadel 10m, Tower of Karazhan 10m, Timbermaw Hold 20m, Emerald Sanctum 40m).
-5. Self-enchanting, consumable stocking, and world buffing (.bot enchants *, arcanums, potions, .buff, .aura).
-6. Permanent reference module checked into repository as `references/20_warrior_dps_dungeons_and_raids.md` and linked in `gm_commands.md`.
 
-## Context & Architecture Boundaries
-- Server Engine: CMaNGOS + PlayerBots Framework + mod-dungeon-clear + Eluna Lua Engine.
-- Client / Protocol: Turtle-WoW 1.18.1 (Build 7272).
-- Zero SQL Guardrail: Strictly follow `MEMORY.md` — no direct database modifications. All operations handled via in-game GM commands, playerbot macros, and markdown documentation.
+Elevate the entire Tortoise-WoW reference library (`references/01_*.md` through `05_*.md`, `gm_commands.md`, and `rndbot_commands.md`) to **perfection**:
+
+1. **Eluna Core Deep Audit**: Deeply audit `src/modules/Eluna/` for all C++ bindings, all event registrations, all object methods (`Player`, `Creature`, `GameObject`, `Map`, `Spell`, `Item`), database queries (`WorldDBQuery`, `CharDBQuery`), global methods, and custom Turtle engine hooks.
+2. **Volume 05 Overhaul**: Transform `references/05_developer_eluna_and_engine.md` into an exhaustive, production-grade guide with complete event tables, object APIs, hot-reload patterns, and copy-paste Lua script blueprints for server operators.
+3. **Cross-Volume Gap Closing**: Exhaustively audit Volumes 01, 02, 03, 04, `gm_commands.md`, and `rndbot_commands.md` to ensure zero missing mechanics, complete command coverage, full link harmony, and flawless usability.
+4. **Master Verification**: Run programmatic test suite `scripts/validate_reference_suite.py` ensuring 100% pass across all quality gates.
+
+## Core Architecture Boundaries
+
+- **Server Core**: Turtle-WoW 1.18.1 (Build 7272) CMaNGOS (`src/game/Chat/Chat.cpp`, `Commands.cpp`).
+- **Bot Engine**: `modules/mod-playerbots` (`PlayerbotMgr.cpp`, `RandomPlayerbotMgr.cpp`, `ChatFilter.cpp`, `ChatTriggerContext.h`, `ChatActionContext.h`).
+- **Dungeon Engine**: `modules/mod-dungeon-clear` (`DungeonClearCommand.cpp`, `mod_dungeon_clear.conf.dist`).
+- **Script Engine**: Eluna Lua module (`src/modules/Eluna/`).
+- **Local Scripts & Test Suite**: Reside exclusively in `scripts/` (strictly ignored by `.gitignore`).

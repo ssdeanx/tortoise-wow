@@ -3,7 +3,7 @@
 > **Target Core**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework
 > **Source Verification**: `src/modules/PlayerBots/playerbot/RandomPlayerbotMgr.cpp` & `PlayerbotMgr.cpp`
 > **Security Level**: Available to all players (`SEC_PLAYER` / Level 0) with elevated GM features where noted.
-> **Related Portals**: [🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📖 Module 11: Playerbot Suite (references/11_playerbot_suite.md)](./references/11_playerbot_suite.md) • [📖 Module 12: RandomBot Manager (references/12_randombot_manager.md)](./references/12_randombot_manager.md) • [🎯 Bot Whispers & Macros (references/13_bot_whispers_and_macros.md)](./references/13_bot_whispers_and_macros.md)
+> **Related Portals**: [🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📜 Volume 01: GM Handbook](./references/01_game_master_handbook.md) • [🤖 Volume 02: Playerbot & Raid Automation](./references/02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./references/03_turtle_world_and_teleports.md) • [⚔️ Volume 04: Class Specs & Gear](./references/04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./references/05_developer_eluna_and_engine.md)
 
 ---
 
@@ -489,6 +489,4 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 ---
 
-<p align="center">
-  [🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📖 Module 11: Playerbot Suite](./references/11_playerbot_suite.md) • [📖 Module 12: RandomBot Manager](./references/12_randombot_manager.md) • [🎯 Bot Whispers & Macros](./references/13_bot_whispers_and_macros.md)
-</p>
+[🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📜 Volume 01: GM Handbook](./references/01_game_master_handbook.md) • [🤖 Volume 02: Playerbot & Raid Automation](./references/02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./references/03_turtle_world_and_teleports.md) • [⚔️ Volume 04: Class Specs & Gear](./references/04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./references/05_developer_eluna_and_engine.md)

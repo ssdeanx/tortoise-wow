@@ -38,17 +38,27 @@ commands.md
 logs/bot_events.csv
 *logs/deaths.csv
 gm_commands.md
+twrealmd.pid
+twlive.pid
+twdb.pid
+honorupdate.txt
+egglog.txt
+
+tools/checkegglogs/obj/Debug/net8.0/*.cs
+tools/checkegglogs/obj/Debug/net8.0/*.cache
+
 tools/checkegglogs/obj/checkegglogs.csproj.nuget.dgspec.json
 tools/checkegglogs/obj/checkegglogs.csproj.nuget.g.targets
-tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfo.cs
-tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfo.cs
-tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfo.cs
-tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfo.cs
-tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfoInputs.cache
+
 
 *.bak
 *.bak.*
 *.bak-*
+
+# Local scripts & tools
+/scripts/
+__pycache__/
+*.pyc
 
 # Routen, die der Rekorder selbst verworfen hat (DcRouteRecorder::
 # DiscardRoute benennt .route/.cpp in .bad um, wenn die Stuck-Leiter auf

@@ -1,50 +1,26 @@
 [
   {
     "id": "goal-1",
-    "description": "Comprehensive reference audit and extraction of Warrior-specific mechanics, commands, and IDs",
+    "description": "Eluna Core Deep-Dive & C++ Source Audit: Inspect src/modules/Eluna/ for all registered classes (Player, Creature, GameObject, Map, Spell, Item, Group, Guild, etc.), all event hooks and IDs (Server, Player, Creature, GameObject, Item, etc.), global DB functions (WorldDBQuery, CharDBQuery), packet methods, and custom Turtle engine hooks.",
     "status": "completed",
-    "verification_criteria": "All reference docs (18, 17, 00, 03, 07, 11, 12, 13, 14, 15) audited; Warrior specs, item IDs, bot strategies, and dungeon commands cataloged."
+    "verification_criteria": "Verbatim inventory of all Eluna Lua bindings, event registration tables, methods, and engine lifecycle points extracted directly from C++ headers and source files."
   },
   {
     "id": "goal-2",
-    "description": "Character baseline and skill readiness: Boost, spells, weapon skills, travel unlocks, and utility macros",
+    "description": "Volume 05 Exhaustive Overhaul & Production Engine Guide: Upgrade references/05_developer_eluna_and_engine.md with comprehensive Eluna architecture, full event ID matrices, complete object API references, global database query workflows, custom command routing, and copy-paste production script blueprints.",
     "status": "completed",
-    "verification_criteria": "Exact GM console commands and macros documented for level 60, all myspells, maxskill, bags, gold, taxicheat, explorecheat."
+    "verification_criteria": "Volume 05 provides enterprise-grade, exhaustive documentation of Eluna with working code examples, event tables, and debugging tools."
   },
   {
     "id": "goal-3",
-    "description": "Warrior DPS mechanics deep dive: DW Fury (17/34/0) & 2H Arms Cleave (31/20/0), Heroic Strike queue miss bug, rotations, stat caps (305 weapon skill, 6% hit cap), and LIP threat dropping",
+    "description": "Cross-Volume Master Gap Closing & Perfection Audit: Review Volumes 01, 02, 03, 04, gm_commands.md, and rndbot_commands.md to eliminate any remaining omissions, verify all cross-links, ensure uniform navigation, and confirm all commands and mechanics are 100% optimal.",
     "status": "completed",
-    "verification_criteria": "DW Fury and 2H Arms talent allocations, HS queue bug mechanics, stance dancing for Overpower, Execute phase, and threat safety documented."
+    "verification_criteria": "Zero missing features, uniform navigation across all 7 documentation files, zero broken links, single-H1 heading hierarchy."
   },
   {
     "id": "goal-4",
-    "description": "Master Keyring, Attunements & Doors: UBRS Seal of Ascension, Scholo, Strat, BRD, Dire Maul, Onyxia, and Molten Core",
+    "description": "Automated Quality Assurance Verification & Final Walkthrough: Extend and execute scripts/validate_reference_suite.py across the entire reference library, confirming 100% pass across all quality gates, and document results in walkthrough.md.",
     "status": "completed",
-    "verification_criteria": "All dungeon keys (12344, 13704, 12382, 11000, 18249) and raid attunements (16309, 22754) cataloged with 1-click spawning macro."
-  },
-  {
-    "id": "goal-5",
-    "description": "Turtle-WoW custom dungeons and raids directory with teleport tokens and level ranges",
-    "status": "completed",
-    "verification_criteria": "Custom dungeons (Hateforge, Alah'Thalas, Gilneas, Crescent Grove) and raids (Scarlet Citadel 10m, Karazhan 10m, Timbermaw 20m, Emerald Sanctum 40m) mapped."
-  },
-  {
-    "id": "goal-6",
-    "description": "Raid coordination & bot commands: 10-man group conversion, /ra vs /p channels, Main Tank designation, and .dc clear AI in raids",
-    "status": "completed",
-    "verification_criteria": "Raid conversion procedures, /ra channel broadcast commands, bot MT threat configuration, and .dc execution verified."
-  },
-  {
-    "id": "goal-7",
-    "description": "Self-enchanting, consumable provisioning, and world buffing procedures",
-    "status": "completed",
-    "verification_criteria": ".bot enchants * mechanism, arcanums (11733, 11734, 20077), consumable item IDs, and .aura world buff scripts documented."
-  },
-  {
-    "id": "goal-8",
-    "description": "Create permanent reference module references/20_warrior_dps_dungeons_and_raids.md and integrate into gm_commands.md sitemap",
-    "status": "completed",
-    "verification_criteria": "New reference file written with zero linter errors; gm_commands.md index updated with Module 20 entry."
+    "verification_criteria": "Programmatic test suite passes 100% on all gates; walkthrough artifact updated with complete evidence."
   }
 ]
