@@ -1,4 +1,4 @@
-#include "Config/Config.h"
+#include "ScriptMgr.h"
 #include "LFTMgr.h"
 
 #include "Group.h"
@@ -63,6 +63,11 @@ namespace
 
 void LFTManager::HandleQueueJoin(Player* player, std::vector<std::string> const& fields)
 {
+    // A managed bot never queues on its own behalf: a group formed for one steals
+    // members from groups formed for people, and nobody at the other end wanted it.
+    if (player && sScriptMgr.IsBotManaged(player))
+        return;
+
     if (fields.size() < 3)
         return;
 
@@ -95,45 +100,8 @@ void LFTManager::HandleQueueLeave(Player* player)
 {
     if (!player)
         return;
-
-    ObjectGuid guid = player->GetObjectGuid();
-
-    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
-    {
-        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
-        {
-            CancelRolecheck(itr);
-            return;
-        }
-    }
-
-    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
-    if (offerItr != m_playerOffers.end())
-    {
-        CancelOffer(offerItr->second, true, guid, true);
-        TryMakeOffers();
-        return;
-    }
-
-    QueueMap::iterator queueItr = m_queue.find(guid);
-    if (queueItr == m_queue.end())
-        return;
-
-    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
-    std::vector<ObjectGuid> toRemove;
-    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
-    {
-        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
-        if (itrLeader == leaderGuid)
-            toRemove.push_back(itr->first);
-    }
-
-    for (ObjectGuid const& removeGuid : toRemove)
-    {
-        std::string name = m_queue[removeGuid].name;
-        m_queue.erase(removeGuid);
-        SendQueueLeft(removeGuid, name);
-    }
+    // Single owner for cancellation: addon and module both route through LeaveQueue.
+    LeaveQueue(player->GetObjectGuid());
 }
 
 void LFTManager::HandleGetQueueStatus(Player* player)
@@ -277,9 +245,42 @@ void LFTManager::StartRolecheck(Player* leader, std::vector<std::string> const& 
     {
         if (Player* member = GetPlayer(guid))
         {
+            // A managed bot answers for itself, here and now.
+            //
+            // The rolecheck is an addon conversation: the server asks every member
+            // what they want to be, the addon opens a window, somebody clicks. A
+            // managed bot has no client and therefore no window and no click, so it
+            // never answered -- and because the check only completes when everybody
+            // has, a party with a managed bot in it could not list itself at all. It
+            // waited ninety seconds and expired, every time.
+            //
+            // The module knows its role, the same answer it would give in any group.
+            // There is nothing to ask and nobody to ask, so
+            // the response is simply written down, and no message is sent to a client
+            // that does not exist.
+            if (sScriptMgr.IsBotManaged(member))
+            {
+                if (uint8 roles = sScriptMgr.GetBotRoles(member))
+                    m_rolechecks[rolecheck.leaderGuid].responses[guid] = roles;
+
+                continue;
+            }
+
             Send(member, "S2C_ROLECHECK_START;" + joinedInstances);
             Send(member, "S2C_UPDATE_QUEUE_STATUS;pending_rolecheck");
         }
+    }
+
+    // And if that was everybody -- a party of managed bots with nobody left to ask -- the
+    // check is already finished rather than pending.
+    RolecheckMap::iterator itr = m_rolechecks.find(rolecheck.leaderGuid);
+
+    if (itr != m_rolechecks.end() &&
+        itr->second.responses.size() == itr->second.members.size())
+    {
+        PendingRolecheck finished = itr->second;
+        m_rolechecks.erase(itr);
+        EnqueueRolecheck(finished);
     }
 }
 
@@ -301,6 +302,7 @@ void LFTManager::EnqueuePlayer(Player* player, ObjectGuid const& leaderGuid, std
     queued.instances = instances;
     queued.roleMask = roleMask;
     queued.assignedRole = PickRole(roleMask, 0, 0, 0);
+    m_signedUpRole[queued.guid] = queued.assignedRole;   // outlives the queue entry
 
     m_queue[queued.guid] = queued;
     SendQueueJoined(player, m_queue[queued.guid]);
@@ -352,6 +354,7 @@ void LFTManager::CancelOffer(uint32 offerId, bool requeueAccepted, ObjectGuid co
         if (keepQueued && queued != m_queue.end())
         {
             queued->second.assignedRole = PickRole(queued->second.roleMask, 0, 0, 0);
+            m_signedUpRole[queued->first] = queued->second.assignedRole;
             if (Player* player = GetPlayer(itr->first))
                 SendQueueJoined(player, queued->second);
         }
@@ -500,6 +503,7 @@ bool LFTManager::TryBuildOfferForInstance(std::string const& instance)
     for (std::map<ObjectGuid, uint8>::const_iterator itr = selectedRoles.begin(); itr != selectedRoles.end(); ++itr)
     {
         m_queue[itr->first].assignedRole = itr->second;
+        m_signedUpRole[itr->first] = itr->second;
         m_playerOffers[itr->first] = offer.id;
         if (Player* player = GetPlayer(itr->first))
         {
@@ -511,98 +515,6 @@ bool LFTManager::TryBuildOfferForInstance(std::string const& instance)
     }
 
     return true;
-}
-
-namespace
-{
-    // The finder's instance names are display strings; game_tele stores the
-    // entrances under squashed ones. Strip everything that only exists for
-    // reading so the two can be compared.
-    std::string SquashInstanceName(std::string const& name)
-    {
-        std::string out;
-        for (char c : name)
-            if (std::isalnum((unsigned char)c))
-                out += (char)std::tolower((unsigned char)c);
-
-        // "The Deadmines" and "The Stockade" are listed without the article.
-        if (out.compare(0, 3, "the") == 0 && out.size() > 3)
-            out = out.substr(3);
-
-        return out;
-    }
-
-    // Longest game_tele name that starts the instance name. Longest on purpose:
-    // the wings share an entrance, so "Scarlet Monastery Library" has to land on
-    // "ScarletMonastery" and not on some shorter accident. The minimum length
-    // keeps a very short tele entry from matching half the list.
-    GameTele const* FindInstanceEntrance(std::string const& instance)
-    {
-        std::string const wanted = SquashInstanceName(instance);
-        GameTele const* best = nullptr;
-        size_t bestLength = 0;
-
-        for (auto const& entry : sObjectMgr.GetGameTeleMap())
-        {
-            std::string const candidate = SquashInstanceName(entry.second.name);
-            if (candidate.size() < 5 || candidate.size() <= bestLength)
-                continue;
-
-            if (wanted.compare(0, candidate.size(), candidate) == 0)
-            {
-                best = &entry.second;
-                bestLength = candidate.size();
-            }
-        }
-
-        return best;
-    }
-}
-
-// A group that formed without anybody real in it has nowhere to be but the
-// instance, and its members are scattered across two continents - the seed for
-// one Scarlet Monastery run stood in Stranglethorn with a member in Feralas.
-// Walking that is half an hour of travel that mostly ends in a death. Move them
-// to the door instead; from there they play normally.
-//
-// Never with a person in the group. They did not ask to be moved, and bots that
-// have a real player as master follow them anyway.
-void LFTManager::TeleportBotGroupToInstance(Offer const& offer)
-{
-    if (!sConfig.GetBoolDefault("LFT.BotFill.SeedTeleport", false))
-        return;
-
-    for (auto const& role : offer.roles)
-    {
-        Player* member = GetPlayer(role.first);
-        if (!member || !Script_IsAIControlled(member))
-            return;
-    }
-
-    GameTele const* entrance = FindInstanceEntrance(offer.instance);
-    if (!entrance)
-    {
-        sLog.outError("LFT: no game_tele entrance for '%s' - group left where it stands", offer.instance.c_str());
-        return;
-    }
-
-    for (auto const& role : offer.roles)
-    {
-        Player* member = GetPlayer(role.first);
-        if (!member || member->IsBeingTeleported())
-            continue;
-
-        // Skipping anyone in combat left a member of the first group standing in
-        // Feralas while the other four waited at the door. The manager already
-        // teleports bots out of fights on its own schedule, so there is nothing
-        // to protect here - break off the fight and bring them along.
-        if (member->IsInCombat())
-            member->CombatStop(true);
-
-        member->TeleportTo(entrance->mapId, entrance->x, entrance->y, entrance->z, entrance->o);
-    }
-
-    sLog.outBasic("LFT: bot group moved to the entrance of '%s' (%s)", offer.instance.c_str(), entrance->name.c_str());
 }
 
 bool LFTManager::CompleteOffer(uint32 offerId)
@@ -656,8 +568,6 @@ bool LFTManager::CompleteOffer(uint32 offerId)
             Send(player, "S2C_OFFER_COMPLETE");
     }
 
-    TeleportBotGroupToInstance(offer);
-
     m_offers.erase(offerId);
     return true;
 }
@@ -687,10 +597,6 @@ bool LFTManager::AddPlayerToGroup(Group*& group, ObjectGuid const& leaderGuid, O
             sObjectMgr.AddGroup(group);
         }
     }
-
-    // Formed or adopted by this matcher either way - remember it as OURS
-    // (TakeFromBotOnlyGroup refuses to raid unregistered bot groups).
-    m_lftGroupIds.insert(group->GetId());
 
     if (group->IsMember(memberGuid))
         return true;
@@ -821,12 +727,7 @@ uint8 LFTManager::AllowedRoleMask(Player const* player) const
         case CLASS_PALADIN: return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
         case CLASS_PRIEST:  return LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
         case CLASS_ROGUE:   return LFT_ROLE_DAMAGE;
-        // No tank here. There is no shaman tank talent tree in 1.12 and the bot
-        // module has no tank strategy for one, so offering the slot only led to
-        // a shaman being handed the role and respecced into whatever came to
-        // hand - enhancement and restoration both turned up in the log under
-        // "respecced for role 1".
-        case CLASS_SHAMAN:  return LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
+        case CLASS_SHAMAN:  return LFT_ROLE_TANK | LFT_ROLE_HEALER | LFT_ROLE_DAMAGE;
         case CLASS_WARLOCK: return LFT_ROLE_DAMAGE;
         case CLASS_WARRIOR: return LFT_ROLE_TANK | LFT_ROLE_DAMAGE;
         default:            return 0;
@@ -853,4 +754,152 @@ void LFTManager::CleanupPlayer(ObjectGuid const& guid)
         ++itr;
     }
 
+}
+
+// Generic module API. World-thread only. Reuses native queue/rolecheck/offers/groups
+// and addon packet behavior (SendQueueJoined/SendQueueLeft/TryMakeOffers).
+// Validates instances and role (AllowedRoleMask, native class mask); native grouping
+// constraints are team, hardcore and group formation (see CanQueuedPlayersGroup/
+// CanPlayersGroup); level is not compared by the core and remains caller/instance
+// policy. Grouped callers enter native rolecheck requiring per-member responses;
+// the leader's roleMask is only initial validation. Solo enqueues directly and is
+// the expected module use case.
+bool LFTManager::QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask)
+{
+    if (!player || !player->IsInWorld())
+        return false;
+
+    if (player->GetGroup() && player->GetGroup()->isRaidGroup())
+        return false;
+
+    if (player->GetGroup() && !player->GetGroup()->IsLeader(player->GetObjectGuid()))
+        return false;
+
+    std::vector<std::string> valid = GetSharedInstances(instances);
+    uint8 effective = roleMask & AllowedRoleMask(player);
+    if (valid.empty() || !effective)
+        return false;
+
+    ObjectGuid guid = player->GetObjectGuid();
+    CleanupPlayer(guid);
+
+    // Grouped players go through the native rolecheck so each member can pick a role.
+    // Solo participants enqueue directly without a roundtrip.
+    if (player->GetGroup())
+    {
+        StartRolecheck(player, valid);
+        return true;
+    }
+
+    EnqueuePlayer(player, guid, valid, effective);
+    TryMakeOffers();
+    return true;
+}
+
+bool LFTManager::LeaveQueue(Player* player)
+{
+    if (!player)
+        return false;
+    return LeaveQueue(player->GetObjectGuid());
+}
+
+bool LFTManager::LeaveQueue(ObjectGuid const& guid)
+{
+    for (RolecheckMap::iterator itr = m_rolechecks.begin(); itr != m_rolechecks.end(); ++itr)
+    {
+        if (std::find(itr->second.members.begin(), itr->second.members.end(), guid) != itr->second.members.end())
+        {
+            CancelRolecheck(itr);
+            return true;
+        }
+    }
+
+    std::map<ObjectGuid, uint32>::iterator offerItr = m_playerOffers.find(guid);
+    if (offerItr != m_playerOffers.end())
+    {
+        CancelOffer(offerItr->second, true, guid, true);
+        TryMakeOffers();
+        return true;
+    }
+
+    QueueMap::iterator queueItr = m_queue.find(guid);
+    if (queueItr == m_queue.end())
+        return false;
+
+    ObjectGuid leaderGuid = queueItr->second.queueLeaderGuid.IsEmpty() ? guid : queueItr->second.queueLeaderGuid;
+    std::vector<ObjectGuid> toRemove;
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        ObjectGuid itrLeader = itr->second.queueLeaderGuid.IsEmpty() ? itr->first : itr->second.queueLeaderGuid;
+        if (itrLeader == leaderGuid)
+            toRemove.push_back(itr->first);
+    }
+
+    for (ObjectGuid const& removeGuid : toRemove)
+    {
+        QueueMap::iterator it = m_queue.find(removeGuid);
+        if (it != m_queue.end())
+        {
+            std::string name = it->second.name;
+            m_queue.erase(it);
+            SendQueueLeft(removeGuid, name);
+        }
+    }
+
+    return true;
+}
+
+bool LFTManager::IsQueued(ObjectGuid const& guid) const
+{
+    return m_queue.find(guid) != m_queue.end();
+}
+
+bool LFTManager::IsInOffer(ObjectGuid const& guid) const
+{
+    return m_playerOffers.find(guid) != m_playerOffers.end();
+}
+
+bool LFTManager::AcceptOffer(Player* player)
+{
+    if (!player)
+        return false;
+    return AcceptOffer(player->GetObjectGuid());
+}
+
+bool LFTManager::AcceptOffer(ObjectGuid const& guid)
+{
+    if (guid.IsEmpty())
+        return false;
+    Player* player = GetPlayer(guid);
+    if (!player)
+        return false;
+    if (!IsInOffer(guid))
+        return false;
+    // Reuse native handler: validates m_playerOffers/m_offers, updates accepted,
+    // broadcasts S2C_OFFER_UPDATE_COUNT, and completes the offer when full.
+    // Preserves timers, cancellation/requeue, packets, private state, addon behavior.
+    HandleOfferAccept(player);
+    return true;
+}
+
+std::vector<LFTManager::QueuedInfo> LFTManager::GetQueuedPlayers() const
+{
+    std::vector<QueuedInfo> out;
+    out.reserve(m_queue.size());
+    for (QueueMap::const_iterator itr = m_queue.begin(); itr != m_queue.end(); ++itr)
+    {
+        QueuedInfo info;
+        info.guid = itr->second.guid;
+        info.name = itr->second.name;
+        info.className = itr->second.className;
+        info.level = itr->second.level;
+        info.team = itr->second.team;
+        info.isHardcore = itr->second.isHardcore;
+        info.instances = itr->second.instances;
+        info.roleMask = itr->second.roleMask;
+        info.assignedRole = itr->second.assignedRole;
+        info.joinTime = itr->second.joinTime;
+        out.push_back(std::move(info));
+    }
+    return out;
 }

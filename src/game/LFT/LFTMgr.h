@@ -1,8 +1,6 @@
 #ifndef MANGOSSERVER_LFTMGR_H
 #define MANGOSSERVER_LFTMGR_H
 
-#include <unordered_set>
-#include "ObjectGuid.h"   // ObjectGuid members below; reachable only via the PCH before (USE_PCH=OFF, 2026-09-04)
 #include <array>
 #include <ctime>
 #include <map>
@@ -16,8 +14,7 @@
 class Group;
 class Player;
 
-// Moved here from LFTQeueue.cpp's anonymous namespace: the bot fill in
-// LFTBotFill.cpp needs them too.
+// Role masks shared by the queue's role-check and offer code.
 enum LFTRoles
 {
     LFT_ROLE_TANK   = 0x01,
@@ -27,20 +24,61 @@ enum LFTRoles
 
 class LFTManager
 {
-    // Groups formed (or adopted) by the LFT matcher itself.
-    // TakeFromBotOnlyGroup may only raid THESE: a bot-only group can just as
-    // well belong to someone else - live, LFT ripped the tank out of a
-    // mod-dungeon-clear test party mid-run because the "bot-only means ours"
-    // assumption was never actually checked. Ids of long-gone groups linger
-    // harmlessly (group ids are not recycled within an uptime).
-    std::unordered_set<uint32> m_lftGroupIds;
-
     public:
         LFTManager();
 
         bool HandleAddonMessage(Player* player, uint32 type, std::string const& rawMessage);
         void Update(uint32 diff);
         void OnPlayerLogout(ObjectGuid const& guid);
+        // What somebody signed up as, kept after the queue has let go of them: a
+        // group forming is the moment anybody asks. Cleared on logout.
+        uint8 SignedUpRole(ObjectGuid const& guid) const;
+
+
+        // Generic module API: queue a live in-world player through native validation.
+        // World-thread only. Validates instances and role (via AllowedRoleMask, native
+        // class mask) and owns queue/rolecheck/offers/groups.
+        // Native grouping constraints are team, hardcore and group formation (leader/party),
+        // enforced at offer formation (TryMakeOffers/CanQueuedPlayersGroup/CanPlayersGroup);
+        // level is not compared by the core and remains caller/instance policy even at offer time.
+        // Grouped callers enter native rolecheck: each party member must send a per-member
+        // rolecheck response (C2S_ROLECHECK_RESPONSE via HandleRolecheckResponse); the
+        // leader's roleMask is only initial validation (AllowedRoleMask) and does not assign
+        // members' roles. Solo queue (no group) enqueues directly and is the expected
+        // module use case.
+        // Returns true if the player (solo) was queued, or if grouped and leader the party
+        // entered rolecheck.
+        bool QueuePlayer(Player* player, std::vector<std::string> const& instances, uint8 roleMask);
+        // World-thread only. Single owner of cancellation - removes from
+        // rolecheck/offer/queue and restores addon state via S2C_QUEUE_LEFT.
+        // Both addon HandleQueueLeave and module calls route through here.
+        bool LeaveQueue(Player* player);
+        bool LeaveQueue(ObjectGuid const& guid);
+        bool IsQueued(ObjectGuid const& guid) const;
+        bool IsInOffer(ObjectGuid const& guid) const;
+        // World-thread only. Generic offer acceptance for machine-driven participants.
+        // Validates that the participant is live (in-world) and belongs to an offer,
+        // then reuses native HandleOfferAccept/CompleteOffer semantics (accepted-count,
+        // S2C_OFFER_UPDATE_COUNT, timers, cancellation/requeue, packets, private state).
+        // Core owns queue/offers/groups; addon behavior unchanged.
+        bool AcceptOffer(Player* player);
+        bool AcceptOffer(ObjectGuid const& guid);
+
+        struct QueuedInfo
+        {
+            ObjectGuid guid;
+            std::string name;
+            std::string className;
+            uint32 level = 0;
+            uint32 team = 0;
+            bool isHardcore = false;
+            std::vector<std::string> instances;
+            uint8 roleMask = 0;
+            uint8 assignedRole = 0;
+            time_t joinTime = 0;
+        };
+        // World-thread only. Copy of current queue for module policy decisions.
+        std::vector<QueuedInfo> GetQueuedPlayers() const;
 
     private:
         struct ListingSignup
@@ -104,6 +142,9 @@ class LFTManager
 
         typedef std::map<uint32, Listing> ListingsMap;
         typedef std::map<ObjectGuid, QueuedPlayer> QueueMap;
+        // Survives the queue entry it came from; cleared on logout.
+        std::map<ObjectGuid, uint8> m_signedUpRole;
+
         typedef std::map<ObjectGuid, PendingRolecheck> RolecheckMap;
         typedef std::map<uint32, Offer> OffersMap;
 
@@ -169,23 +210,6 @@ class LFTManager
         void RecountListing(Listing& listing) const;
         void CleanupPlayer(ObjectGuid const& guid);
 
-        // Bot fill - see LFTBotFill.cpp
-        void UpdateBotFill(uint32 diff);
-        void DropUnneededFillBots();
-        void FillInstanceWithBots(std::string const& instance, QueuedPlayer const& waiter);
-        void SeedBotOnlyQueue();
-
-        Player* TakeFromBotOnlyGroup(uint8 wanted, QueuedPlayer const& waiter,
-                                     uint32 below, uint32 above);
-
-        Player* TakeBotAndRespecFor(uint8 wanted, QueuedPlayer const& waiter,
-                                    uint32 below, uint32 above);
-        void TeleportBotGroupToInstance(Offer const& offer);
-        void AcceptOffersForFillBots();
-        void ForgetFillBot(ObjectGuid const& guid);
-        bool IsFillBot(ObjectGuid const& guid) const;
-        bool RealPlayerWaitsFor(std::string const& instance, time_t& oldestJoin) const;
-
         ListingsMap m_listings;
         QueueMap m_queue;
         RolecheckMap m_rolechecks;
@@ -195,10 +219,6 @@ class LFTManager
         uint32 m_nextOfferId;
         uint64 m_nextQueueOrder;
         bool m_listingsLoaded;
-
-        // Queue entries we created ourselves to fill a real player's group.
-        std::set<ObjectGuid> m_fillBots;
-        uint32 m_botFillTimer;
 };
 
 extern LFTManager sLFTMgr;

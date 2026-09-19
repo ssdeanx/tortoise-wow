@@ -24,13 +24,14 @@
 #include "WorldPacket.h"
 #include "SharedDefines.h"
 #include "WorldSession.h"
-#include "ArchitectureDiagnostics.h"
+#include "SessionTransport.h"
+#include "PlayerLoginQueryHolder.h"
 #include "Opcodes.h"
 #include "Log.h"
 #include "World.h"
 #include "ObjectMgr.h"
 #include "Player.h"
-#include "Handlers/LoginQueryHolder.h"
+#include "Handlers/CharacterCreation.h"
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "UpdateMask.h"
@@ -51,63 +52,21 @@
 #include "miscellaneous/feature_transmog.h"
 #include "Config.hpp"
 #include "Logging/DatabaseLogger.hpp"
-#ifdef ENABLE_ELUNA
-#include "LuaEngine.h"
-#endif
+#include <atomic>
 
-// config option SkipCinematics supported values
-enum CinematicsSkipMode
+namespace
 {
-    CINEMATICS_SKIP_NONE      = 0,
-    CINEMATICS_SKIP_SAME_RACE = 1,
-    CINEMATICS_SKIP_ALL       = 2,
-};
-
-
-// LoginQueryHolder class moved to Handlers/LoginQueryHolder.h
-// so the bot module can construct holders for synthetic bot logins. Initialize() definition stays here.
-
-bool LoginQueryHolder::Initialize()
+uint64 NextLoginRequestToken()
 {
-    SetSize(MAX_PLAYER_LOGIN_QUERY);
-
-    bool res = true;
-
-    // NOTE: all fields in `characters` must be read to prevent lost character data at next save in case wrong DB structure.
-    // !!! NOTE: including unused `zone`,`online`
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADFROM,            "SELECT guid, account, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags, "
-                     "position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_multiplier, "
-                     "resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, "
-                     "honorRankPoints, honorHighestRank, honorStanding, honorLastWeekHK, honorLastWeekCP, honorStoredHK, honorStoredDK, "
-                     "watchedFaction, drunk, health, power1, power2, power3, power4, power5, exploredZones, equipmentCache, ammoId, actionBars, "
-                     "world_phase_mask, customFlags, city_protector, ignore_titles, mortality_status, total_deaths, xp_gain, extraBonusTalentCount FROM characters WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT groupId FROM group_member WHERE memberGuid ='%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid,item_guid,spell,stackcount,remaincharges,basepoints0,basepoints1,basepoints2,periodictime0,periodictime1,periodictime2,maxduration,remaintime,effIndexMask FROM character_aura WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLS,          "SELECT spell,active,disabled FROM character_spell WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS,     "SELECT quest,status,rewarded,explored,timer,mobcount1,mobcount2,mobcount3,mobcount4,itemcount1,itemcount2,itemcount3,itemcount4,reward_choice FROM character_queststatus WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADHONORCP,         "SELECT victimType,victim,cp,date,type FROM character_honor_cp WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADPVPCURRENCY,     "SELECT honor,conquest,weekly_honor,week_begin_day FROM character_pvp_currency WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADREPUTATION,      "SELECT faction,standing,flags FROM character_reputation WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADTRANSMOGS,       "SELECT itemId FROM character_transmogs WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADINVENTORY,       "SELECT * FROM (SELECT creatorGuid, giftCreatorGuid, count, duration, charges, flags, enchantments, randomPropertyId, transmogrifyId, durability, text, bag, slot, item, itemEntry, generated_loot FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u') as t ORDER BY bag,slot", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADITEMLOOT,        "SELECT guid,itemid,amount,property FROM item_loot WHERE owner_guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADACTIONS,         "SELECT button,action,type FROM character_action WHERE guid = '%u' ORDER BY button", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSOCIALLIST,      "SELECT friend,flags FROM character_social WHERE guid = '%u' LIMIT 255", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADHOMEBIND,        "SELECT map,zone,position_x,position_y,position_z FROM character_homebind WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSPELLCOOLDOWNS,  "SELECT spell,item,time,cattime FROM character_spell_cooldown WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGUILD,           "SELECT guildid,`rank` FROM guild_member WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBGDATA,          "SELECT instance_id, team, join_x, join_y, join_z, join_o, join_map FROM character_battleground_data WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADSKILLS,          "SELECT skill, value, max FROM character_skills WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILS,           "SELECT id,messageType,sender,receiver,subject,itemTextId,expire_time,deliver_time,money,cod,checked,stationery,mailTemplateId,has_items,isDeleted FROM mail WHERE receiver = '%u' ORDER BY id DESC", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADMAILEDITEMS,     "SELECT creatorGuid, giftCreatorGuid, count, duration, charges, flags, enchantments, randomPropertyId, transmogrifyId, durability, text, mail_id, item_guid, itemEntry, generated_loot FROM mail_items JOIN item_instance ON item_guid = guid WHERE receiver = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_FORGOTTEN_SKILLS,    "SELECT skill, value FROM character_forgotten_skills WHERE guid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADVARIABLES,       "SELECT variableType, value FROM character_variables WHERE lowGuid = '%u'", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_ITEM_LOGS,           "SELECT itemLowGuid, itemEntry, itemCount, action, timestamp FROM character_item_logs WHERE playerLowGuid = '%u' ORDER BY timestamp DESC", m_guid.GetCounter());
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_SAVED_SPECS,         "SELECT guid, spell, spec FROM `character_spell_dual_spec` WHERE guid = '%u'", m_guid.GetCounter());
-
-    return res;
+    static std::atomic<uint64> nextToken{0};
+    uint64 token = nextToken.fetch_add(1, std::memory_order_relaxed) + 1;
+    if (!token)
+        token = nextToken.fetch_add(1, std::memory_order_relaxed) + 1;
+    return token;
 }
+}
+
+
 
 // don't call WorldSession directly
 // it may get deleted before the query callbacks get executed
@@ -127,14 +86,25 @@ public:
     }
     void HandlePlayerLoginCallback(QueryResult * /*dummy*/, SqlQueryHolder * holder)
     {
-        if (!holder) return;
-        WorldSession *session = sWorld.FindSession(((LoginQueryHolder*)holder)->GetAccountId());
-        if (!session)
+        if (!holder)
+            return;
+
+        LoginQueryHolder* loginHolder = static_cast<LoginQueryHolder*>(holder);
+        if (loginHolder->GetTransport() == SessionTransport::Headless)
         {
-            delete holder;
+            sWorld.HandleHeadlessLoginCallback(loginHolder);
             return;
         }
-        session->HandlePlayerLogin((LoginQueryHolder*)holder);
+
+        WorldSession* session = sWorld.FindSession(loginHolder->GetAccountId());
+        if (!session || !session->IsLoginRequest(loginHolder->GetGuid(),
+            loginHolder->GetTransport(), loginHolder->GetRequestToken()))
+        {
+            delete loginHolder;
+            return;
+        }
+
+        session->HandlePlayerLogin(loginHolder);
     }
 } chrHandler;
 
@@ -187,7 +157,7 @@ void WorldSession::HandleCharEnum(QueryResult * result)
 void WorldSession::HandleCharEnumOpcode(WorldPacket & /*recv_data*/)
 {
     /// get all the data necessary for loading all characters (along with their pets) on the account
-    CharacterDatabase.AsyncPQueryPriority(&chrHandler, &CharacterHandler::HandleCharEnumCallback, GetAccountId(),
+    CharacterDatabase.AsyncPQuery(&chrHandler, &CharacterHandler::HandleCharEnumCallback, GetAccountId(),
                                   //           0               1                2                3                 4                  5                       6                        7
                                   "SELECT characters.guid, characters.name, characters.race, characters.class, characters.gender, characters.playerBytes, characters.playerBytes2, characters.level, "
                                   //   8                9               10                     11                     12                     13                    14
@@ -205,210 +175,68 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket & recv_data)
 {
     std::string name;
     uint8 race_, class_;
-
     recv_data >> name;
-
     recv_data >> race_;
     recv_data >> class_;
-
-    // extract other data required for player creating
     uint8 gender, skin, face, hairStyle, hairColor, facialHair, outfitId;
     recv_data >> gender >> skin >> face;
     recv_data >> hairStyle >> hairColor >> facialHair >> outfitId;
-
     uint32 challengeMask;
     recv_data >> challengeMask;
 
-    WorldPacket data(SMSG_CHAR_CREATE, 1);                  // returned with diff.values in all cases
+    CharacterCreateInfo info;
+    info.name = name;
+    info.race = race_;
+    info.class_ = class_;
+    info.gender = gender;
+    info.skin = skin;
+    info.face = face;
+    info.hairStyle = hairStyle;
+    info.hairColor = hairColor;
+    info.facialHair = facialHair;
+    info.outfitId = outfitId;
+    info.challengeMask = challengeMask;
+    info.remoteAddress = GetRemoteAddress();
+    info.currentRealmCharacterCount = _charactersCount;
+    info.currentRealmCharacterCountProvided = true;
 
-    Team team = Player::TeamForRace(race_);
-    if (GetSecurity() == SEC_PLAYER)
+    CharacterCreateOutcome outcome = CharacterCreation::CreateCharacter(GetAccountId(), info);
+
+    if (outcome.result == CHAR_CREATE_SUCCESS)
     {
-        bool disabled = false;
-
-        if (uint32 mask = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_CREATING_DISABLED))
-        {
-            switch (team)
-            {
-            case ALLIANCE:
-                disabled = mask & (1 << 0);
-                break;
-            case HORDE:
-                disabled = mask & (1 << 1);
-                break;
-            }
-        }
-
-        if (!disabled)
-            disabled = sObjectMgr.IsFactionImbalanced(team);
-
-        if (disabled)
-        {
-            data << (uint8)CHAR_CREATE_DISABLED;
-            SendPacket(&data);
-            return;
-        }
-    }
-
-    ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
-    ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
-
-    if (!classEntry || !raceEntry)
-    {
-        data << (uint8)CHAR_CREATE_FAILED;
-        SendPacket(&data);
-        std::stringstream oss;
-        oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
-        ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    if (raceEntry->HasFlag(CHRRACES_FLAGS_NOT_PLAYABLE))
-    {
-        data << (uint8)CHAR_CREATE_DISABLED;
-        SendPacket(&data);
-        std::stringstream oss;
-        oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
-        ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    // Prevent character creating with invalid name
-    if (!normalizePlayerName(name))
-    {
-        data << (uint8)CHAR_NAME_NO_NAME;
-        SendPacket(&data);
-        ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
-        return;
-    }
-
-    // check name limitations
-    uint8 res = ObjectMgr::CheckPlayerName(name, true);
-    if (res != CHAR_NAME_SUCCESS)
-    {
-        data << uint8(res);
-        SendPacket(&data);
-        return;
-    }
-
-    if (GetSecurity() == SEC_PLAYER && sObjectMgr.IsReservedName(name))
-    {
-        data << (uint8)CHAR_NAME_RESERVED;
-        SendPacket(&data);
-        return;
-    }
-
-    if (ObjectGuid existingGuid = sObjectMgr.GetPlayerGuidByName(name))
-    {
-        PlayerCacheData const* pExistingData = sObjectMgr.GetPlayerDataByGUID(existingGuid.GetCounter());
-        if (pExistingData && pExistingData->sName == name)
-        {
-            data << (uint8)CHAR_CREATE_NAME_IN_USE;
-            SendPacket(&data);
-            return;
-        }
+        uint32 limit = sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM);
+        if (outcome.newCharactersCount)
+            _charactersCount = std::min(outcome.newCharactersCount, limit);
         else
+            _charactersCount = std::min<uint32>(_charactersCount + 1, limit);
+    }
+
+    switch (outcome.failureReason)
+    {
+        case CharacterCreateFailureReason::InvalidClassOrRace:
         {
-            sObjectMgr.DeletePlayerNameFromCache(name);
-            sLog.outError("Character name %s taken but no player data in cache!", name.c_str());
+            std::stringstream oss;
+            oss << "Attempt to create character of invalid Class (" << int(class_) << ") or Race (" << int(race_) << ")";
+            ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
+            break;
         }
-    }
-
-    if (_charactersCount >= sWorld.getConfig(CONFIG_UINT32_CHARACTERS_PER_REALM))
-    {
-        data << (uint8)CHAR_CREATE_SERVER_LIMIT;
-        SendPacket(&data);
-        return;
-    }
-
-    bool AllowTwoSideAccounts = !sWorld.IsPvPRealm() || sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_ACCOUNTS) || GetSecurity() > SEC_PLAYER;
-    CinematicsSkipMode skipCinematics = CinematicsSkipMode(sWorld.getConfig(CONFIG_UINT32_SKIP_CINEMATICS));
-
-    bool have_same_race = false;
-    if (!AllowTwoSideAccounts || skipCinematics == CINEMATICS_SKIP_SAME_RACE)
-    {
-        std::vector<PlayerCacheData*> characters;
-        sObjectMgr.GetPlayerDataForAccount(GetAccountId(), characters);
-
-        if (!characters.empty())
+        case CharacterCreateFailureReason::NonPlayableRace:
         {
-            PlayerCacheData* cData = characters.front();
-
-            uint8 acc_race = cData->uiRace;
-
-            // need to check team only for first character
-            // TODO: what to if account already has characters of both races?
-            if (!AllowTwoSideAccounts)
-            {
-                if (acc_race == 0 || Player::TeamForRace(acc_race) != team)
-                {
-                    data << (uint8)CHAR_CREATE_PVP_TEAMS_VIOLATION;
-                    SendPacket(&data);
-                    return;
-                }
-            }
-
-            // search same race for cinematic or same class if need
-            // TODO: check if cinematic already shown? (already logged in?; cinematic field)
-            std::vector<PlayerCacheData*>::iterator iter = characters.begin();
-            while (iter != characters.end() && skipCinematics == CINEMATICS_SKIP_SAME_RACE && !have_same_race)
-            {
-                acc_race = (*iter)->uiRace;
-
-                have_same_race = race_ == acc_race;
-                ++iter;
-            }
+            std::stringstream oss;
+            oss << "Attempt to create character of non-playable Race (" << int(race_) << ")";
+            ProcessAnticheatAction("PassiveAnticheat", oss.str().c_str(), CHEAT_ACTION_INFO_LOG);
+            break;
         }
+        case CharacterCreateFailureReason::InvalidName:
+            ProcessAnticheatAction("PassiveAnticheat", "Attempt to create character with invalid name", CHEAT_ACTION_INFO_LOG);
+            break;
+        case CharacterCreateFailureReason::None:
+            break;
     }
 
-    // created only to call SaveToDB()
-    std::unique_ptr<Player> pNewChar = std::make_unique<Player>(this);
-    if (!pNewChar->Create(sObjectMgr.GeneratePlayerLowGuid(), name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair))
-    {
-        // Player not create (race/class problem?)
-        data << (uint8)CHAR_CREATE_ERROR;
-        SendPacket(&data);
-        return;
-    }
-
-    MasterPlayer masterPlayer(this);
-    masterPlayer.Create(pNewChar.get());
-    if ((have_same_race && skipCinematics == CINEMATICS_SKIP_SAME_RACE) || skipCinematics == CINEMATICS_SKIP_ALL)
-        pNewChar->SetCinematic(1);                          // not show intro
-
-    pNewChar->SetAtLoginFlag(AT_LOGIN_FIRST);               // First login
-
-    // Challenge spells are given on first login and not on character creation
-    if (challengeMask)
-        pNewChar->SetPlayerVariable(PlayerVariables::PendingChallengeMask, std::to_string(challengeMask));
-
-    // Player created, save it now
-    if (!pNewChar->SaveToDB(false, true, false))
-    {
-        data << (uint8)CHAR_CREATE_ERROR;
-        SendPacket(&data);
-        return;
-    }
-    masterPlayer.SaveToDB();
-
-    sObjectMgr.InsertPlayerInCache(pNewChar.get());
-    sObjectMgr.UpdatePlayerCachedPosition(pNewChar.get());
-    _charactersCount += 1;
-
-    LoginDatabase.PExecute("REPLACE INTO realmcharacters (numchars, acctid, realmid) VALUES (%u, %u, %u)",  _charactersCount, GetAccountId(), realmID);
-
-    data << (uint8)CHAR_CREATE_SUCCESS;
+    WorldPacket data(SMSG_CHAR_CREATE, 1);
+    data << uint8(outcome.result);
     SendPacket(&data);
-
-    std::string IP_str = GetRemoteAddress();
-    BASIC_LOG("Account: %d (IP: %s) Create Character:[%s] (guid: %u)", GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
-    sLog.out(LOG_CHAR, "[%s:%u@%s] Create Character:[%s] (guid: %u)", GetUsername().c_str(), GetAccountId(), IP_str.c_str(), name.c_str(), pNewChar->GetGUIDLow());
-    sDBLogger.LogCharAction({ pNewChar->GetGUIDLow(), GetAccountId(), LogCharAction::ActionCreate, {} });
-    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CREATE, [&](PlayerScript* script)
-    {
-        script->OnCreate(pNewChar.get());
-    });
-    sObjectMgr.IncreaseActivePlayersCount(team);
 }
 
 void WorldSession::HandleCharDeleteOpcode(WorldPacket & recv_data)
@@ -486,6 +314,7 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
     ObjectGuid playerGuid;
     recv_data >> playerGuid;
 
+    HeadlessSessionState headlessState = sWorld.GetHeadlessSessionState(playerGuid);
     if (PlayerLoading() || GetPlayer() != nullptr ||
         !playerGuid.IsPlayer() || sWorld.IsCharacterLocked(playerGuid.GetCounter()))
     {
@@ -495,21 +324,33 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket & recv_data)
         return;
     }
 
-    DEBUG_LOG("WORLD: Recvd Player Logon Message");
-
-    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), playerGuid);
-    holder->SetLoginRequestTime(WorldTimer::getMSTime());
-    if (GetSocket() && TurtleDiagnostics::enabled.load(std::memory_order_relaxed))
-        sLog.out(LOG_PERFORMANCE, "PLAYER_LOGIN_STAGE account=%u guid=%u phase=request handler_queue_ms=%u",
-            GetAccountId(), playerGuid.GetCounter(), recv_data.GetPacketTime() ?
-            WorldTimer::getMSTimeDiff(recv_data.GetPacketTime(), holder->GetLoginRequestTime()) : 0);
-    if (!holder->Initialize())
+    PlayerCacheData* cacheData = sObjectMgr.GetPlayerDataByGUID(playerGuid.GetCounter());
+    if (!cacheData || cacheData->uiAccount != GetAccountId())
     {
-        delete holder;                                      // delete all unprocessed queries
+        WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
+        data << (uint8)1;
+        SendPacket(&data);
         return;
     }
-    m_playerLoading = true;
-    CharacterDatabase.DelayQueryHolderUnsafePriority(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
+
+    // Module hook: a bot session holding this character yields to the real client
+    // logging in.
+    ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_BOT_LOGIN_YIELD,
+        [&](WorldScript* s) { s->OnBotLoginYield(playerGuid.GetCounter()); });
+    // A real client always wins. Pending/Loading Headless sessions have not
+    // materialized a Player yet, so cancel them before dispatching this login.
+    if ((headlessState == HeadlessSessionState::Pending ||
+         headlessState == HeadlessSessionState::Loading) &&
+        !sWorld.StopHeadlessSession(playerGuid, false))
+    {
+        WorldPacket data(SMSG_CHARACTER_LOGIN_FAILED, 1);
+        data << (uint8)1;
+        SendPacket(&data);
+        return;
+    }
+
+    DEBUG_LOG("WORLD: Recvd Player Logon Message");
+    LoginPlayer(playerGuid);
 }
 
 //This is what most initial priority is given.
@@ -544,70 +385,47 @@ uint32 WorldSession::GetBasePriority() const
     return priority;
 }
 
-void WorldSession::LoginPlayer(ObjectGuid loginPlayerGuid)
+bool WorldSession::LoginPlayer(ObjectGuid loginPlayerGuid, uint64 requestToken)
 {
     ASSERT(loginPlayerGuid.IsPlayer());
-    LoginQueryHolder *holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid);
+    if (m_playerLoading || GetPlayer())
+        return false;
+
+    if (!requestToken)
+        requestToken = NextLoginRequestToken();
+
+    LoginQueryHolder* holder = new LoginQueryHolder(GetAccountId(), loginPlayerGuid,
+        GetTransport(), requestToken);
     if (!holder->Initialize())
     {
         delete holder;                                      // delete all unprocessed queries
-        return;
+        return false;
     }
+
+    m_loginRequestGuid = loginPlayerGuid;
+    m_loginRequestToken = requestToken;
     m_playerLoading = true;
-    CharacterDatabase.DelayQueryHolderUnsafePriority(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder);
-}
-
-// Post-login event that fixes other players/bots rendering "naked" (base/underwear model) to a
-// freshly logged-in client.
-//
-// CAUSE: While the player watches the intro cinematic, the surrounding players/bots are sent to the
-// client and their character models are built BEFORE the client has received the item display data
-// (DisplayInfoID, delivered via SMSG_ITEM_QUERY_SINGLE_RESPONSE) for their equipped gear. The 1.12
-// client does NOT re-render an already-created character model when those item-query responses
-// arrive afterwards, so the equipment never appears. Gear of the SAME class as the viewer renders
-// fine only because the client already cached that item data from drawing the viewer's own
-// character. The display otherwise corrects only on a full visibility reset (hearthstone/relog),
-// which destroys and re-creates the objects after the item data is cached.
-//
-// FIX: once the cinematic has finished (by which point the item-query responses have been received
-// and cached), force the client to destroy and re-create the players/bots it has in view, so their
-// models are rebuilt with the now-available equipment data. See Player::RefreshVisiblePlayersForClient.
-class RefreshVisiblePlayersEvent : public BasicEvent
-{
-public:
-    explicit RefreshVisiblePlayersEvent(ObjectGuid playerGuid, uint32 attempt = 0)
-        : BasicEvent(), m_playerGuid(playerGuid), m_attempt(attempt) {}
-
-    bool Execute(uint64 /*e_time*/, uint32 /*p_time*/) override
+    m_headlessLoginRequested = IsHeadless();
+    if (!CharacterDatabase.DelayQueryHolderUnsafe(&chrHandler, &CharacterHandler::HandlePlayerLoginCallback, holder))
     {
-        Player* player = ObjectAccessor::FindPlayer(m_playerGuid);
-        if (!player || !player->IsInWorld())
-            return true;
-
-        // Wait until the login cinematic has finished. Refreshing during the cinematic recreates
-        // objects the client hasn't fully received yet, which makes them vanish.
-        if (player->watching_cinematic_entry != 0)
-        {
-            if (m_attempt + 1 < kMaxAttempts)
-                player->m_Events.AddEvent(new RefreshVisiblePlayersEvent(m_playerGuid, m_attempt + 1),
-                                          player->m_Events.CalculateTime(kRetryMs));
-            return true;
-        }
-
-        // Cinematic done: one refresh of the players/bots the client has in view.
-        player->RefreshVisiblePlayersForClient();
-        return true;
+        delete holder;
+        m_playerLoading = false;
+        m_headlessLoginRequested = false;
+        return false;
     }
 
-private:
-    static constexpr uint32 kMaxAttempts = 60; // cinematic-wait cap (~120s)
-    static constexpr uint32 kRetryMs     = 2000;
-    ObjectGuid m_playerGuid;
-    uint32 m_attempt;
-};
+    return true;
+}
 
 void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 {
+    if (!holder || !IsLoginRequest(holder->GetGuid(), holder->GetTransport(),
+        holder->GetRequestToken()) || holder->GetAccountId() != GetAccountId())
+    {
+        delete holder;
+        return;
+    }
+
     // The following fixes a crash. Use case:
     // Session1 created, requests login, kicked.
     // Session2 created, requests login, and receives 2 login callback.
@@ -620,21 +438,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     }
     ObjectGuid playerGuid = holder->GetGuid();
     ASSERT(playerGuid.IsPlayer());
-    bool const traceLoginEnabled = GetSocket() && holder->GetLoginRequestTime() &&
-        TurtleDiagnostics::enabled.load(std::memory_order_relaxed);
-    uint32 const loginRequestedAt = holder->GetLoginRequestTime();
-    uint32 loginPreviousStage = loginRequestedAt;
-    auto traceLogin = [&](char const* phase)
-    {
-        if (!traceLoginEnabled) return;
-        uint32 const now = WorldTimer::getMSTime();
-        sLog.out(LOG_PERFORMANCE, "PLAYER_LOGIN_STAGE account=%u guid=%u phase=%s stage_ms=%u since_request_ms=%u",
-            GetAccountId(), playerGuid.GetCounter(), phase,
-            WorldTimer::getMSTimeDiff(loginPreviousStage, now), WorldTimer::getMSTimeDiff(loginRequestedAt, now));
-        loginPreviousStage = now;
-    };
-    // Includes DB queue, holder execution and callback dispatch, not SQL alone.
-    traceLogin("db_results_ready");
 
     // If the character is online (ALT-F4 logout for example)
     Player *pCurrChar = sObjectAccessor.FindPlayer(playerGuid);
@@ -642,8 +445,17 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     bool alreadyOnline = false;
     if (pCurrChar)
     {
-        // Hacking attempt
-        if (pCurrChar->GetSession()->GetAccountId() != GetAccountId())
+        // Headless sessions never take over a character already owned by
+        // another session. Network login is the reclaiming direction.
+        if (IsHeadless())
+        {
+            delete holder;
+            m_playerLoading = false;
+            return;
+        }
+
+        WorldSession* previousSession = pCurrChar->GetSession();
+        if (!previousSession)
         {
             KickPlayer();
             delete holder;
@@ -651,33 +463,31 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
             return;
         }
 
-        // If this character is currently in-world as a bot (PlayerbotAI
-        // attached), cleanly detach
-        // the AI BEFORE transferring session ownership. Without this, the
-        // bot's PlayerbotAI keeps ticking on what's now the real-player's
-        // Player object via Player::UpdatePlayerbotHooks → fights with the
-        // login handshake, drives movement / casts / packets the client
-        // doesn't expect → loading screen never finishes (10+ min hang
-        // observed; client eventually gives up). Reproduces deterministically
-        // when:
-        //   1. Char A is being run as a bot
-        //   2. Master logs off
-        //   3. User immediately logs into Char A as a real player
-        // The take-over path below transfers the Player object cleanly; we
-        // just have to make sure the bot brain stops first.
-        if (Script_IsAIControlled(pCurrChar))
+        // Hacking attempt
+        if (previousSession->GetAccountId() != GetAccountId())
         {
-            sLog.outInfo("[BOT] HandlePlayerLogin: char %s (guid %u) currently driven by a module - "
-                         "asking it to let go before real-player session take-over",
-                         pCurrChar->GetName(), playerGuid.GetCounter());
-            ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_RELEASE_TO_CLIENT, [&](PlayerScript* script)
-            {
-                script->OnReleaseToClient(pCurrChar);
-            });
+            KickPlayer();
+            delete holder;
+            m_playerLoading = false;
+            return;
         }
 
-        pCurrChar->GetSession()->SetPlayer(nullptr);
-        pCurrChar->SetSession(this);
+        // Network login may reclaim only a manager-owned Headless session.
+        if (previousSession->IsHeadless())
+        {
+            if (!sWorld.ReclaimHeadlessSession(playerGuid, previousSession, this, GetAccountId()))
+            {
+                KickPlayer();
+                delete holder;
+                m_playerLoading = false;
+                return;
+            }
+        }
+        else
+        {
+            previousSession->SetPlayer(nullptr);
+            pCurrChar->SetSession(this);
+        }
 
         // Need to attach packet bcaster to the new socket
         pCurrChar->m_broadcaster->ChangeSocket(GetSocket());
@@ -706,7 +516,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         pCurrChar->GetMotionMaster()->Initialize();
     }
 
-    traceLogin("existing_character_resolved");
     // "GetAccountId()==db stored account id" checked in LoadFromDB (prevent login not own character using cheating tools)
     if (alreadyOnline)
         pCurrChar->SendPacketsAtRelogin();
@@ -720,17 +529,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     }
 
     ASSERT(pCurrChar->GetSession() == this);
-    traceLogin("character_loaded");
     SetPlayer(pCurrChar);
     if (m_antiCheat)
         m_antiCheat->NewPlayer();
-
-    // Attach a PlayerbotMgr to real-player sessions. Bots (synthetic sessions
-    // with m_playerbotAI set during AddPlayerBot) skip this. Real players get
-    // a mgr so .bot commands work (otherwise the user hits "you cannot control
-    // bots yet").
-    // The module attaches its own controller from PlayerScript::OnLogin, further
-    // down this function - nothing between here and there asks for it.
 
 
     //WE DO NOT NEED TO SEND ALL POSSIBLE TRANSMOGS TO ANY PLAYER ON LOGIN
@@ -747,7 +548,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     if (pCurrMasterPlayer)
     {
-        pCurrMasterPlayer->GetSession()->SetMasterPlayer(nullptr);
+        if (WorldSession* previousSession = pCurrMasterPlayer->GetSession())
+            previousSession->SetMasterPlayer(nullptr);
         pCurrMasterPlayer->SetSession(this);
         m_masterPlayer = pCurrMasterPlayer;
     }
@@ -770,7 +572,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     sObjectAccessor.AddObject(m_masterPlayer);
 
     WorldPacket data(SMSG_LOGIN_VERIFY_WORLD, 20);
-    traceLogin("social_loaded");
     data << pCurrChar->GetMapId();
     data << pCurrChar->GetPositionX();
     data << pCurrChar->GetPositionY();
@@ -815,30 +616,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         SendNotification("WARNING: %s", warning);
     }
 
-    // --- Beginners guild (custom): put new guildless real players into the
-    //     configured welcome guild on their first login. Bots are excluded
-    //     through GetPlayerbotAI, and only up to level 5. ---
-    if (sConfig.GetBoolDefault("BeginnersGuilds", false)
-        && pCurrChar->GetGuildId() == 0
-        && !Script_IsAIControlled(pCurrChar)
-        && pCurrChar->GetLevel() <= 5)
-    {
-        // Random bots sit on RNDBOT accounts. Their session carries no username
-        // - GetUsername() is empty - so look the account name up by id instead,
-        // which is reliable, and exclude the bots that way.
-        std::string beginnersAccName;
-        sAccountMgr.GetName(GetAccountId(), beginnersAccName);
-        if (beginnersAccName.rfind("RNDBOT", 0) != 0)
-        {
-            uint32 beginnersGuildId = (pCurrChar->GetTeam() == HORDE)
-                ? sConfig.GetIntDefault("BeginnersGuildHorde", 0)
-                : sConfig.GetIntDefault("BeginnersGuildAlliance", 0);
-            if (beginnersGuildId)
-                if (Guild* beginnersGuild = sGuildMgr.GetGuildById(beginnersGuildId))
-                    beginnersGuild->AddMember(pCurrChar->GetObjectGuid(), beginnersGuild->GetLowestRank());
-        }
-    }
-
     if (Guild* guild = sGuildMgr.GetGuildById(pCurrChar->GetGuildId()))
     {
         WorldPacket data(SMSG_GUILD_EVENT, (2 + guild->GetMOTD().size() + 1));
@@ -861,7 +638,6 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     GetMasterPlayer()->SendInitialActionButtons();
 
     // Show only player accounts cinematic at first log on
-    bool showedIntroCinematic = false;
     if (!sWorld.getConfig(CONFIG_BOOL_PTR))
     {
         AccountMgr AccountMgr;
@@ -872,15 +648,11 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
                 pCurrChar->SetCinematic(1);
 
                 if (ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(pCurrChar->GetRace()))
-                {
                     pCurrChar->SendCinematicStart(rEntry->CinematicSequence);
-                    showedIntroCinematic = true;
-                }
             }
         }
     }
 
-    traceLogin("initial_packets_queued");
     if (!alreadyOnline && !pCurrChar->GetMap()->Add(pCurrChar))
     {
         // normal delayed teleport protection not applied (and this correct) for this case (Player object just created)
@@ -905,18 +677,20 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     pCurrChar->GetSocial()->SendIgnoreList();
 
     pCurrChar->SendInitialPacketsAfterAddToMap();
-    traceLogin("map_and_initial_objects_added");
     if (alreadyOnline)
         pCurrChar->SendInitWorldStates(pCurrChar->GetCachedZoneId());
 
     static SqlStatementID updChars;
-    static SqlStatementID updAccount;
 
     SqlStatement stmt = CharacterDatabase.CreateStatement(updChars, "UPDATE characters SET online = 1 WHERE guid = ?");
     stmt.PExecute(pCurrChar->GetGUIDLow());
 
-    stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET current_realm = ?, online = 1 WHERE id = ?");
-    stmt.PExecute(realmID, GetAccountId());
+    if (!IsHeadless())
+    {
+        static SqlStatementID updAccount;
+        stmt = LoginDatabase.CreateStatement(updAccount, "UPDATE account SET current_realm = ?, online = 1 WHERE id = ?");
+        stmt.PExecute(realmID, GetAccountId());
+    }
 
     pCurrChar->SetInGameTime(WorldTimer::getMSTime());
 
@@ -966,19 +740,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
         pCurrChar->ContinueTaxiFlight();
         pCurrChar->LoadPet();
     }
-    traceLogin("social_corpse_and_pet_loaded");
 
     auto maskVar = pCurrChar->GetPlayerVariable(PlayerVariables::PendingChallengeMask);
-    // Bot sessions must never go through challenge setup — they predate TurtleWoW's hardcore
-    // system and have no concept of it. Skip and clear any stale mask so it doesn't re-fire.
-    const std::string& remoteAddr = pCurrChar->GetSession()->GetRemoteAddress();
-    const bool isBotSession = (remoteAddr == "disconnected/bot" || remoteAddr == "<BOT>");
-    if (isBotSession)
-    {
-        if (maskVar)
-            pCurrChar->SetPlayerVariable(PlayerVariables::PendingChallengeMask, "0");
-    }
-    else if (maskVar && *maskVar != "0")
+    if (maskVar && *maskVar != "0")
     {
         uint32 challengeMask = std::stoul(*maskVar);
 
@@ -1063,8 +827,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
     sDBLogger.LogCharAction({ pCurrChar->GetGUIDLow(), GetAccountId(), LogCharAction::ActionLogin, {} });
 
     m_playerLoading = false;
+    m_headlessLoginRequested = false;
     m_clientMoverGuid = pCurrChar->GetObjectGuid();
-    traceLogin("login_flag_cleared");
     delete holder;
     if (alreadyOnline)
     {
@@ -1143,25 +907,10 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
 
     ALL_SESSION_SCRIPTS(this, OnLogin(pCurrChar));
-
-    // Only on the FIRST login (the one that plays the intro cinematic) is the client's item cache
-    // cold enough to render nearby players/bots naked; subsequent logins already have the gear data
-    // cached and render fine. So schedule the equipment-refresh only when the cinematic was shown,
-    // to avoid an unnecessary destroy/recreate "blink" on every subsequent login.
-    if (showedIntroCinematic)
-        pCurrChar->m_Events.AddEvent(new RefreshVisiblePlayersEvent(pCurrChar->GetObjectGuid()),
-                                     pCurrChar->m_Events.CalculateTime(3000));
     ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_LOGIN, [&](PlayerScript* script)
     {
         script->OnLogin(pCurrChar);
     });
-    traceLogin("login_hooks_finished");
-
-#ifdef ENABLE_ELUNA
-    if (showedIntroCinematic)
-        if (Eluna* e = pCurrChar->GetEluna())
-            e->OnFirstLogin(pCurrChar);
-#endif
 }
 
 void WorldSession::HandleSetFactionAtWarOpcode(WorldPacket & recv_data)

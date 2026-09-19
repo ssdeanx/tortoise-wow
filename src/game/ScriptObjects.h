@@ -78,6 +78,8 @@ enum WorldHook
     WORLDHOOK_ON_SHUTDOWN,
     WORLDHOOK_ON_AFTER_UNLOAD_ALL_MAPS,
     WORLDHOOK_ON_BEFORE_WORLD_INITIALIZED,
+    WORLDHOOK_ON_CHANNEL_BROADCAST,
+    WORLDHOOK_ON_BOT_LOGIN_YIELD,
     WORLDHOOK_END
 };
 
@@ -104,6 +106,8 @@ class WorldScript : public ScriptObject
         virtual void OnShutdown() {}
         virtual void OnAfterUnloadAllMaps() {}
         virtual void OnBeforeWorldInitialized() {}
+        virtual void OnChannelBroadcast(uint32 /*guidLow*/, char const* /*channel*/, char const* /*msg*/) {}
+        virtual void OnBotLoginYield(uint32 /*guidLow*/) {}
 };
 
 enum PlayerHook
@@ -140,17 +144,15 @@ enum PlayerHook
     PLAYERHOOK_ON_MAP_CHANGED,
     PLAYERHOOK_ON_BEFORE_TELEPORT,
     PLAYERHOOK_ON_LOOT_ITEM,
-    PLAYERHOOK_ON_RELEASE_TO_CLIENT,
-    PLAYERHOOK_IS_AI_CONTROLLED,
-    PLAYERHOOK_IS_MACHINE_DRIVEN,
-    PLAYERHOOK_IS_UPDATE_CRITICAL,
-    PLAYERHOOK_HAS_AI_FOLLOWERS,
-    PLAYERHOOK_GET_ALLOWED_ROLES,
-    PLAYERHOOK_SET_FORCED_ROLE,
-    PLAYERHOOK_ON_CHAT_COMMAND,
-    PLAYERHOOK_CAN_USE_GROUP_CHAT,
-    PLAYERHOOK_ON_AI_UPDATE,
-    PLAYERHOOK_IS_AI_UPDATE_DUE,
+    PLAYERHOOK_ON_CHAT_SAY,
+    PLAYERHOOK_ON_CHAT_YELL,
+    PLAYERHOOK_ON_CHAT_CHANNEL,
+    PLAYERHOOK_ON_CHAT_WHISPER,
+    PLAYERHOOK_ON_CHAT_GUILD,
+    PLAYERHOOK_ON_TEXT_EMOTE_HEARD,
+    PLAYERHOOK_IS_MANAGED_BOT,
+    PLAYERHOOK_GET_BOT_ROLES,
+    PLAYERHOOK_ON_ADDON_MESSAGE,
     PLAYERHOOK_END
 };
 
@@ -174,9 +176,6 @@ class PlayerScript : public ScriptObject
         virtual void OnTalentsReset(Player* /*player*/, bool /*noCost*/) {}
         virtual void OnBeforeUpdate(Player* /*player*/, uint32 /*diff*/) {}
         virtual void OnUpdate(Player* /*player*/, uint32 /*diff*/) {}
-        // AI has its own cadence; never throttle gameplay/module OnUpdate hooks.
-        virtual void OnAIUpdate(Player* /*player*/, uint32 /*diff*/, bool /*minimal*/) {}
-        virtual bool IsAIUpdateDue(Player* /*player*/, uint32 /*diff*/) { return false; }
         virtual void OnMoneyChanged(Player* /*player*/, int32& /*amount*/) {}
         virtual void OnGiveXP(Player* /*player*/, uint32& /*amount*/, Unit* /*victim*/) {}
         virtual void OnReputationChange(Player* /*player*/, uint32 /*factionId*/, int32& /*standing*/) {}
@@ -200,56 +199,18 @@ class PlayerScript : public ScriptObject
         virtual void OnMapChanged(Player* /*player*/) {}
         virtual void OnBeforeTeleport(Player* /*player*/, uint32 /*mapId*/, float /*x*/, float /*y*/, float /*z*/, float /*orientation*/) {}
         virtual void OnLootItem(Player* /*player*/, Item* /*item*/, uint32 /*count*/, ObjectGuid /*lootGuid*/) {}
+        virtual void OnChatSay(Player* /*from*/, float /*range*/, char const* /*msg*/) {}
+        virtual void OnChatYell(Player* /*from*/, float /*range*/, char const* /*msg*/) {}
+        virtual void OnChatChannel(Player* /*from*/, char const* /*channel*/, char const* /*msg*/) {}
+        virtual void OnChatWhisper(Player* /*from*/, char const* /*msg*/) {}
+        virtual void OnChatGuild(Player* /*from*/, char const* /*msg*/) {}
+        virtual void OnTextEmoteHeard(Player* /*from*/, uint32 /*textEmote*/, ObjectGuid /*target*/) {}
+        virtual bool IsManagedBot(Player* /*who*/) { return false; }
+        virtual uint8 GetBotRoles(Player* /*who*/) { return 0; }
 
-        // Whether some module drives this character instead of a human at a client.
-        // Asked wherever the core needs to treat a puppet differently from a player -
-        // group bookkeeping, the looking-for-team queue, chat throttles. Returning
-        // true from any module settles it, so keep the check cheap.
-        // A real client is taking over a character the module was driving. Stop
-        // driving it before the session changes hands: an AI that keeps ticking
-        // on the new owner fights the login handshake and the client never
-        // finishes loading.
-        virtual void OnReleaseToClient(Player* /*player*/) {}
-
-        virtual bool IsAIControlled(Player const* /*player*/) { return false; }
-
-        // Narrower than IsAIControlled: true only when nobody is at a client.
-        // A person driving their own character through the module still counts
-        // as a human here, which is what the core wants when it decides whether
-        // a group member can be waited on.
-        virtual bool IsMachineDriven(Player const* /*player*/) { return false; }
-
-        // Machine-driven characters normally run on a reduced cadence. Modules
-        // return true while a character is attached to a real player or doing
-        // latency-sensitive work so map catch-up passes keep it responsive.
-        virtual bool IsUpdateCritical(Player const* /*player*/) { return false; }
-
-        // Whether this *human* player commands puppets of his own. Distinct from
-        // IsAIControlled: the master is a real player, his followers are not.
-        virtual bool HasAIFollowers(Player const* /*player*/) { return false; }
-
-        // Roles the module will let this character fill, as a LFT_ROLE_* mask
-        // (tank 1, healer 2, dps 4). Write into roles and return true to answer;
-        // return false to leave the question to the next module.
-        virtual bool GetAllowedRoles(Player const* /*player*/, uint8& /*roles*/) { return false; }
-
-        // Pin this character to one role for the coming run. Mask as above.
-        virtual void SetForcedRole(Player* /*player*/, uint8 /*role*/) {}
-
-        // A player typed something that a module may want to act on. Unlike
-        // OnBeforeSendChatMessage this carries the whisper target and cannot alter
-        // the message - it is a notification, not a filter.
-        virtual void OnChatCommand(Player* /*player*/, uint32 /*type*/, std::string const& /*msg*/,
-                                   uint32 /*lang*/, std::string const& /*to*/) {}
-
-        // May this line go out to the group? A module that consumes its own
-        // control traffic (an addon command channel) answers false and the
-        // core drops the line after the module acted on it - without this the
-        // whole party sees every button press, or the old workaround rewrites
-        // the type to a value the opcode switch cannot handle and the log
-        // fills with unknown-message-type lines.
-        virtual bool CanUseGroupChat(Player* /*player*/, uint32 /*type*/, uint32 /*lang*/,
-                                     std::string& /*msg*/) { return true; }
+        // A module may take an addon message as a command of its own. Return true
+        // when the text was consumed; the core then does not relay it.
+        virtual bool OnAddonMessage(Player* /*from*/, std::string const& /*msg*/) { return false; }
 };
 
 class CreatureScript : public ScriptObject, public UpdatableScript<Creature>
@@ -529,6 +490,7 @@ enum UnitHook
     UNITHOOK_ON_UNIT_ENTER_COMBAT,
     UNITHOOK_ON_UNIT_EXIT_COMBAT,
     UNITHOOK_ON_UNIT_DEATH,
+    UNITHOOK_ON_BUFF_RECEIVED,
     UNITHOOK_END
 };
 
@@ -554,6 +516,7 @@ class UnitScript : public ScriptObject
         virtual void OnUnitEnterCombat(Unit* /*unit*/, Unit* /*victim*/) {}
         virtual void OnUnitExitCombat(Unit* /*unit*/) {}
         virtual void OnUnitDeath(Unit* /*unit*/, Unit* /*killer*/) {}
+        virtual void OnBuffReceived(Unit* /*target*/, Player* /*caster*/, uint32 /*spellId*/) {}
 };
 
 class WorldObjectScript : public ScriptObject
@@ -645,7 +608,6 @@ enum ServerHook
     SERVERHOOK_ON_SOCKET_CLOSE,
     SERVERHOOK_CAN_PACKET_SEND,
     SERVERHOOK_CAN_PACKET_RECEIVE,
-    SERVERHOOK_ON_PACKET_HANDLED,
     SERVERHOOK_END
 };
 
@@ -666,11 +628,6 @@ class ServerScript : public ScriptObject
         virtual void OnSocketClose(WorldSocket* /*socket*/) {}
         virtual bool CanPacketSend(WorldSession* /*session*/, WorldPacket const& /*packet*/) { return true; }
         virtual bool CanPacketReceive(WorldSession* /*session*/, WorldPacket const& /*packet*/) { return true; }
-
-        // Fires after the handler for this opcode ran, and cannot suppress
-        // anything. CanPacketReceive is the wrong place for work that has to
-        // observe the result of a player action rather than pre-empt it.
-        virtual void OnPacketHandled(WorldSession* /*session*/, WorldPacket const& /*packet*/) {}
 };
 
 class MiscScript : public ScriptObject
@@ -766,13 +723,11 @@ class GroupScript : public ScriptObject
     protected:
         explicit GroupScript(char const* name) : ScriptObject(name) { ScriptRegistry<GroupScript>::AddScript(this); }
     public:
-        virtual void OnCreate(Group* /*group*/, ObjectGuid /*leaderGuid*/, uint8 /*groupType*/) {}
-        virtual void OnInviteMember(Group* /*group*/, ObjectGuid /*guid*/) {}
-        virtual bool CanMemberAccept(Group* /*group*/, Player* /*player*/) { return true; }
         virtual void OnAddMember(Group* /*group*/, ObjectGuid /*guid*/) {}
         virtual void OnRemoveMember(Group* /*group*/, ObjectGuid /*guid*/, uint8 /*method*/) {}
         virtual void OnChangeLeader(Group* /*group*/, ObjectGuid /*newLeaderGuid*/, ObjectGuid /*oldLeaderGuid*/) {}
         virtual void OnDisband(Group* /*group*/) {}
+        virtual void OnLootRollStarted(Group* /*group*/, ObjectGuid const& /*target*/, uint32 /*itemSlot*/, uint32 /*itemId*/) {}
 };
 
 class GuildScript : public ScriptObject
@@ -784,8 +739,7 @@ class GuildScript : public ScriptObject
         virtual void OnRemoveMember(Guild* /*guild*/, Player* /*player*/, bool /*isDisbanding*/, bool /*isKicked*/) {}
         virtual void OnCreate(Guild* /*guild*/, Player* /*leader*/, std::string const& /*name*/) {}
         virtual void OnDisband(Guild* /*guild*/) {}
-        virtual void OnMotdChanged(Guild* /*guild*/, std::string const& /*motd*/) {}
-        virtual void OnInfoChanged(Guild* /*guild*/, std::string const& /*info*/) {}
+        virtual void OnGuildInvite(Player* /*invited*/) {}
 };
 
 class MailScript : public ScriptObject

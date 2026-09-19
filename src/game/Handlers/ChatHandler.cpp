@@ -266,7 +266,14 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             recv_data >> channel;
             recv_data >> msg;
 
-            if (!ProcessChatMessageAfterSecurityCheck(msg, lang, type))
+            if (lang == LANG_ADDON)
+            {
+                // Destination authorization happens in the handling switch below.
+                // Do not parse addon payloads as server chat commands meanwhile.
+                if (!CheckChatMessageValidity(msg, lang, type))
+                    return;
+            }
+            else if (!ProcessChatMessageAfterSecurityCheck(msg, lang, type))
                 return;
 
             if (msg.empty())
@@ -292,6 +299,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         case CHAT_MSG_HARDCORE:
         {
             recv_data >> msg;
+
             if (!ProcessChatMessageAfterSecurityCheck(msg, lang, type))
                 return;
             if (msg.empty())
@@ -495,6 +503,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                     {
                         chn->AsyncSay(playerPointer->GetObjectGuid(), msg.c_str(), lang);
 
+
                         if (lang != LANG_ADDON && bIsWorldChannel)
                         {
                             ChannelMgr::AnnounceBothFactionsChannel("Global", playerPointer->GetObjectGuid(), string_format("|cff{}{}|r", playerPointer->GetTeam() == HORDE ? "ff0000" : "2773ff"
@@ -533,6 +542,12 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 return;
 
             GetPlayer()->Say(msg, lang);
+
+            // Speech names nobody, so at most one managed bot nearby looks up.
+            if (lang != LANG_ADDON)
+                ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_SAY,
+                    [&](PlayerScript* s) { s->OnChatSay(GetPlayer(),
+                        sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY), msg.c_str()); });
 
             if (lang != LANG_ADDON)
             {
@@ -578,6 +593,11 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 return;
 
             GetPlayer()->Yell(msg, lang);
+
+            if (lang != LANG_ADDON && !IsFingerprintBanned())
+                ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_YELL,
+                    [&](PlayerScript* s) { s->OnChatYell(GetPlayer(),
+                        GetPlayer()->GetYellRange(), msg.c_str()); });
 
             if (lang != LANG_ADDON)
             {
@@ -646,6 +666,13 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 //if (!allowSendWhisper || lang == LANG_ADDON || !pAntispam || pAntispam->AddMessage(msg, lang, type, GetPlayerPointer(), PlayerPointer(new PlayerWrapper<MasterPlayer>(player)), nullptr, nullptr))
                 masterPlr->Whisper(msg, lang, player, allowSendWhisper);
 
+                // A module listens to whispers and party chat for one thing only:
+                // somebody calling an errand off. Everything else it is told
+                // arrives through a channel.
+                if (_player && allowSendWhisper)
+                    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_WHISPER,
+                        [&](PlayerScript* s) { s->OnChatWhisper(_player, msg.c_str()); });
+
                 if (lang != LANG_ADDON)
                 {
                     sWorld.LogChat(this, "Whisp", msg, PlayerPointer(new PlayerWrapper<MasterPlayer>(player)));
@@ -665,6 +692,13 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                     return;
             }
 
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+                return;
+
+            if (_player && lang != LANG_ADDON)
+                ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_WHISPER,
+                    [&](PlayerScript* s) { s->OnChatWhisper(_player, msg.c_str()); });
+
             WorldPacket data;
             ChatHandler::BuildChatPacket(data, ChatMsg(type), msg.c_str(), Language(lang), _player->GetChatTag(), _player->GetObjectGuid(), _player->GetName());
 
@@ -678,7 +712,17 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         {
             if (Guild* guild = sGuildMgr.GetGuildById(GetMasterPlayer()->GetGuildId()))
             {
+                if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+                    return;
+
                 guild->BroadcastToGuild(this, msg, lang == LANG_ADDON ? LANG_ADDON : LANG_UNIVERSAL);
+
+                // Module hook: guild chat with our people in it answers back.
+                if (_player && lang != LANG_ADDON)
+                {
+                    ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_CHAT_GUILD,
+                        [&](PlayerScript* s) { s->OnChatGuild(_player, msg.c_str()); });
+                }
             }
 
             if (lang != LANG_ADDON)
@@ -706,7 +750,11 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         {
             if (GetMasterPlayer()->GetGuildId())
                 if (Guild* guild = sGuildMgr.GetGuildById(GetMasterPlayer()->GetGuildId()))
+                {
+                    if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+                        return;
                     guild->BroadcastToOfficers(this, msg, lang == LANG_ADDON ? LANG_ADDON : LANG_UNIVERSAL);
+                }
 
             if (lang != LANG_ADDON)
                 sWorld.LogChat(this, "Officer", msg, nullptr, GetMasterPlayer()->GetGuildId());
@@ -723,6 +771,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 if (!group || group->isBGGroup() || !group->isRaidGroup())
                     return;
             }
+
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+                return;
 
             WorldPacket data;
             ChatHandler::BuildChatPacket(data, CHAT_MSG_RAID, msg.c_str(), Language(lang), _player->GetChatTag(), _player->GetObjectGuid(), _player->GetName());
@@ -744,6 +795,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                     return;
             }
 
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
+                return;
+
             WorldPacket data;
             ChatHandler::BuildChatPacket(data, CHAT_MSG_RAID_LEADER, msg.c_str(), Language(lang), _player->GetChatTag(), _player->GetObjectGuid(), _player->GetName());
             group->BroadcastPacket(&data, false);
@@ -758,6 +812,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             Group *group = GetPlayer()->GetGroup();
             if (!group || !group->isRaidGroup() ||
                     !(group->IsLeader(GetPlayer()->GetObjectGuid()) || group->IsAssistant(GetPlayer()->GetObjectGuid())))
+                return;
+
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
                 return;
 
             WorldPacket data;
@@ -775,6 +832,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             // battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group *group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup())
+                return;
+
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
                 return;
 
             WorldPacket data;
@@ -798,6 +858,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             // battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group *group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup() || !group->IsLeader(GetPlayer()->GetObjectGuid()))
+                return;
+
+            if (lang == LANG_ADDON && _player && sScriptMgr.OnAddonMessage(_player, msg))
                 return;
 
             WorldPacket data;
@@ -995,6 +1058,14 @@ void WorldSession::HandleTextEmoteOpcode(WorldPacket & recv_data)
     //Send scripted event call
     if (unit && unit->IsCreature() && ((Creature*)unit)->AI())
         ((Creature*)unit)->AI()->ReceiveEmote(GetPlayer(), textEmote);
+
+    // And the same courtesy for managed bots. The packet carried its target, so
+    // this is the one place in the game where who was addressed is not a
+    // guess -- no distance heuristic, no name parsing, no language involved.
+    if (unit && GetPlayer()->IsWithinDistInMap(unit,
+        sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE)))
+        ScriptRegistry<PlayerScript>::ForEachEnabledHook(PLAYERHOOK_ON_TEXT_EMOTE_HEARD,
+            [&](PlayerScript* s) { s->OnTextEmoteHeard(GetPlayer(), textEmote, guid); });
 }
 
 void WorldSession::HandleChatIgnoredOpcode(WorldPacket& recv_data)
