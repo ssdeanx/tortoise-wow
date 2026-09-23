@@ -988,7 +988,11 @@ class World
                 return s;
             }
         };
-        WorldGraveyardManagerStub& GetGraveyardManager();
+        WorldGraveyardManagerStub& GetGraveyardManager()
+        {
+            static WorldGraveyardManagerStub s;
+            return s;
+        }
 
 		// basically a destructor
 		void InternalShutdown();
@@ -1287,6 +1291,7 @@ class World
         std::mutex m_asyncTaskQueueMutex;
         std::vector<std::function<void()>> _asyncTasks;
         std::vector<std::function<void()>> _asyncTasksBusy;
+        std::unique_ptr<ThreadPool> m_updateThreads;
 
         void LogChat(WorldSession* sess, const char* type, std::string const& msg, PlayerPointer target = nullptr, uint32 chanId = 0, const char* chanStr = nullptr);
         std::string FormatLoggedChat(WorldSession* sess, const char* type, std::string const& msg, PlayerPointer target, uint32 chanId, const char* chanStr);

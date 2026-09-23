@@ -619,6 +619,21 @@ namespace ai
         virtual uint32 GetItemId() override { return 13457; }
     };
 
+    // Greater Shadow Protection Potion (13459, buff 17548) - same pattern as the
+    // fire one. Used on shadow fights (Lucifron, Gehennas, Nefarian, Ebonroc).
+    class UseShadowProtectionPotionAction : public UseItemIdAction
+    {
+    public:
+        UseShadowProtectionPotionAction(PlayerbotAI* ai) : UseItemIdAction(ai, "shadow protection potion") {}
+
+        virtual bool isUseful() override
+        {
+            return UseItemIdAction::isUseful() && !bot->HasAura(17548) && (bot->GetLevel() >= 48);
+        }
+
+        virtual uint32 GetItemId() override { return 13459; }
+    };
+
     class UseFreeActionPotionAction : public UseItemIdAction
     {
     public:

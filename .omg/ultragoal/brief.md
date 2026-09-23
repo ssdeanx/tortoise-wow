@@ -1,18 +1,33 @@
-# Ultragoal Brief: Enterprise Reference Library — Eluna Deep Audit & Final Master Polish
+# Ultragoal Brief: Autonomous Group & Raid Controller for Tortoise-WoW (5, 10, 20, 40-Man)
 
 ## Objective
+Build a unified, end-to-end automation engine (via an Eluna Lua script and command suite) that eliminates the manual grind of typing dozens of macros and whispering individual bots when forming groups and raids (5, 10, 20, and 40-man). The system must:
+1. **Leverage the 5-Volume Master Reference Suite** (`references/01`–`05` and `legacy_22_modules`):
+   - Volume 01: Character progression, instant boost, and instance unbinding.
+   - Volume 02 & Legacy 21: Full playerbot control (`.bot`), chat filter targeting tokens (`/p @tank`, `/p @heal`, etc.), strategy tokens (`co`/`nc`), whisper shortcuts, and 10/20/40-man raid compositions.
+   - Volume 03: Fast group teleports (`.tele group <instance>`), keys, and attunements.
+   - Volume 04: Class specs, BiS gear loadouts, tier sets, enchants, and verified 1.18.1 talent builds.
+   - Volume 05: Eluna Lua engine event hooks (`RegisterPlayerEvent(42, ...)` for custom commands, `RegisterGroupEvent`, `MAP_EVENT_ON_PLAYER_ENTER`, `player:RunCommand`).
+2. **Support LFT (Looking For Turtle) & Custom Group/Raid Formation**:
+   - Work seamlessly whether a group is formed via the native group finder (`LFTBotFill`) or assembled on-demand.
+   - Support dynamic scaling: 5-man dungeon, 10-man (UBRS, Karazhan Crypts), 20-man (ZG, AQ20), and 40-man (MC, BWL, AQ40, Naxx).
+3. **Automate the Tedious Configuration**:
+   - **Automatic Role & Spec Detection**: Detect bot class/spec and assign proper combat roles (`tank`, `heal`, `melee`, `ranged`), combat strategies (`co`), and non-combat behaviors (`nc`).
+   - **1-Click Gearing & Preparation**: Run `.bot gear * best`, `.bot enchants *`, `.bot prep *`, potions, food, and class reagents across the entire raid.
+   - **Instant Full Raid Buffing**: Apply full rank raid buffs (Fortitude, Shadow Protection, Arcane Brilliance, Gift of the Wild, Greater Blessings, Paladin Auras) to all 40 members without waiting 10 minutes for mana.
+   - **Autonomous Dungeon Clear (`.dc`) Integration**: Automatically designate the Main Tank bot, toggle `.dc on`, set pull mode (`.dc pull dynamic`), and coordinate followers when entering an instance.
+4. **Intuitive User Interface**:
+   - Provide clean custom commands (`.raid 10`, `.raid 20`, `.raid 40`, `.raid buff`, `.raid gear`, `.raid start`, `.raid pause`, `.raid reset`).
+   - Optional interactive Gossip Menu / item (Raid Commander Stone) so the player can control the entire raid with single clicks.
 
-Elevate the entire Tortoise-WoW reference library (`references/01_*.md` through `05_*.md`, `gm_commands.md`, and `rndbot_commands.md`) to **perfection**:
+## Sequential Execution Pipeline
+1. **Goal 1 (Active)**: Audit and Synthesize Master References for Raid Automation Commands.
+2. **Goal 2**: Develop the Core Eluna Raid Automation Script (`lua_scripts/raid_automation.lua`).
+3. **Goal 3**: Implement Autonomous Dungeon Clear (`.dc`) & Instance Entry Triggers.
+4. **Goal 4**: Implement the In-Game Command Deck (`.raid`) & Gossip UI Controller.
+5. **Goal 5**: Validate Syntax, Verify Server Configuration & Document Usage.
 
-1. **Eluna Core Deep Audit**: Deeply audit `src/modules/Eluna/` for all C++ bindings, all event registrations, all object methods (`Player`, `Creature`, `GameObject`, `Map`, `Spell`, `Item`), database queries (`WorldDBQuery`, `CharDBQuery`), global methods, and custom Turtle engine hooks.
-2. **Volume 05 Overhaul**: Transform `references/05_developer_eluna_and_engine.md` into an exhaustive, production-grade guide with complete event tables, object APIs, hot-reload patterns, and copy-paste Lua script blueprints for server operators.
-3. **Cross-Volume Gap Closing**: Exhaustively audit Volumes 01, 02, 03, 04, `gm_commands.md`, and `rndbot_commands.md` to ensure zero missing mechanics, complete command coverage, full link harmony, and flawless usability.
-4. **Master Verification**: Run programmatic test suite `scripts/validate_reference_suite.py` ensuring 100% pass across all quality gates.
-
-## Core Architecture Boundaries
-
-- **Server Core**: Turtle-WoW 1.18.1 (Build 7272) CMaNGOS (`src/game/Chat/Chat.cpp`, `Commands.cpp`).
-- **Bot Engine**: `modules/mod-playerbots` (`PlayerbotMgr.cpp`, `RandomPlayerbotMgr.cpp`, `ChatFilter.cpp`, `ChatTriggerContext.h`, `ChatActionContext.h`).
-- **Dungeon Engine**: `modules/mod-dungeon-clear` (`DungeonClearCommand.cpp`, `mod_dungeon_clear.conf.dist`).
-- **Script Engine**: Eluna Lua module (`src/modules/Eluna/`).
-- **Local Scripts & Test Suite**: Reside exclusively in `scripts/` (strictly ignored by `.gitignore`).
+## Boundaries & Constraints
+- Platform: Turtle-WoW 1.18.1 (Build 7272) on CMaNGOS with `mod-playerbots`, `mod-dungeon-clear`, and `Eluna`.
+- Script Location: `lua_scripts/` (executed live via `.reload eluna`).
+- Zero manual bot micromanagement: All bot targeting and role tuning must be fully automated across all group members.

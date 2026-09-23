@@ -1,26 +1,26 @@
 [
   {
     "id": "goal-1",
-    "description": "Eluna Core Deep-Dive & C++ Source Audit: Inspect src/modules/Eluna/ for all registered classes (Player, Creature, GameObject, Map, Spell, Item, Group, Guild, etc.), all event hooks and IDs (Server, Player, Creature, GameObject, Item, etc.), global DB functions (WorldDBQuery, CharDBQuery), packet methods, and custom Turtle engine hooks.",
+    "description": "Project Analysis, 30s Storyboard & Script Pacing Design",
     "status": "completed",
-    "verification_criteria": "Verbatim inventory of all Eluna Lua bindings, event registration tables, methods, and engine lifecycle points extracted directly from C++ headers and source files."
+    "verification_criteria": "Accurate technical summary of installation and features; complete second-by-second 30s storyboard approved with visual direction."
   },
   {
     "id": "goal-2",
-    "description": "Volume 05 Exhaustive Overhaul & Production Engine Guide: Upgrade references/05_developer_eluna_and_engine.md with comprehensive Eluna architecture, full event ID matrices, complete object API references, global database query workflows, custom command routing, and copy-paste production script blueprints.",
+    "description": "Visual Asset Generation & Motion Graphics Engine Setup",
     "status": "completed",
-    "verification_criteria": "Volume 05 provides enterprise-grade, exhaustive documentation of Eluna with working code examples, event tables, and debugging tools."
+    "verification_criteria": "Branding art, graphical badges, high-res terminal frames, and automated Python/PIL/ffmpeg rendering pipeline initialized."
   },
   {
     "id": "goal-3",
-    "description": "Cross-Volume Master Gap Closing & Perfection Audit: Review Volumes 01, 02, 03, 04, gm_commands.md, and rndbot_commands.md to eliminate any remaining omissions, verify all cross-links, ensure uniform navigation, and confirm all commands and mechanics are 100% optimal.",
+    "description": "Scene Animation & Kinetic Motion Composition",
     "status": "completed",
-    "verification_criteria": "Zero missing features, uniform navigation across all 7 documentation files, zero broken links, single-H1 heading hierarchy."
+    "verification_criteria": "All 4 scenes synthesized with smooth 60fps transitions, particle/glow effects, and synchronized on-screen text."
   },
   {
     "id": "goal-4",
-    "description": "Automated Quality Assurance Verification & Final Walkthrough: Extend and execute scripts/validate_reference_suite.py across the entire reference library, confirming 100% pass across all quality gates, and document results in walkthrough.md.",
+    "description": "Full Video Rendering, Multi-Format Polish & Final Delivery",
     "status": "completed",
-    "verification_criteria": "Programmatic test suite passes 100% on all gates; walkthrough artifact updated with complete evidence."
+    "verification_criteria": "Render broadcast-ready 1080p60 MP4 (30.00s duration), verify frame playback, and package video artifact with documentation."
   }
 ]

@@ -43,7 +43,15 @@ twlive.pid
 twdb.pid
 honorupdate.txt
 egglog.txt
-
+WOW_FOREVER_LOL.mp4
+VIDEO_SCRIPT.md
+llm_character_card.txt
+build.log
+*.mp4
+*.mp3
+*.wav
+/media/
+media/
 tools/checkegglogs/obj/Debug/net8.0/*.cs
 tools/checkegglogs/obj/Debug/net8.0/*.cache
 
@@ -64,3 +72,14 @@ __pycache__/
 # DiscardRoute benennt .route/.cpp in .bad um, wenn die Stuck-Leiter auf
 # einer aufgezeichneten Route auslief). Ausschuss, kein Repo-Inhalt.
 *.bad
+media/synth_music.py
+tools/checkegglogs/obj/project.nuget.cache
+tools/checkegglogs/obj/Debug/net8.0/checkegglogs.AssemblyInfo.cs
+references/1
+.gitignore
+logs/char.log.1
+logs/errors.log.1
+logs/errors.log.2
+logs/honor.log.1
+logs/errors.log.3
+logs/perf.log.1

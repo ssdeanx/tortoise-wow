@@ -41,6 +41,7 @@
 
 struct FactionTemplateEntry;
 struct Modifier;
+struct ItemPrototype;
 
 class WorldPacket;
 class SpellEntry;
@@ -593,7 +594,7 @@ class Unit : public WorldObject
         bool IsAlive() const { return (m_deathState == ALIVE); }
         bool IsDying() const { return m_deathState == JUST_DIED; }
         // AzerothCore spelling.
-        bool isDead() const;
+        bool isDead() const { return IsDead(); }
         // AzerothCore starts a fight in one call. Here that is entering combat
         // with the target and putting it on the threat list at zero, which is
         // what the engage path does.
@@ -661,6 +662,7 @@ class Unit : public WorldObject
         bool IsInSwimmableWater() const { return IsInWater(); }
         // IsSpellReady on Unit: forward to spell-cooldown check.
         bool IsSpellReady(uint32 spellId) const { return !HasSpellCooldown(spellId); }
+        bool IsSpellReady(uint32 spellId, const ItemPrototype* /*proto*/) const { return IsSpellReady(spellId); }
         bool IsSpellReady(SpellEntry const* spellInfo) const;
         // SetTarget WorldObject* overload: bot passes WorldObject; downcast to Unit if possible.
         void SetTarget(WorldObject const* obj) {
@@ -686,6 +688,7 @@ class Unit : public WorldObject
         bool HasInArc(float arc, WorldObject const* target) const { return WorldObject::HasInArc(target, arc); }
         // CanReachWithMeleeAttack: cmangos has it on Unit; Penqle uses CanReachWithMeleeAutoAttack.
         bool CanReachWithMeleeAttack(Unit const* victim) const { return CanReachWithMeleeAutoAttack(victim); }
+        bool IsFacingTargetsBack(Unit const* target) const;
         // GetControllingPlayer: cmangos returns charmer/owner Player. Stub: charmer if Player, else nullptr.
         Player* GetControllingPlayer() const {
             Unit* charmer = GetCharmerOrOwner();
@@ -695,6 +698,9 @@ class Unit : public WorldObject
         virtual void SetSheath(SheathState sheathed) { SetByteValue(UNIT_FIELD_BYTES_2, 0, sheathed); }
         void SetStandState(uint8 state);
         uint8 GetStandState() const { return GetByteValue(UNIT_FIELD_BYTES_1, 0); }
+        uint8 getStandState() const { return GetStandState(); }
+        bool IsStandState() const { return GetStandState() == UNIT_STAND_STATE_STAND; }
+        bool IsSitState() const { return IsSittingDown(); }
         bool IsSittingDown() const;
         bool IsStandingUp() const;
         virtual bool IsStandingUpForProc() const; // takes not yet applied stand state change into account (for players to simulate batching)
@@ -753,6 +759,7 @@ class Unit : public WorldObject
         bool IsSpiritService() const { return HasFlag( UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPIRITHEALER | UNIT_NPC_FLAG_SPIRITGUIDE ); }
         bool IsGhost() const { return (HasAura(9036)); }
         bool IsTaxiFlying() const { return HasUnitState(UNIT_STAT_TAXI_FLIGHT); }
+        bool IsFreeFlying() const { return IsFlying() && !IsTaxiFlying(); }
 
         bool IsCaster() const;
         CreatureAI* AI() const;
@@ -813,6 +820,15 @@ class Unit : public WorldObject
 
         bool NearTeleportTo(WorldLocation location, uint32_t teleportOptions = TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_UNSUMMON_PET);
         bool NearTeleportTo(float x, float y, float z, float orientation, uint32 teleportOptions = TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+        bool NearTeleportTo(float x, float y, float z, float orientation, bool spellOp, bool resetSound, bool teleportPet)
+        {
+            uint32 teleportOptions = TELE_TO_NOT_LEAVE_COMBAT;
+            if (spellOp)
+                teleportOptions |= TELE_TO_SPELL;
+            if (teleportPet)
+                teleportOptions |= TELE_TO_NOT_UNSUMMON_PET;
+            return NearTeleportTo(x, y, z, orientation, teleportOptions);
+        }
         void NearLandTo(float x, float y, float z, float orientation);
         void TeleportPositionRelocation(float x, float y, float z, float o);
         void MonsterMoveWithSpeed(float x, float y, float z, float o, float speed, uint32 options);
@@ -1120,6 +1136,7 @@ class Unit : public WorldObject
         virtual bool IsImmuneToSpell(SpellEntry const* spellInfo, bool castOnSelf) const;
         virtual bool IsImmuneToDamage(SpellSchoolMask meleeSchoolMask, SpellEntry const* spellInfo = nullptr) const;
         bool IsTotalImmune() const;
+        bool isTotalImmune() const { return IsTotalImmune(); }
         virtual bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index, bool castOnSelf) const;
         bool IsImmuneToSchool(SpellEntry const* spellInfo, uint8 effectMask) const;
 
@@ -1150,7 +1167,7 @@ class Unit : public WorldObject
         void AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 itemId, Spell* spell = nullptr, bool infinityCooldown = false);
         void RemoveSpellCooldown(uint32 spell_id, bool update = false);
         // bot passes SpellEntry; forward to ID-based version.
-        void RemoveSpellCooldown(SpellEntry const& spellInfo, bool update = false);  // impl in Unit.cpp
+        void RemoveSpellCooldown(SpellEntry const& spellInfo, bool update = false);
         void RemoveSpellCooldown(SpellEntry const* spellInfo, bool update = false);
         void RemoveSpellCategoryCooldown(uint32 category, bool update = true);
         void RemoveAllSpellCooldown();
@@ -1329,6 +1346,7 @@ class Unit : public WorldObject
          * @return True if an attack was initiated, false otherwise
          */
         bool Attack(Unit* victim, bool meleeAttack);
+        bool MeleeAttackStart(Unit* victim) { return Attack(victim, true); }
         /**
          * Called when we are attacked by someone in someway, might be when a fear runs out and
          * we want to notify AI to attack again or when a spell hits.
@@ -1343,6 +1361,7 @@ class Unit : public WorldObject
          * \see Unit::m_attacking
          */
         bool AttackStop(bool targetSwitch = false);
+        bool MeleeAttackStop(Unit* /*victim*/ = nullptr) { return AttackStop(); }
         /**
          * Removes all attackers from the Unit::m_attackers set and logs it if someone that
          * wasn't attacking it was in the list. Does this check by checking if Unit::AttackStop()
@@ -1552,7 +1571,12 @@ class Unit : public WorldObject
         void SetCharmerGuid(ObjectGuid owner) { SetGuidValue(UNIT_FIELD_CHARMEDBY, owner); ForceValuesUpdateAtIndex(UNIT_FIELD_HEALTH); ForceValuesUpdateAtIndex(UNIT_FIELD_MAXHEALTH); }
         bool IsCharmed() const { return !GetCharmerGuid().IsEmpty(); }
         bool IsCharmerOrOwnerPlayerOrPlayerItself() const final { return IsPlayer() || GetCharmerOrOwnerGuid().IsPlayer(); }
-        bool isAttackingPlayer() const;
+        bool isAttackingPlayer() const
+        {
+            if (Unit const* victim = GetVictim())
+                return victim->IsCharmerOrOwnerPlayerOrPlayerItself();
+            return false;
+        }
         bool IsTargetableBy(WorldObject const* caster, bool forAoE = false, bool checkAlive = true, bool helpful = false) const;
         ObjectGuid const& GetCharmerOrOwnerGuid() const { return GetCharmerGuid() ? GetCharmerGuid() : GetOwnerGuid(); }
         ObjectGuid const& GetCharmerOrOwnerOrOwnGuid() const

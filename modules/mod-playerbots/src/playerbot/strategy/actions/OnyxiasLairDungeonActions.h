@@ -27,4 +27,11 @@ namespace ai
     public:
         OnyxiaDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable onyxia fight strategy", "-onyxia") {}
     };
+
+    // Deep Breath scatter (23461): get off the breath lane.
+    class MoveAwayFromOnyxiaAction : public MoveAwayFromCreature
+    {
+    public:
+        MoveAwayFromOnyxiaAction(PlayerbotAI* ai) : MoveAwayFromCreature(ai, "move away from onyxia", 10184, 40.0f) {}
+    };
 }

@@ -2,6 +2,8 @@
 // no per-module precompiled header - the aggregate `modules` target compiles
 // two modules' sources - so a use has to name its own header.
 #include <set>
+#include <algorithm>
+#include <cmath>
 #include "playerbot/strategy/actions/AutoLearnSpellAction.h"
 #include <mutex>
 #include <regex>
@@ -255,7 +257,7 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(QueryResult* /*dummy*/, SqlQu
                                                 /*mute_time*/ 0, LOCALE_enUS, /*remote_ip*/ "disconnected/bot",
                                                 /*binaryIp*/ 0);
     botSession->SetNoAnticheat();
-    botSession->SetPlayerLoading(true); // satisfies HandlePlayerLogin's first guard
+    botSession->SetLoginRequest(lqh->GetGuid(), lqh->GetRequestToken());
 
     // HandlePlayerLogin owns the holder from this point — don't delete it here.
     botSession->HandlePlayerLogin(lqh);
@@ -2313,8 +2315,67 @@ std::string PlayerbotHolder::HandleBotAddLogin(Player* bot, Player* master, cons
 
     if (bot)
     {
-        SC_LOG("HandleBotAddLogin bot already online — returning early");
-        return "Player already logged in";
+        SC_LOG("HandleBotAddLogin bot already online — checking group");
+        if (!master)
+            return "Player already logged in";
+
+        if (bot == master)
+            return "Cannot add yourself to group";
+
+        Group* group = master->GetGroup();
+        if (group && group->IsMember(bot->GetObjectGuid()))
+            return "Already in your group";
+
+        PlayerbotAI* ai = GetBotAI(bot);
+        if (bot->GetGroup())
+        {
+            if (ai && ai->HasRealPlayerMaster() && ai->GetMaster() != master)
+                return "Bot is already grouped with another player";
+            bot->RemoveFromGroup();
+        }
+
+        if (bot->GetGroupInvite())
+            bot->GetGroupInvite()->RemoveInvite(bot);
+
+        if (group && !group->IsRaidGroup() && group->GetMembersCount() >= 5)
+            group->ConvertToRaid();
+
+        WorldPacket invitePacket(CMSG_GROUP_INVITE);
+        uint32 roles_mask = 0;
+        invitePacket << bot->GetName();
+        invitePacket << roles_mask;
+        master->GetSession()->HandleGroupInviteOpcode(invitePacket);
+
+        if (bot->GetGroupInvite())
+        {
+            WorldPacket acceptPacket(CMSG_GROUP_ACCEPT);
+            acceptPacket << roles_mask;
+            bot->GetSession()->HandleGroupAcceptOpcode(acceptPacket);
+        }
+
+        Group* afterGrp = master->GetGroup();
+        if (afterGrp && afterGrp->IsMember(bot->GetObjectGuid()))
+        {
+            if (ai)
+            {
+                ai->SetMaster(master);
+                std::string defaultMovementStrategy = ai->GetDefaultMovementStrategy();
+                ai->ChangeStrategy("+" + defaultMovementStrategy, BotState::BOT_STATE_NON_COMBAT);
+                ai->ResetStrategies();
+                ai->ChangeStrategy("-lfg,-bg", BotState::BOT_STATE_NON_COMBAT);
+                ai->Reset();
+            }
+
+            bot->TeleportTo(master->GetMapId(),
+                            master->GetPositionX(),
+                            master->GetPositionY(),
+                            master->GetPositionZ(),
+                            master->GetOrientation());
+
+            return "Bot " + std::string(bot->GetName()) + " added to your group";
+        }
+
+        return "Failed to add bot to group";
     }
 
     if (!Qualified::isValidNumberString(param))
@@ -2722,16 +2783,14 @@ std::list<std::string> PlayerbotHolder::HandleGroup(Player* master, const std::s
     }
 
     uint32 masterLevel = master->GetLevel();
-    uint8 masterClass = master->getClass();
-    Team team = master->GetTeam();
-    BotRoles masterRole = AiFactory::GetPlayerRoles(master);
+    Team masterTeam = master->GetTeam();
     uint8 groupSize = 5;
-    uint8 currentGroupSize = 1;
     Group* group = master->GetGroup();
-    if (group)
-        currentGroupSize = group->GetMembersCount();
+    uint8 currentGroupSize = group ? group->GetMembersCount() : 1;
 
     std::string passThroughParam = "";
+    uint8 requestedClass = 0;
+    BotRoles requestedRole = BotRoles::BOT_ROLE_NONE;
 
     std::vector<std::string> args = Qualified::getMultiQualifiers(param, " ");
     for (const auto& arg : args)
@@ -2745,88 +2804,231 @@ std::list<std::string> PlayerbotHolder::HandleGroup(Player* master, const std::s
 
         if (key == "size" && Qualified::isValidNumberString(value))
             groupSize = stoi(value);
+        else if (key == "class")
+            requestedClass = (uint8)ChatHelper::parseClass(value);
+        else if (key == "role")
+            requestedRole = ChatHelper::parseRole(value);
         else
             passThroughParam += key + "=" + value + " ";
     }
-    
-    std::unordered_map<uint8, std::unordered_map<BotRoles, uint32>> allowedClassNr = LfgAction::AllowedClassRoleNr(master, groupSize);
 
-    RandomPlayerbotFactory factory(0);
+    if (groupSize > 40)
+        groupSize = 40;
+    if (groupSize < 2)
+        groupSize = 2;
 
-    uint32 maxTries = 10*groupSize;
-
-    uint32 botsCreated = 0;
-    uint32 continue_role = 0, continue_race = 0, continue_class = 0;
-    std::map<uint8, uint32> classesCreated;
-
-    while (currentGroupSize < groupSize)
+    if (group && group->GetMembersCount() >= groupSize)
     {
-        maxTries--;
-        if (!maxTries)
-            break;
-
-        BotRoles role = BotRoles(urand(BotRoles::BOT_ROLE_TANK, BotRoles::BOT_ROLE_DPS));
-
-        if (allowedClassNr[0][role] == 0)
-        {
-            continue_role++;
-            continue;
-        }
-
-        uint8 cls = factory.GetRandomClass(0, role);
-
-#ifdef MANGOSBOT_ZERO
-        if (cls == CLASS_PALADIN && team == HORDE)
-        {
-            continue_race++;
-            continue;
-        }
-        if (cls == CLASS_SHAMAN && team == ALLIANCE)
-        {
-            continue_race++;
-            continue;
-        }
-#endif
-
-        if (allowedClassNr[cls].find(role) != allowedClassNr[cls].end() && allowedClassNr[cls][role] == 0)
-        {
-            continue_class++;
-            continue;
-        }
-
-        std::ostringstream paramStr;
-        paramStr << "level=" << masterLevel << " class=" << ChatHelper::formatClass(cls) << " group=" << master->GetName() << " " << passThroughParam; //Passthrough will override.
-
-        auto result = HandleCreate(master, paramStr.str(), security);
-        messages.splice(messages.end(), result);
-
-        if (!messages.empty())
-        {
-            auto lastMsg = messages.front();
-            if (lastMsg.find("Bot created:") != std::string::npos)
-            {
-                classesCreated[cls]++;
-                botsCreated++;
-                currentGroupSize++;
-            }
-        }
-    
-        allowedClassNr[0][role]--; 
-        
-        if (allowedClassNr[cls].find(role) != allowedClassNr[cls].end())
-            allowedClassNr[cls][role]--;
+        messages.push_back("Your group already has " + std::to_string(group->GetMembersCount()) + " members (target was " + std::to_string(groupSize) + ").");
+        return messages;
     }
 
-    std::ostringstream debugInfo;
-    debugInfo << "DEBUG group: target=" << (int)groupSize << ", created=" << botsCreated;
-    if (maxTries == 0)
-        debugInfo << " (maxTries exhausted)";
-    debugInfo << ", continues: role=" << continue_role << ", race=" << continue_race << ", class=" << continue_class;
-    debugInfo << ", classes: ";
-    for (auto& kv : classesCreated)
-        debugInfo << ChatHelper::formatClass(kv.first) << "=" << kv.second << ",";
-    sLog.outString("%s", debugInfo.str().c_str());
+    std::unordered_map<uint8, std::unordered_map<BotRoles, uint32>> allowedClassNr = LfgAction::AllowedClassRoleNr(master, groupSize);
 
+    uint32 botsRecruited = 0;
+    uint32 botsCreated = 0;
+
+    auto recruitBot = [&](Player* bot, BotRoles role) -> bool
+    {
+        if (!bot || !bot->IsInWorld() || !bot->IsAlive() || bot->IsInCombat())
+            return false;
+
+        PlayerbotAI* ai = GetBotAI(bot);
+        if (!ai)
+            return false;
+
+        if (bot->GetGroup())
+        {
+            if (ai->HasRealPlayerMaster() && ai->GetMaster() != master)
+                return false;
+            bot->RemoveFromGroup();
+        }
+
+        if (bot->GetGroupInvite())
+            bot->GetGroupInvite()->RemoveInvite(bot);
+
+        Group* currentGrp = master->GetGroup();
+        if (currentGrp && !currentGrp->IsRaidGroup() && currentGrp->GetMembersCount() >= 5 && groupSize > 5)
+            currentGrp->ConvertToRaid();
+
+        WorldPacket invitePacket(CMSG_GROUP_INVITE);
+        uint32 roles_mask = 0;
+        invitePacket << bot->GetName();
+        invitePacket << roles_mask;
+        master->GetSession()->HandleGroupInviteOpcode(invitePacket);
+
+        if (bot->GetGroupInvite())
+        {
+            WorldPacket acceptPacket(CMSG_GROUP_ACCEPT);
+            acceptPacket << roles_mask;
+            bot->GetSession()->HandleGroupAcceptOpcode(acceptPacket);
+        }
+
+        Group* afterGrp = master->GetGroup();
+        if (afterGrp && afterGrp->IsMember(bot->GetObjectGuid()))
+        {
+            ai->SetMaster(master);
+            std::string defaultMovementStrategy = ai->GetDefaultMovementStrategy();
+            ai->ChangeStrategy("+" + defaultMovementStrategy, BotState::BOT_STATE_NON_COMBAT);
+            ai->ResetStrategies();
+            ai->ChangeStrategy("-lfg,-bg", BotState::BOT_STATE_NON_COMBAT);
+            ai->Reset();
+
+            bot->TeleportTo(master->GetMapId(),
+                            master->GetPositionX(),
+                            master->GetPositionY(),
+                            master->GetPositionZ(),
+                            master->GetOrientation());
+
+            std::string roleStr = (role == BOT_ROLE_TANK ? "Tank" : (role == BOT_ROLE_HEALER ? "Healer" : "DPS"));
+            messages.push_back("Recruited [" + roleStr + "] " + bot->GetName() + " (" + ChatHelper::formatClass(bot->getClass()) + " lvl " + std::to_string(bot->GetLevel()) + ")");
+            return true;
+        }
+
+        return false;
+    };
+
+    // Phase 1: Recruit from active online random bots
+    auto& onlineBots = sRandomPlayerbotMgr.GetPlayers();
+    std::vector<Player*> candidates;
+    candidates.reserve(onlineBots.size());
+
+    for (auto const& [guid, bot] : onlineBots)
+    {
+        if (!bot || bot == master || !bot->IsInWorld() || !bot->IsAlive() || bot->IsInCombat())
+            continue;
+
+        if (bot->InBattleGround() || bot->InBattleGroundQueue())
+            continue;
+
+        if (bot->GetTeam() != masterTeam && !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_GROUP))
+            continue;
+
+        if (bot->GetMap() && bot->GetMap()->Instanceable() && bot->GetMapId() != master->GetMapId())
+            continue;
+
+        if (master->GetGroup() && master->GetGroup()->IsMember(bot->GetObjectGuid()))
+            continue;
+
+        PlayerbotAI* ai = GetBotAI(bot);
+        if (!ai || (ai->HasRealPlayerMaster() && ai->GetMaster() != master))
+            continue;
+
+        if (requestedClass && bot->getClass() != requestedClass)
+            continue;
+
+        candidates.push_back(bot);
+    }
+
+    // Sort candidates by level difference to master (closest first)
+    std::sort(candidates.begin(), candidates.end(), [masterLevel](Player* a, Player* b) {
+        int32 diffA = std::abs((int32)a->GetLevel() - (int32)masterLevel);
+        int32 diffB = std::abs((int32)b->GetLevel() - (int32)masterLevel);
+        return diffA < diffB;
+    });
+
+    std::vector<BotRoles> roleOrder;
+    if (requestedRole != BotRoles::BOT_ROLE_NONE)
+        roleOrder.push_back(requestedRole);
+    else
+        roleOrder = { BOT_ROLE_TANK, BOT_ROLE_HEALER, BOT_ROLE_DPS };
+
+    for (BotRoles targetRole : roleOrder)
+    {
+        while (allowedClassNr[0][targetRole] > 0)
+        {
+            Player* bestBot = nullptr;
+            for (auto it = candidates.begin(); it != candidates.end(); ++it)
+            {
+                Player* candidate = *it;
+                if (!candidate)
+                    continue;
+
+                if (std::abs((int32)candidate->GetLevel() - (int32)masterLevel) > 5 && masterLevel > 10)
+                    continue;
+
+                PlayerbotAI* ai = GetBotAI(candidate);
+                if (!ai)
+                    continue;
+
+                BotRoles role = ai->IsTank(candidate, false) ? BOT_ROLE_TANK : (ai->IsHeal(candidate, false) ? BOT_ROLE_HEALER : BOT_ROLE_DPS);
+                if (role != targetRole)
+                    continue;
+
+                uint8 cls = candidate->getClass();
+                if (allowedClassNr[cls].find(role) != allowedClassNr[cls].end() && allowedClassNr[cls][role] == 0)
+                    continue;
+
+                bestBot = candidate;
+                candidates.erase(it);
+                break;
+            }
+
+            if (!bestBot)
+                break;
+
+            uint8 cls = bestBot->getClass();
+            if (recruitBot(bestBot, targetRole))
+            {
+                botsRecruited++;
+                allowedClassNr[0][targetRole]--;
+                if (allowedClassNr[cls].find(targetRole) != allowedClassNr[cls].end())
+                    allowedClassNr[cls][targetRole]--;
+            }
+        }
+    }
+
+    // Phase 2 (Fallback): If any roles are still needed, spawn via rndbot account pool with login=1 temporary=1
+    Group* currentGroup = master->GetGroup();
+    currentGroupSize = currentGroup ? currentGroup->GetMembersCount() : 1;
+
+    if (currentGroupSize < groupSize)
+    {
+        RandomPlayerbotFactory factory(0);
+        uint32 maxTries = 10 * groupSize;
+
+        while (currentGroupSize < groupSize && maxTries > 0)
+        {
+            maxTries--;
+            BotRoles role = requestedRole != BotRoles::BOT_ROLE_NONE ? requestedRole : BotRoles(urand(BotRoles::BOT_ROLE_TANK, BotRoles::BOT_ROLE_DPS));
+            if (allowedClassNr[0][role] == 0)
+                continue;
+
+            uint8 cls = requestedClass ? requestedClass : factory.GetRandomClass(0, role);
+#ifdef MANGOSBOT_ZERO
+            if (cls == CLASS_PALADIN && masterTeam == HORDE)
+                continue;
+            if (cls == CLASS_SHAMAN && masterTeam == ALLIANCE)
+                continue;
+#endif
+            if (allowedClassNr[cls].find(role) != allowedClassNr[cls].end() && allowedClassNr[cls][role] == 0)
+                continue;
+
+            std::ostringstream paramStr;
+            paramStr << "level=" << masterLevel << " class=" << ChatHelper::formatClass(cls) << " group=" << master->GetName() << " login=1 temporary=1 " << passThroughParam;
+
+            auto result = sRandomPlayerbotMgr.HandleCreate(master, paramStr.str(), security);
+            for (auto const& msg : result)
+            {
+                if (msg.find("Bot created:") != std::string::npos)
+                {
+                    botsCreated++;
+                    allowedClassNr[0][role]--;
+                    if (allowedClassNr[cls].find(role) != allowedClassNr[cls].end())
+                        allowedClassNr[cls][role]--;
+                    messages.push_back(msg);
+                    break;
+                }
+            }
+
+            currentGroup = master->GetGroup();
+            currentGroupSize = currentGroup ? currentGroup->GetMembersCount() : 1;
+        }
+    }
+
+    currentGroup = master->GetGroup();
+    uint32 finalCount = currentGroup ? currentGroup->GetMembersCount() : 1;
+    messages.push_back("Group formed: " + std::to_string(finalCount) + "/" + std::to_string(groupSize) + " members (" + std::to_string(botsRecruited) + " recruited online, " + std::to_string(botsCreated) + " created).");
     return messages;
 }
 
@@ -3269,9 +3471,25 @@ std::string PlayerbotHolder::HandleBotPet(Player* bot, Player* master, const std
 
 std::string PlayerbotHolder::HandleBotLevelUp(Player* bot, Player* master, const std::string param)
 {
-    PlayerbotFactory factory(bot, bot->GetLevel());
+    uint32 targetLevel = bot->GetLevel();
+    if (!param.empty() && Qualified::isValidNumberString(param))
+    {
+        uint32 lvl = std::stoul(param);
+        if (lvl > 0 && lvl <= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+            targetLevel = lvl;
+    }
+
+    if (bot->GetLevel() != targetLevel)
+    {
+        bot->GiveLevel(targetLevel);
+        bot->InitTalentForLevel();
+        bot->SetUInt32Value(PLAYER_XP, 0);
+        bot->SetUInt32Value(PLAYER_NEXT_LEVEL_XP, sObjectMgr.GetXPForLevel(targetLevel));
+    }
+
+    PlayerbotFactory factory(bot, targetLevel);
     factory.Randomize(true, false);
-    return "ok";
+    return "level set to " + std::to_string(bot->GetLevel());
 }
 
 std::string PlayerbotHolder::HandleBotRefresh(Player* bot, Player* master, const std::string param)

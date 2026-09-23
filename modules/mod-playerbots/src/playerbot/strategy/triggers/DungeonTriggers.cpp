@@ -385,3 +385,112 @@ bool ItemBuffReadyTrigger::IsActive()
 
     return false;
 }
+
+Unit* ai::GetRaidTargetByEntry(PlayerbotAI* ai, uint32 entryId)
+{
+    Player* bot = ai->GetBot();
+    if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported())
+        return nullptr;
+
+    AiObjectContext* context = ai->GetAiObjectContext();
+
+    for (const ObjectGuid& guid : AI_VALUE(std::list<ObjectGuid>, "possible attack targets"))
+    {
+        Creature* creature = ai->GetCreature(guid);
+        if (creature && creature->IsInWorld() && creature->GetMapId() == bot->GetMapId() &&
+            creature->IsAlive() && creature->GetEntry() == entryId)
+        {
+            return creature;
+        }
+    }
+
+    return nullptr;
+}
+
+// Stack count of a spell aura on a unit (0 when absent). Declared in
+// DungeonTriggers.h; lives here with the other trigger-side helpers.
+uint32 ai::GetSpellStacks(Unit* unit, uint32 spellId)
+{
+    if (!unit)
+        return 0;
+
+    SpellAuraHolder* holder = unit->GetSpellAuraHolder(spellId);
+    return holder ? holder->GetStackAmount() : 0;
+}
+
+bool AttackersEntryTrigger::IsActive()
+{
+    uint32 entryId = 0;
+    try { entryId = std::stoul(getQualifier()); }
+    catch (...) { return false; }
+
+    if (!entryId)
+        return false;
+
+    for (const ObjectGuid& attackerGuid : AI_VALUE(std::list<ObjectGuid>, "possible attack targets"))
+    {
+        Creature* attacker = ai->GetCreature(attackerGuid);
+        if (attacker && sServerFacade.IsAlive(attacker) && attacker->GetEntry() == entryId)
+            return true;
+    }
+
+    return false;
+}
+
+bool EntryProximityTrigger::IsActive()
+{
+    if (!bot->IsInWorld() || bot->IsBeingTeleported())
+        return false;
+
+    std::vector<std::string> params = getMultiQualifiers(getQualifier(), ",");
+    if (params.size() < 2)
+        return false;
+
+    uint32 entryId = 0;
+    float range = 0.0f;
+    bool ignoreVictim = false;
+    try
+    {
+        entryId = std::stoul(params[0]);
+        range = stof(params[1]);
+        ignoreVictim = params.size() > 2 && params[2] == "1";
+    }
+    catch (...) { return false; }
+
+    if (!entryId || range <= 0.0f)
+        return false;
+
+    std::list<Unit*> creatures;
+    MaNGOS::AllCreaturesOfEntryInRangeCheck u_check(bot, entryId, range);
+    MaNGOS::UnitListSearcher<MaNGOS::AllCreaturesOfEntryInRangeCheck> searcher(creatures, u_check);
+    Cell::VisitAllObjects(bot, searcher, range);
+
+    for (Unit* unit : creatures)
+    {
+        Creature* creature = (Creature*)unit;
+        if (!creature || !sServerFacade.IsAlive(creature))
+            continue;
+
+        if (!ignoreVictim && creature->GetVictim() && (creature->GetVictim()->GetObjectGuid() == bot->GetObjectGuid()))
+            continue;
+
+        if (bot->IsWithinDist(creature, range))
+            return true;
+    }
+
+    return false;
+}
+
+bool InstanceEncounterDoneTrigger::IsActive()
+{
+    Map* map = bot->GetMap();
+    if (!map)
+        return false;
+
+    InstanceData* instance = map->GetInstanceData();
+    if (!instance)
+        return false;
+
+    try { return instance->GetData(std::stoul(getQualifier())) == DONE; }
+    catch (...) { return false; }
+}

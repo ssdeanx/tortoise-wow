@@ -38,6 +38,7 @@
 
 
 #include <optional>
+#include <memory>
 
 struct ItemPrototype;
 struct AuctionEntry;
@@ -311,6 +312,13 @@ class WorldSession
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
+        void SetPlayerLoading(bool val) { m_playerLoading = val; }
+        void SetLoginRequest(ObjectGuid characterGuid, uint64 requestToken = 0)
+        {
+            m_loginRequestGuid = characterGuid;
+            m_loginRequestToken = requestToken;
+            m_playerLoading = true;
+        }
         bool PlayerLogout() const { return m_playerLogout; }
         bool PlayerLogoutWithSave() const { return m_playerLogout && m_playerSave; }
 
@@ -319,12 +327,14 @@ class WorldSession
         void SizeError(WorldPacket const& packet, uint32 size) const;
 
         void SendPacket(WorldPacket const* packet);
+        void SendPacket(WorldPacket const& packet) { SendPacket(&packet); }
         void SendNotification(const char *format,...) ATTR_PRINTF(2,3);
         void SendNotification(int32 string_id,...);
         void SendPetNameInvalid(uint32 error, std::string const& name);
         void SendPartyResult(PartyOperation operation, std::string const& member, PartyResult res);
         void SendAreaTriggerMessage(const char* Text, ...) ATTR_PRINTF(2,3);
         void SendQueryTimeResponse();
+        void SendGuildInvite(Player* invitee);
 
         //simple email check for now, can expand later.
         WorldRegion GetRegion() const { return (HasChineseEmail() || sessionDbcLocaleRaw == LOCALE_zhCN) ? WorldRegion::Eastern : WorldRegion::Western;  }
@@ -338,6 +348,15 @@ class WorldSession
 
 
         bool HadQueue() const { return m_hadQueue; }
+
+        enum WorldSessionState
+        {
+            WORLD_SESSION_STATE_CREATED,
+            WORLD_SESSION_STATE_READY,
+            WORLD_SESSION_STATE_OFFLINE,
+            WORLD_SESSION_STATE_REMOVING
+        };
+        WorldSessionState GetState() const { return WORLD_SESSION_STATE_READY; }
 
         std::string GetEmail() const { return m_email; }
         void SetEmail(std::string const& s) { m_email = s; }
@@ -391,19 +410,21 @@ class WorldSession
             m_shouldBackupCharacters = on;
         }
 
-        void LogoutPlayer(bool Save);
+        void LogoutPlayer(bool Save = true);
         void KickPlayer();
         // Session can be safely deleted if returns false
         bool ForcePlayerLogoutDelay();
 
         void QueuePacket(WorldPacket* new_packet);
+        void QueuePacket(std::unique_ptr<WorldPacket> new_packet) { QueuePacket(new_packet.release()); }
+        void HandleBotPackets();
 
         bool Update(PacketFilter& updater);
         /**
          * @brief Returns true if packets can be processed (ie the session has an open socket)
          */
         bool CanProcessPackets() const;
-        void ProcessPackets(PacketFilter& updater);
+        void ProcessPackets(PacketFilter& updater, bool force = false, uint32 maxPackets = 200);
 
         /// Handle the authentication waiting queue (to be completed)
         void SendAuthWaitQue(uint32 position);
@@ -417,6 +438,7 @@ class WorldSession
         void SendTrainerList(ObjectGuid guid, std::string const& strTitle);
         void SendTrainingSuccess(ObjectGuid guid, uint32 spellId);
         void SendTrainingFailure(ObjectGuid guid, uint32 serviceId, uint32 errorCode);
+        void SendPlaySpellVisual(ObjectGuid guid, uint32 id);
 
         // NPC
         void SendListInventory(ObjectGuid guid, uint8 menu_type = VENDOR_MENU_ALL);
@@ -543,6 +565,7 @@ class WorldSession
         void SetDisconnectedSession(); // Remove from World::m_session. Used when an account gets disconnected.
         bool UpdateDisconnected(uint32 diff);
         bool IsConnected() const { return m_connected; }
+        void SetOffline() { m_connected = false; }
         void KickDisconnectedFromWorld() { m_disconnectTimer = 0; }
         bool m_connected;
         uint32 m_disconnectTimer;
@@ -553,6 +576,7 @@ class WorldSession
 
         std::unique_ptr<SessionAnticheatInterface> m_antiCheat;
         SessionAnticheatInterface* GetAntiCheat() const { return m_antiCheat.get(); }
+        void SetNoAnticheat();
 
         void InitAntiCheatSession(BigNumber * K);
 
@@ -645,6 +669,7 @@ class WorldSession
         void HandleCharDeleteOpcode(WorldPacket& recvPacket);
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
+        void HandlePlayerLogin(LoginQueryHolder* holder);
         void HandleCharEnum(QueryResult * result);
         void HandlePlayedTime(WorldPacket& recvPacket);
 
@@ -995,7 +1020,6 @@ class WorldSession
             return m_loginRequestGuid == characterGuid &&
                 m_transport == transport && m_loginRequestToken == requestToken;
         }
-        void HandlePlayerLogin(LoginQueryHolder* holder);
         void InitHeadlessSession();
 
         Player *_player;

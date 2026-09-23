@@ -560,6 +560,9 @@ bool LFTManager::CompleteOffer(uint32 offerId)
         }
     }
 
+    if (group)
+        m_lftGroupIds.insert(group->GetId());
+
     for (std::map<ObjectGuid, uint8>::const_iterator itr = offer.roles.begin(); itr != offer.roles.end(); ++itr)
     {
         m_queue.erase(itr->first);

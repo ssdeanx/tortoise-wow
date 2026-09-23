@@ -3211,6 +3211,11 @@ bool Unit::IsBehindTarget(Unit const* pTarget, bool strict) const
     return !pTarget->HasInArc(this);
 }
 
+bool Unit::IsFacingTargetsBack(Unit const* target) const
+{
+    return target && !target->HasInArc(this) && HasInArc(target);
+}
+
 bool Unit::CantPathToVictim() const
 {
     if (!GetVictim())
@@ -11767,6 +11772,22 @@ bool Unit::HasSpellCategoryCooldown(uint32 cat) const
     return false;
 }
 
+void Unit::RemoveSpellCategoryCooldown(uint32 category, bool update)
+{
+    if (!category)
+        return;
+
+    SpellCooldowns::iterator itr, next;
+    for (itr = m_spellCooldowns.begin(); itr != m_spellCooldowns.end(); itr = next)
+    {
+        next = itr;
+        ++next;
+
+        if (itr->second.cat == category)
+            RemoveSpellCooldown(itr->first, update);
+    }
+}
+
 void Unit::RemoveAllSpellCooldown()
 {
     if (!m_spellCooldowns.empty())
@@ -11999,4 +12020,93 @@ float Unit::GetScaleForDisplayId(uint32 displayId)
     }
 
     return DEFAULT_OBJECT_SCALE;
+}
+
+float Unit::GetAttackDistance(Unit const* target) const
+{
+    if (Creature const* creature = ToCreature())
+        return creature->GetAttackDistance(target);
+
+    float const targetRadius = target ? target->GetCombatReach() : 0.0f;
+    return GetCombatReach() + targetRadius + NOMINAL_MELEE_RANGE;
+}
+
+bool Unit::IsTargetableBy(WorldObject const* caster, bool /*forAoE*/, bool checkAlive, bool helpful) const
+{
+    if (checkAlive && !IsAlive())
+        return false;
+
+    if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE))
+        return false;
+
+    if (!helpful && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SPAWNING | UNIT_FLAG_NOT_ATTACKABLE_1 | UNIT_FLAG_NON_ATTACKABLE_2 | UNIT_FLAG_TAXI_FLIGHT))
+        return false;
+
+    if (caster)
+    {
+        if (Unit const* casterUnit = caster->ToUnit())
+        {
+            if (helpful && !casterUnit->IsFriendlyTo(this))
+                return false;
+            if (!helpful && casterUnit->IsFriendlyTo(this))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+bool Unit::IsInTeam(uint32 team, bool allowFFA) const
+{
+    if (Player const* player = ToPlayer())
+    {
+        if (allowFFA && player->IsFFAPvP())
+            return false;
+        return player->GetTeam() == team;
+    }
+    return team == ALLIANCE;
+}
+
+bool Unit::IsInTeam(Unit const* other, bool allowFFA) const
+{
+    if (!other)
+        return false;
+    if (Player const* player = ToPlayer())
+    {
+        if (Player const* otherPlayer = other->ToPlayer())
+        {
+            if (allowFFA && (player->IsFFAPvP() || otherPlayer->IsFFAPvP()))
+                return false;
+            return player->GetTeam() == otherPlayer->GetTeam();
+        }
+    }
+    return IsFriendlyTo(other);
+}
+
+Unit* Unit::GetCreator() const
+{
+    if (ObjectGuid creatorid = GetCreatorGuid())
+        return ObjectAccessor::GetUnit(*this, creatorid);
+    return nullptr;
+}
+
+bool Unit::IsSpellReady(SpellEntry const* spellInfo) const
+{
+    return spellInfo ? IsSpellReady(spellInfo->Id) : false;
+}
+
+bool Unit::IsTotalImmune() const
+{
+    return HasAuraType(SPELL_AURA_MOD_UNATTACKABLE) || IsImmuneToDamage(SPELL_SCHOOL_MASK_ALL);
+}
+
+void Unit::RemoveSpellCooldown(SpellEntry const& spellInfo, bool update)
+{
+    RemoveSpellCooldown(spellInfo.Id, update);
+}
+
+void Unit::RemoveSpellCooldown(SpellEntry const* spellInfo, bool update)
+{
+    if (spellInfo)
+        RemoveSpellCooldown(spellInfo->Id, update);
 }

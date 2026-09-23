@@ -24,6 +24,7 @@
 */
 
 #include "World.h"
+#include "LFG/LFGMgr.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
 #include "CustomMerchantMgr.h"
@@ -110,6 +111,12 @@ namespace DiscordBot
 }
 #endif
 
+#ifdef ENABLE_ELUNA
+#include "LuaEngine.h"
+#include "ElunaConfig.h"
+#include "ElunaLoader.h"
+#endif
+
 namespace HttpApi
 {
     void RegisterControllers();
@@ -124,9 +131,9 @@ namespace HttpApi
 
 #include <chrono>
 
-volatile bool World::m_stopEvent = false;
+std::atomic<bool> World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
-volatile uint32 World::m_worldLoopCounter = 0;
+std::atomic<uint32> World::m_worldLoopCounter = 0;
 
 float World::m_MaxVisibleDistanceOnContinents = DEFAULT_VISIBILITY_DISTANCE;
 float World::m_MaxVisibleDistanceInInstances = DEFAULT_VISIBILITY_INSTANCE;
@@ -261,6 +268,10 @@ void World::InternalShutdown()
 
 #ifdef USING_DISCORD_BOT
     sDiscordBot->Stop();
+#endif
+
+#ifdef ENABLE_ELUNA
+    sElunaMgr->Destroy(m_elunaInfo);
 #endif
 }
 
@@ -632,9 +643,6 @@ bool World::RemoveQueuedSession(WorldSession* sess)
 
 void World::LoadConfigSettingsCommonPart(bool reload)
 {
-    if (!reload)
-        m_lastDiffs.resize(50);
-
 #ifdef USE_ANTICHEAT
     sAnticheatConfig.SetSource("anticheat.conf");
     sAnticheatConfig.loadConfigSettings();
@@ -1342,6 +1350,24 @@ void World::LoadConfigSettingsFromFile(bool reload)
     setConfig(CONFIG_BOOL_TERRAIN_PRELOAD_CONTINENTS, "Terrain.Preload.Continents", 1);
     setConfig(CONFIG_BOOL_TERRAIN_PRELOAD_INSTANCES, "Terrain.Preload.Instances", 1);
 
+    setConfig(CONFIG_UINT32_MAPUPDATE_WORKER_THREADS, "MapUpdate.WorkerThreads", 4);
+    setConfig(CONFIG_UINT32_MAP_CELL_THREADS, "MapUpdate.CellThreads", 2);
+    setConfig(CONFIG_UINT32_MAP_IDLE_BOT_THREADS, "MapUpdate.IdleBotThreads", 2);
+    setConfig(CONFIG_UINT32_MAP_CELL_CHUNK_SIZE, "MapUpdate.CellChunkSize", 64);
+    setConfig(CONFIG_UINT32_MAP_CELL_MIN_PARALLEL, "MapUpdate.CellMinParallelCells", 128);
+    setConfig(CONFIG_UINT32_MAP_CELL_MAX_CHUNKS, "MapUpdate.CellMaxChunksPerMap", 8);
+    setConfig(CONFIG_UINT32_MAP_CELL_MAX_WAIT, "MapUpdate.CellMaxWaitMs", 75);
+    setConfig(CONFIG_UINT32_MAP_CELL_FALLBACK_SECONDS, "MapUpdate.CellFallbackSeconds", 30);
+    setConfig(CONFIG_UINT32_MAP_BACKGROUND_OBJECT_SKIP, "MapUpdate.BackgroundObjects.MaxSkip", 20);
+    setConfig(CONFIG_UINT32_MAP_OBJECT_BUILD_THREADS, "MapUpdate.ObjectThreads", 2);
+    setConfig(CONFIG_UINT32_MAP_OBJECT_BUILD_CHUNK, "MapUpdate.VisibilityChunkSize", 64);
+    setConfig(CONFIG_UINT32_MAPUPDATE_IDLE_AI_BATCH, "MapUpdate.IdleBotMaxUpdatesPerTick", 128);
+    setConfig(CONFIG_UINT32_MAP_IDLE_AI_ADVANCE, "MapUpdate.IdleBotMaxTimerAdvanceMs", 250);
+    setConfig(CONFIG_UINT32_MAP_IDLE_AI_BUDGET, "MapUpdate.IdleBotBudgetMs", 50);
+    setConfig(CONFIG_UINT32_MAP_IDLE_AI_MIN, "MapUpdate.IdleBotMinUpdates", 16);
+    setConfig(CONFIG_UINT32_MAP_IDLE_AI_MAX_DEFERRAL, "MapUpdate.IdleBotMaxDeferral", 4);
+    setConfig(CONFIG_UINT32_MAP_IDLE_AI_RECOVERY, "MapUpdate.IdleBotRecoveryStreak", 10);
+
     setConfig(CONFIG_BOOL_ENABLE_MOVEMENT_EXTRAPOLATION_PLAYER, "Movement.ExtrapolatePlayerPosition", false);
     setConfig(CONFIG_BOOL_ENABLE_MOVEMENT_EXTRAPOLATION_PET, "Movement.ExtrapolatePetPosition", true);
     setConfig(CONFIG_UINT32_MOVEMENT_CHANGE_ACK_TIME, "Movement.PendingAckResponseTime", 2000);
@@ -1489,6 +1515,7 @@ void World::LoadConfigSettingsFromFile(bool reload)
 
     setConfig(CONFIG_BOOL_ITEM_LOG_RESTORE_QUEST_ITEMS, "ItemRestoreLog.QuestItems", false);
     setConfig(CONFIG_BOOL_LOAD_LOCALES, "LoadLocales", true);
+    setConfig(CONFIG_BOOL_LOAD_SPELLS_FROM_SQL, "LoadSpellsFromSql", false);
 
     setConfig(CONFIG_BOOL_ENABLE_FACTION_BALANCE, "FactionBalance.Enable", false);
     setConfig(CONFIG_BOOL_BLOCK_ALL_HANZI, "Hanzi.BlockAll", false);
@@ -1987,7 +2014,16 @@ void LoadPlayerEggLoot();
     sLog.outString("Loading script names...");
     sScriptMgr.LoadScriptNames();
     sLog.outString("Loading spells...");
-    sSpellMgr.LoadSpells();
+    if (sWorld.getConfig(CONFIG_BOOL_LOAD_SPELLS_FROM_SQL))
+    {
+        sSpellMgr.LoadSpellsFromSpellTemplate();
+        sSpellMgr.LoadSpellExtra();
+    }
+    else
+    {
+        LoadSpellDBCStore(m_dataPath);
+        sSpellMgr.LoadSpells();
+    }
     sLog.outString("Loading factions...");
     sObjectMgr.LoadFactions();
     sLog.outString("Loading sounds...");
@@ -2031,6 +2067,12 @@ void LoadPlayerEggLoot();
 
     ///- Init highest guids before any guid using table loading to prevent using not initialized guids in some code.
     sObjectMgr.SetHighestGuids();                           // must be after packing instances
+#ifdef ENABLE_ELUNA
+    sLog.outString("Loading Eluna config...");
+    sElunaConfig->Initialize();
+    sLog.outString("Loading Lua scripts...");
+    sElunaLoader->LoadScripts();
+#endif
     sLog.outString("Loading broadcast texts...");
     sObjectMgr.LoadBroadcastTexts();
     sLog.outString("Loading page texts...");
@@ -2209,6 +2251,14 @@ void LoadPlayerEggLoot();
     sObjectMgr.LoadGuildHouses();
     sLog.outString("Loading guild houses...");
 	sGuildMgr.LoadPetitions();
+#ifdef ENABLE_ELUNA
+    if (sElunaConfig->IsElunaEnabled() && sElunaConfig->ShouldMapLoadEluna(ElunaInfoKey::GLOBAL_MAP_ID))
+    {
+        sLog.outString("Starting Eluna world state...");
+        m_elunaInfo = { ElunaInfoKey::MakeGlobalKey(0) };
+        sElunaMgr->Create(nullptr, m_elunaInfo);
+    }
+#endif
     sLog.outString("Loading groups...");
 	sObjectMgr.LoadGroups();
     sLog.outString("Loading reserved player names...");
@@ -2437,6 +2487,8 @@ void LoadPlayerEggLoot();
             honorUpdateFile << "0";
     }
 
+    InitPlayerbotsAtStartup();
+
     ScriptRegistry<WorldScript>::ForEachEnabledHook(WORLDHOOK_ON_STARTUP, [](WorldScript* script)
     {
         script->OnStartup();
@@ -2614,6 +2666,10 @@ void World::Update(uint32 diff)
     sGuardMgr.Update(diff);
     sZoneScriptMgr.Update(diff);
     sDynamicVisMgr.UpdateVisibility(diff);
+#ifdef ENABLE_ELUNA
+    if (Eluna* eluna = sWorld.GetEluna())
+        eluna->UpdateEluna(diff);
+#endif
 
     ///- Update groups with offline leaders
     if (m_timers[WUPDATE_GROUPS].Passed())
@@ -3727,14 +3783,7 @@ void World::AddFingerprint(uint32 fingerprint, std::string accountName)
 void World::SetLastDiff(uint32 diff)
 {
     m_lastDiff = diff;
-    static uint32 currentDiffIndex = 0;
-
-    if (currentDiffIndex >= m_lastDiffs.size())
-        currentDiffIndex = 0;
-
-    m_lastDiffs[currentDiffIndex] = m_lastDiff;
-    ++currentDiffIndex;
-
+    m_tickDiffs.Record(diff);
     CheckDiffProtection();
 }
 
@@ -3756,11 +3805,7 @@ bool World::HitsDiffThreshold() const
 
 uint32 World::GetAverageDiff() const
 {
-    uint32 sum = 0;
-    for (auto i : m_lastDiffs)
-        sum += i;
-
-    return sum / m_lastDiffs.size();
+    return m_tickDiffs.Average();
 }
 
 void World::SetPlayerLimit(int32 limit, bool needUpdate)
@@ -4969,4 +5014,14 @@ void World::DeleteOldPDumps()
                 remove(file.c_str());
         }
     }
+}
+
+LFGQueue& World::GetLFGQueue()
+{
+    return sLFGMgr;
+}
+
+uint32 World::GetCurrentMSTime() const
+{
+    return WorldTimer::getMSTime();
 }

@@ -699,7 +699,6 @@ bool Database::DirectExecuteStmt( const SqlStatementID& id, SqlStmtParameters * 
 
 SqlStatement Database::CreateStatement(SqlStatementID& index, const char * fmt )
 {
-    int nId = -1;
     //check if statement ID is initialized
     if(!index.initialized())
     {
@@ -709,17 +708,21 @@ SqlStatement Database::CreateStatement(SqlStatementID& index, const char * fmt )
         int nParams = std::count(szFmt.begin(), szFmt.end(), '?');
         //find existing or add a new record in registry
         LOCK_GUARD _guard(m_stmtGuard);
-        PreparedStmtRegistry::const_iterator iter = m_stmtRegistry.find(szFmt);
-        if(iter == m_stmtRegistry.end())
+        if(!index.initialized())
         {
-            nId = ++m_iStmtIndex;
-            m_stmtRegistry[szFmt] = nId;
-        }
-        else
-            nId = iter->second;
+            PreparedStmtRegistry::const_iterator iter = m_stmtRegistry.find(szFmt);
+            int nId = -1;
+            if(iter == m_stmtRegistry.end())
+            {
+                nId = ++m_iStmtIndex;
+                m_stmtRegistry[szFmt] = nId;
+            }
+            else
+                nId = iter->second;
 
-        //save initialized statement index info
-        index.init(nId, nParams);
+            //save initialized statement index info
+            index.init(nId, nParams);
+        }
     }
 
     return SqlStatement(index, *this);

@@ -150,9 +150,20 @@ enum PlayerHook
     PLAYERHOOK_ON_CHAT_WHISPER,
     PLAYERHOOK_ON_CHAT_GUILD,
     PLAYERHOOK_ON_TEXT_EMOTE_HEARD,
+    PLAYERHOOK_IS_AI_CONTROLLED,
+    PLAYERHOOK_HAS_AI_FOLLOWERS,
+    PLAYERHOOK_GET_ALLOWED_ROLES,
+    PLAYERHOOK_SET_FORCED_ROLE,
+    PLAYERHOOK_IS_MACHINE_DRIVEN,
+    PLAYERHOOK_IS_UPDATE_CRITICAL,
+    PLAYERHOOK_IS_AI_UPDATE_DUE,
+    PLAYERHOOK_ON_AI_UPDATE,
+    PLAYERHOOK_ON_CHAT_COMMAND,
+    PLAYERHOOK_ON_RELEASE_TO_CLIENT,
     PLAYERHOOK_IS_MANAGED_BOT,
     PLAYERHOOK_GET_BOT_ROLES,
     PLAYERHOOK_ON_ADDON_MESSAGE,
+    PLAYERHOOK_CAN_USE_GROUP_CHAT,
     PLAYERHOOK_END
 };
 
@@ -205,8 +216,19 @@ class PlayerScript : public ScriptObject
         virtual void OnChatWhisper(Player* /*from*/, char const* /*msg*/) {}
         virtual void OnChatGuild(Player* /*from*/, char const* /*msg*/) {}
         virtual void OnTextEmoteHeard(Player* /*from*/, uint32 /*textEmote*/, ObjectGuid /*target*/) {}
+        virtual bool IsAIControlled(Player const* /*player*/) { return false; }
+        virtual bool HasAIFollowers(Player const* /*player*/) { return false; }
+        virtual bool GetAllowedRoles(Player const* /*player*/, uint8& /*roles*/) { return false; }
+        virtual void SetForcedRole(Player* /*player*/, uint8 /*role*/) {}
+        virtual bool IsMachineDriven(Player const* /*player*/) { return false; }
+        virtual bool IsUpdateCritical(Player const* /*player*/) { return false; }
+        virtual bool IsAIUpdateDue(Player* /*player*/, uint32 /*diff*/) { return false; }
+        virtual void OnAIUpdate(Player* /*player*/, uint32 /*diff*/, bool /*minimal*/) {}
+        virtual void OnChatCommand(Player* /*master*/, uint32 /*type*/, std::string const& /*msg*/, uint32 /*lang*/, std::string const& /*to*/) {}
+        virtual void OnReleaseToClient(Player* /*player*/) {}
         virtual bool IsManagedBot(Player* /*who*/) { return false; }
         virtual uint8 GetBotRoles(Player* /*who*/) { return 0; }
+        virtual bool CanUseGroupChat(Player* /*player*/, uint32 /*type*/, uint32 /*lang*/, std::string& /*msg*/) { return true; }
 
         // A module may take an addon message as a command of its own. Return true
         // when the text was consumed; the core then does not relay it.
@@ -608,6 +630,7 @@ enum ServerHook
     SERVERHOOK_ON_SOCKET_CLOSE,
     SERVERHOOK_CAN_PACKET_SEND,
     SERVERHOOK_CAN_PACKET_RECEIVE,
+    SERVERHOOK_ON_PACKET_HANDLED,
     SERVERHOOK_END
 };
 
@@ -628,6 +651,7 @@ class ServerScript : public ScriptObject
         virtual void OnSocketClose(WorldSocket* /*socket*/) {}
         virtual bool CanPacketSend(WorldSession* /*session*/, WorldPacket const& /*packet*/) { return true; }
         virtual bool CanPacketReceive(WorldSession* /*session*/, WorldPacket const& /*packet*/) { return true; }
+        virtual void OnPacketHandled(WorldSession* /*session*/, WorldPacket const& /*packet*/) {}
 };
 
 class MiscScript : public ScriptObject
@@ -728,6 +752,9 @@ class GroupScript : public ScriptObject
         virtual void OnChangeLeader(Group* /*group*/, ObjectGuid /*newLeaderGuid*/, ObjectGuid /*oldLeaderGuid*/) {}
         virtual void OnDisband(Group* /*group*/) {}
         virtual void OnLootRollStarted(Group* /*group*/, ObjectGuid const& /*target*/, uint32 /*itemSlot*/, uint32 /*itemId*/) {}
+        virtual void OnCreate(Group* /*group*/, ObjectGuid /*leaderGuid*/, uint8 /*groupType*/) {}
+        virtual void OnInviteMember(Group* /*group*/, ObjectGuid /*guid*/) {}
+        virtual bool CanMemberAccept(Group* /*group*/, Player* /*player*/) { return true; }
 };
 
 class GuildScript : public ScriptObject
@@ -740,6 +767,8 @@ class GuildScript : public ScriptObject
         virtual void OnCreate(Guild* /*guild*/, Player* /*leader*/, std::string const& /*name*/) {}
         virtual void OnDisband(Guild* /*guild*/) {}
         virtual void OnGuildInvite(Player* /*invited*/) {}
+        virtual void OnMotdChanged(Guild* /*guild*/, std::string const& /*newMotd*/) {}
+        virtual void OnInfoChanged(Guild* /*guild*/, std::string const& /*newInfo*/) {}
 };
 
 class MailScript : public ScriptObject

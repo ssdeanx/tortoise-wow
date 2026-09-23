@@ -2165,3 +2165,8 @@ void BattleGroundMgr::RemoveBattleGround(uint32 instanceID, BattleGroundTypeId b
     std::lock_guard<std::mutex> guard(m_BattleGroundsMutex);
     m_BattleGrounds[bgTypeId].erase(instanceID);
 }
+
+BattleGroundBracketId BattleGroundMgr::GetBattleGroundBracketIdFromLevel(BattleGroundTypeId bgTypeId, uint32 level)
+{
+    return Player::GetBattleGroundBracketIdFromLevel(bgTypeId, level);
+}

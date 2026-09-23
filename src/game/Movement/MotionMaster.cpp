@@ -993,3 +993,10 @@ void Creature::PauseOutOfCombatMovement(uint32 pauseTime)
         }
     }
 }
+
+void MotionMaster::PauseWaypoints(uint32 pauseTimer)
+{
+    if (m_owner && m_owner->GetTypeId() == TYPEID_UNIT)
+        static_cast<Creature*>(m_owner)->PauseOutOfCombatMovement(pauseTimer);
+}
+

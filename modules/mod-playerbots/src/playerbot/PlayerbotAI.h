@@ -1,6 +1,7 @@
 #pragma once
 #include "PlayerbotMgr.h"
 #include <atomic>
+#include <memory>
 #include "PlayerbotAIBase.h"
 #include "strategy/AiObjectContext.h"
 #include "strategy/ReactionEngine.h"
@@ -385,6 +386,7 @@ public:
     void HandleCommand(uint32 type, const std::string& text, Player& fromPlayer, const uint32 lang = LANG_UNIVERSAL);
     void QueueChatResponse(uint32 msgType, ObjectGuid guid1, ObjectGuid guid2, std::string message, std::string chanName, std::string name, bool noDelay = false);
 	void HandleBotOutgoingPacket(const WorldPacket& packet);
+    void ProcessIncomingChatPacket(const WorldPacket& packet);
     uint32 GetTransitionGeneration() const { return transitionGeneration.load(std::memory_order_acquire); }
     bool IsTransitionContextCurrent(uint32 generation, uint32 mapId, uint32 instanceId) const;
     bool HasPendingTransition() const { return requestedTransition.load(std::memory_order_acquire) || transitionInProgress.load(std::memory_order_acquire); }
@@ -657,29 +659,52 @@ public:
     // teleport forever (every a bot / cross-continent bot). See     // 2026-05-07 root-cause investigation.
     bool IsRealPlayer()
     {
+        if (!bot || !bot->GetSession()) return false;
         std::string const& addr = bot->GetSession()->GetRemoteAddress();
         return addr != "disconnected/bot" && addr != "<BOT>";
     }
     bool IsRealPlayer(Unit* unit)
     {
-        if (!unit->IsPlayer()) return false;
-        std::string const& addr = ((Player*)unit)->GetSession()->GetRemoteAddress();
+        if (!unit || !unit->IsPlayer()) return false;
+        Player* p = (Player*)unit;
+        if (!p->GetSession()) return false;
+        std::string const& addr = p->GetSession()->GetRemoteAddress();
         return addr != "disconnected/bot" && addr != "<BOT>";
     }
-    bool IsSelfMaster() { return master ? (master == bot) : false; }
+    bool IsSelfMaster() { return master && bot ? (master == bot) : false; }
     //Bot has a master that is a player.
-    bool HasRealPlayerMaster() { return master && (!GetBotAI(master) || GetBotAI(master)->IsRealPlayer()); } 
+    bool HasRealPlayerMaster() 
+    { 
+        if (!master) return false;
+        PlayerbotAI* masterAI = GetBotAI(master);
+        if (!masterAI)
+        {
+            if (!master->GetSession()) return false;
+            std::string const& addr = master->GetSession()->GetRemoteAddress();
+            return addr != "disconnected/bot" && addr != "<BOT>";
+        }
+        return masterAI->IsRealPlayer();
+    } 
     //Bot has a master that is actively playing.
-    bool HasActivePlayerMaster() const { return master && !GetBotAI(master); }
+    bool HasActivePlayerMaster() const { return master && master->GetSession() && !GetBotAI(master); }
     //Checks if the bot is summoned as alt of a player
-    bool IsAlt() { return HasRealPlayerMaster() && !sRandomPlayerbotMgr.IsRandomBot(bot); }
+    bool IsAlt() { return HasRealPlayerMaster() && bot && !sRandomPlayerbotMgr.IsRandomBot(bot); }
     //Get the group leader or the master of the bot.
-    Player* GetGroupMaster() { return bot->InBattleGround() ? master : bot->GetGroup() ? (sObjectMgr.GetPlayer(bot->GetGroup()->GetLeaderGuid()) ? sObjectMgr.GetPlayer(bot->GetGroup()->GetLeaderGuid()) : master) : master; }
+    Player* GetGroupMaster() { return (!bot || bot->InBattleGround()) ? master : bot->GetGroup() ? (sObjectMgr.GetPlayer(bot->GetGroup()->GetLeaderGuid()) ? sObjectMgr.GetPlayer(bot->GetGroup()->GetLeaderGuid()) : master) : master; }
 
-    bool IsGroupLeader() { return bot->GetGroup() && bot->GetGroup()->GetLeaderGuid() == bot->GetObjectGuid(); }
+    bool IsGroupLeader() { return bot && bot->GetGroup() && bot->GetGroup()->GetLeaderGuid() == bot->GetObjectGuid(); }
 
     //Check if player is safe to use.    
-    static bool IsSafe(Player* player, WorldObject* obj) {return obj && obj->GetMapId() == player->GetMapId() && obj->GetInstanceId() == player->GetInstanceId() && (!obj->IsPlayer() || !((Player*)obj)->IsBeingTeleported() || !((Player*)obj)->GetSession()->GetPlayer()); }
+    static bool IsSafe(Player* player, WorldObject* obj) 
+    {
+        if (!player || !obj) return false;
+        if (obj->GetMapId() != player->GetMapId() || obj->GetInstanceId() != player->GetInstanceId()) return false;
+        if (!obj->IsPlayer()) return true;
+        Player* pObj = (Player*)obj;
+        if (pObj->IsBeingTeleported()) return false;
+        if (!pObj->GetSession() || !pObj->GetSession()->GetPlayer()) return false;
+        return true;
+    }
     bool IsSafe(WorldObject* obj) { return IsSafe(bot, obj); }
     bool IsSafe(Player* player) { return IsSafe(bot, player); }
 
@@ -837,6 +862,8 @@ protected:
     std::queue<ChatCommandHolder> chatCommands;
     std::queue<ChatQueuedReply> chatReplies;
     std::mutex chatRepliesMutex;
+    std::queue<std::unique_ptr<WorldPacket>> incomingChatPackets;
+    std::mutex incomingChatMutex;
     std::mutex updateExecutionMutex;
     // Map/instance transitions invalidate movement and AI work calculated in
     // the previous world context. These atomics are also read by Arch2 worker

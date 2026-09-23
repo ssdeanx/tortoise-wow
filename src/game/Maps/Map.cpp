@@ -913,10 +913,16 @@ void Map::UpdateDiscoveredCells(uint32 now, uint32 diff)
     selection.Finish();
     TurtleDiagnostics::Record(TurtleDiagnostics::CellCount, m_discoveryCells.size());
 
-    size_t const configuredChunk = sWorld.getConfig(CONFIG_UINT32_MAP_CELL_CHUNK_SIZE);
-    size_t const maxChunks = sWorld.getConfig(CONFIG_UINT32_MAP_CELL_MAX_CHUNKS);
-    size_t const chunkSize = std::max(configuredChunk, (m_discoveryCells.size() + maxChunks - 1) / maxChunks);
-    size_t const chunks = (m_discoveryCells.size() + chunkSize - 1) / chunkSize;
+    size_t chunks = 0;
+    size_t chunkSize = 1;
+    if (!m_discoveryCells.empty())
+    {
+        size_t const configuredChunk = sWorld.getConfig(CONFIG_UINT32_MAP_CELL_CHUNK_SIZE);
+        size_t const maxChunks = std::max<size_t>(1, sWorld.getConfig(CONFIG_UINT32_MAP_CELL_MAX_CHUNKS));
+        chunkSize = std::max(configuredChunk, (m_discoveryCells.size() + maxChunks - 1) / maxChunks);
+        chunkSize = std::max<size_t>(1, chunkSize);
+        chunks = (m_discoveryCells.size() + chunkSize - 1) / chunkSize;
+    }
     std::vector<std::vector<ObjectGuid>> found(chunks);
     auto collect = [this, &found, chunkSize](size_t chunk)
     {
@@ -1142,7 +1148,7 @@ void Map::RefreshRealPlayerActivity()
     uint32 multiplier = 1;
     if (sWorld.getConfig(CONFIG_UINT32_MACHINE_DRIVEN_ADAPTIVE_STRIDE))
     {
-        uint32 const target = sWorld.getConfig(CONFIG_UINT32_MACHINE_DRIVEN_TARGET_DIFF);
+        uint32 const target = std::max<uint32>(1, sWorld.getConfig(CONFIG_UINT32_MACHINE_DRIVEN_TARGET_DIFF));
         uint32 const maxMultiplier = sWorld.getConfig(CONFIG_UINT32_MACHINE_DRIVEN_MAX_STRIDE_MULTIPLIER);
         uint32 const average = sWorld.GetAverageDiff();
         multiplier = std::min<uint32>(maxMultiplier,

@@ -1286,6 +1286,22 @@ void PlayerbotAI::UpdateAIInternal(uint32 elapsed, bool minimal)
 
     ExternalEventHelper helper(aiObjectContext);
 
+    // incoming chat packets
+    std::vector<std::unique_ptr<WorldPacket>> chatPacketsToProcess;
+    {
+        std::scoped_lock lock(incomingChatMutex);
+        while (!incomingChatPackets.empty())
+        {
+            chatPacketsToProcess.push_back(std::move(incomingChatPackets.front()));
+            incomingChatPackets.pop();
+        }
+    }
+    for (const auto& packetPtr : chatPacketsToProcess)
+    {
+        if (packetPtr)
+            ProcessIncomingChatPacket(*packetPtr);
+    }
+
     // chat replies
     std::list<ChatQueuedReply> delayedResponses;
     {
@@ -1701,8 +1717,8 @@ void PlayerbotAI::HandleCommand(uint32 type, const std::string& text, Player& fr
 
 void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 {
-    //if (packet.empty())
-    //    return;
+    if (!bot || !aiObjectContext)
+        return;
 
 	switch (packet.GetOpcode())
 	{
@@ -1750,273 +1766,12 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
     }
     case SMSG_MESSAGECHAT: // do not react to self or if not ready to reply
     {
-        if (!AllowActivity())
+        if (!bot || !bot->IsInWorld())
             return;
 
-        WorldPacket p(packet);
-#ifndef MANGOSBOT_ZERO
-        if (!p.empty() && (p.GetOpcode() == SMSG_MESSAGECHAT || p.GetOpcode() == SMSG_GM_MESSAGECHAT))
-#else
-        if (!p.empty() && p.GetOpcode() == SMSG_MESSAGECHAT)
-#endif
-        {
-            p.rpos(0);
-            uint8 msgtype, chatTag;
-            uint32 lang, textLen, unused;
-            ObjectGuid guid1, guid2;
-            std::string name, chanName, message;
-            p >> msgtype >> lang;
-
-            // filter msg type
-            switch (msgtype)
-            {
-            case CHAT_MSG_CHANNEL:
-            case CHAT_MSG_SAY:
-            case CHAT_MSG_PARTY:
-#ifdef MANGOSBOT_TWO
-            case CHAT_MSG_PARTY_LEADER:
-#endif
-            case CHAT_MSG_YELL:
-            case CHAT_MSG_WHISPER:
-            case CHAT_MSG_GUILD:
-                break;
-            default:
-                return;
-                break;
-            }
-
-#ifdef MANGOSBOT_ZERO
-            switch (msgtype)
-            {
-            case CHAT_MSG_SAY:
-            case CHAT_MSG_PARTY:
-            case CHAT_MSG_YELL:
-                p >> guid1 >> guid2;
-                break;
-            case CHAT_MSG_CHANNEL:
-                p >> chanName >> unused >> guid1;
-                break;
-            default:
-                p >> guid1;
-                break;
-            }
-
-            if (guid1.IsEmpty() || p.size() > 0x1000)
-                return;
-
-            p >> textLen >> message >> chatTag;
-#endif
-#ifdef MANGOSBOT_ONE
-            p >> guid1 >> unused;
-            if (guid1.IsEmpty() || p.size() > 0x1000)
-                return;
-
-            switch (msgtype)
-            {
-            case CHAT_MSG_CHANNEL:
-                p >> chanName;
-                [[fallthrough]];
-            case CHAT_MSG_SAY:
-            case CHAT_MSG_PARTY:
-            case CHAT_MSG_YELL:
-            case CHAT_MSG_WHISPER:
-            case CHAT_MSG_GUILD:
-                p >> guid2;
-                p >> textLen >> message >> chatTag;
-                break;
-            default:
-                break;
-            }
-#endif
-#ifdef MANGOSBOT_TWO
-            p >> guid1 >> unused;
-            if (guid1.IsEmpty() || p.size() > 0x1000)
-                return;
-
-            if (p.GetOpcode() == SMSG_GM_MESSAGECHAT)
-            {
-                p >> textLen;
-                p >> name;
-            }
-
-            switch (msgtype)
-            {
-            case CHAT_MSG_CHANNEL:
-                p >> chanName;
-                [[fallthrough]];
-            case CHAT_MSG_SAY:
-            case CHAT_MSG_PARTY:
-            case CHAT_MSG_PARTY_LEADER:
-            case CHAT_MSG_YELL:
-            case CHAT_MSG_WHISPER:
-            case CHAT_MSG_GUILD:
-                p >> guid2;
-                p >> textLen >> message >> chatTag;
-                break;
-            default:
-                break;
-            }
-#endif
-
-            bool isAiChat = sPlayerbotAIConfig.llmEnabled > 0 && (HasStrategy("ai chat", BotState::BOT_STATE_NON_COMBAT) || sPlayerbotAIConfig.llmEnabled == 3);
-
-            if (m_recordIncommingMessages)
-            {
-                std::string recievedMessage = message;
-
-                std::string senderName;
-                if(!sObjectMgr.GetPlayerNameByGUID(guid1, senderName))
-                    senderName = "unknown";
-
-                std::string recievedChatType;
-
-                //Add chat type prefix before recieved message. Ie. for Guilg "guild:".
-                switch (msgtype)
-                {
-                    case CHAT_MSG_SAY:
-                        recievedChatType = "says";
-                        break;
-                    case CHAT_MSG_YELL:
-                        recievedChatType = "yells";
-                        break;
-                    case CHAT_MSG_PARTY:
-                        recievedChatType = "party";
-                        break;
-#ifdef MANGOSBOT_TWO
-                    case CHAT_MSG_PARTY_LEADER:
-                        recievedChatType = "party leader";
-                        break;
-#endif
-                    case CHAT_MSG_GUILD:
-                        recievedChatType = "guild";
-                        break;
-                    case CHAT_MSG_OFFICER:
-                        recievedChatType = "officer";
-                        break;
-                    case CHAT_MSG_WHISPER:
-                        //Get player name for whisper and add "<whispe:" before message.
-                        recievedChatType = "whispers";
-                        break;
-                    case CHAT_MSG_CHANNEL: //Channel needs channel name to be added as prefix, so we add "c:" before channel name.
-                        recievedChatType = chanName;
-                        break;
-                    default:
-                        break;
-                }
-
-                recievedMessage = "[" + senderName + "] " + recievedChatType + ": " + recievedMessage;
-
-                m_recordedMessages.push_back(recievedMessage);
-            }
-
-            if (isAiChat && (lang == LANG_ADDON || message.find("d:") == 0))
-                return;
-
-            if (guid1 != bot->GetObjectGuid()) // do not reply to self
-            {
-                // try to always reply to real player
-                time_t lastChat = GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Get();
-                bool isPaused = time(0) < lastChat;
-                bool shouldReply = false;
-                bool isFromFreeBot = false;
-                sObjectMgr.GetPlayerNameByGUID(guid1, name);
-                uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid1);
-                isFromFreeBot = sPlayerbotAIConfig.IsInRandomAccountList(accountId);
-                if (!isFromFreeBot)
-                {
-
-                    isFromFreeBot = sPlayerbotAIConfig.IsFreeAltBot(guid1);
-
-                    if (isFromFreeBot)
-                    {
-                        Player* player = sObjectMgr.GetPlayer(guid1);
-                        if (player && IsRealPlayer(player))
-                            isFromFreeBot = false;
-                    }
-                }
-
-                bool isMentioned = message.find(bot->GetName()) != std::string::npos;
-                
-
-                ChatChannelSource chatChannelSource = GetChatChannelSource(bot, msgtype, chanName);
-
-                if (!isAiChat || isFromFreeBot)
-                {
-                    // random bot speaks, chat CD
-                    if ((isFromFreeBot || isAiChat) && isPaused)
-                        return;
-
-                    // BG: react only if mentioned or if not channel and real player spoke
-                    if (bot->InBattleGround() && !(isMentioned || (msgtype != CHAT_MSG_CHANNEL && !isFromFreeBot)))
-                        return;
-
-                    if (HasRealPlayerMaster() && guid1 != GetMaster()->GetObjectGuid())
-                        return;
-
-                    if (lang == LANG_ADDON)
-                        return;
-
-                    if (boost::algorithm::istarts_with(message, sPlayerbotAIConfig.toxicLinksPrefix)
-                        && (GetChatHelper()->ExtractAllItemIds(message).size() > 0 || GetChatHelper()->ExtractAllQuestIds(message).size() > 0)
-                        && sPlayerbotAIConfig.toxicLinksRepliesChance)
-                    {
-                        if (urand(0, 50) > 0 || urand(1, 100) > sPlayerbotAIConfig.toxicLinksRepliesChance)
-                        {
-                            return;
-                        }
-                    }
-                    else if ((GetChatHelper()->ExtractAllItemIds(message).count(19019) && sPlayerbotAIConfig.thunderfuryRepliesChance))
-                    {
-                        if (urand(0, 60) > 0 || urand(1, 100) > sPlayerbotAIConfig.thunderfuryRepliesChance)
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        if (isFromFreeBot && urand(0, 20))
-                            return;
-
-                        if (msgtype == CHAT_MSG_GUILD && (!sPlayerbotAIConfig.guildRepliesRate || urand(1, 100) >= sPlayerbotAIConfig.guildRepliesRate))
-                            return;
-
-                        if (!isFromFreeBot)
-                        {
-                            if (!isMentioned && urand(0, 4))
-                                return;
-                        }
-                        else
-                        {
-                            if (urand(0, 20 + 10 * isMentioned))
-                                return;
-                        }
-                    }
-                }
-
-                MANGOS_ASSERT(!message.empty());     
-                QueueChatResponse(msgtype, guid1, ObjectGuid(), message, chanName, name, isAiChat);
-                GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Set(time(0) + urand(5, 25));
-
-                return;
-            }
-
-            if (isAiChat)
-            {
-                ChatChannelSource chatChannelSource = GetBotAI(bot)->GetChatChannelSource(bot, msgtype, chanName);
-
-                std::string llmChannel;
-
-                if (!sPlayerbotAIConfig.llmGlobalContext)
-                    llmChannel = ((chatChannelSource == ChatChannelSource::SRC_WHISPER) ? name : std::to_string(chatChannelSource));
-
-                AiObjectContext* context = aiObjectContext;
-                std::string llmContext = AI_VALUE(std::string, "manual string::llmcontext" + llmChannel);
-                llmContext = llmContext + " " + bot->GetName() + ":" + message;
-                PlayerbotLLMInterface::LimitContext(llmContext, llmContext.size());
-                SET_AI_VALUE(std::string, "manual string::llmcontext" + llmChannel, llmContext);
-            }
-        }
-
+        std::scoped_lock lock(incomingChatMutex);
+        if (incomingChatPackets.size() < 64)
+            incomingChatPackets.push(std::make_unique<WorldPacket>(packet));
         return;
     }
     case SMSG_MOVE_KNOCK_BACK: // handle knockbacks
@@ -2134,9 +1889,266 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
 	}
 }
 
+void PlayerbotAI::ProcessIncomingChatPacket(const WorldPacket& packet)
+{
+    if (!bot || !bot->IsInWorld() || !aiObjectContext || !AllowActivity())
+        return;
+
+    WorldPacket p(packet);
+#ifndef MANGOSBOT_ZERO
+    if (!p.empty() && (p.GetOpcode() == SMSG_MESSAGECHAT || p.GetOpcode() == SMSG_GM_MESSAGECHAT))
+#else
+    if (!p.empty() && p.GetOpcode() == SMSG_MESSAGECHAT)
+#endif
+    {
+        p.rpos(0);
+        uint8 msgtype, chatTag;
+        uint32 lang, textLen, unused;
+        ObjectGuid guid1, guid2;
+        std::string name, chanName, message;
+        p >> msgtype >> lang;
+
+        // filter msg type
+        switch (msgtype)
+        {
+        case CHAT_MSG_CHANNEL:
+        case CHAT_MSG_SAY:
+        case CHAT_MSG_PARTY:
+#ifdef MANGOSBOT_TWO
+        case CHAT_MSG_PARTY_LEADER:
+#endif
+        case CHAT_MSG_YELL:
+        case CHAT_MSG_WHISPER:
+        case CHAT_MSG_GUILD:
+            break;
+        default:
+            return;
+            break;
+        }
+
+#ifdef MANGOSBOT_ZERO
+        switch (msgtype)
+        {
+        case CHAT_MSG_SAY:
+        case CHAT_MSG_PARTY:
+        case CHAT_MSG_YELL:
+            p >> guid1 >> guid2;
+            break;
+        case CHAT_MSG_CHANNEL:
+            p >> chanName >> unused >> guid1;
+            break;
+        default:
+            p >> guid1;
+            break;
+        }
+
+        if (guid1.IsEmpty() || p.size() > 0x1000)
+            return;
+
+        p >> textLen >> message >> chatTag;
+#endif
+#ifdef MANGOSBOT_ONE
+        p >> guid1 >> unused;
+        if (guid1.IsEmpty() || p.size() > 0x1000)
+            return;
+
+        switch (msgtype)
+        {
+        case CHAT_MSG_CHANNEL:
+            p >> chanName;
+            [[fallthrough]];
+        case CHAT_MSG_SAY:
+        case CHAT_MSG_PARTY:
+        case CHAT_MSG_YELL:
+        case CHAT_MSG_WHISPER:
+        case CHAT_MSG_GUILD:
+            p >> guid2;
+            p >> textLen >> message >> chatTag;
+            break;
+        default:
+            break;
+        }
+#endif
+#ifdef MANGOSBOT_TWO
+        p >> guid1 >> unused;
+        if (guid1.IsEmpty() || p.size() > 0x1000)
+            return;
+
+        if (p.GetOpcode() == SMSG_GM_MESSAGECHAT)
+        {
+            p >> textLen;
+            p >> name;
+        }
+
+        switch (msgtype)
+        {
+        case CHAT_MSG_CHANNEL:
+            p >> chanName;
+            [[fallthrough]];
+        case CHAT_MSG_SAY:
+        case CHAT_MSG_PARTY:
+        case CHAT_MSG_PARTY_LEADER:
+        case CHAT_MSG_YELL:
+        case CHAT_MSG_WHISPER:
+        case CHAT_MSG_GUILD:
+            p >> guid2;
+            p >> textLen >> message >> chatTag;
+            break;
+        default:
+            break;
+        }
+#endif
+
+        if (m_recordIncommingMessages)
+        {
+            std::string recievedMessage = message;
+
+            std::string senderName;
+            if(!sObjectMgr.GetPlayerNameByGUID(guid1, senderName))
+                senderName = "unknown";
+
+            std::string recievedChatType;
+
+            //Add chat type prefix before recieved message. Ie. for Guilg "guild:".
+            switch (msgtype)
+            {
+                case CHAT_MSG_SAY:
+                    recievedChatType = "says";
+                    break;
+                case CHAT_MSG_YELL:
+                    recievedChatType = "yells";
+                    break;
+                case CHAT_MSG_PARTY:
+                    recievedChatType = "party";
+                    break;
+#ifdef MANGOSBOT_TWO
+                case CHAT_MSG_PARTY_LEADER:
+                    recievedChatType = "party leader";
+                    break;
+#endif
+                case CHAT_MSG_GUILD:
+                    recievedChatType = "guild";
+                    break;
+                case CHAT_MSG_OFFICER:
+                    recievedChatType = "officer";
+                    break;
+                case CHAT_MSG_WHISPER:
+                    //Get player name for whisper and add "<whispe:" before message.
+                    recievedChatType = "whispers";
+                    break;
+                case CHAT_MSG_CHANNEL: //Channel needs channel name to be added as prefix, so we add "c:" before channel name.
+                    recievedChatType = chanName;
+                    break;
+                default:
+                    break;
+            }
+
+            recievedMessage = "[" + senderName + "] " + recievedChatType + ": " + recievedMessage;
+
+            m_recordedMessages.push_back(recievedMessage);
+        }
+
+        if (guid1 != bot->GetObjectGuid()) // do not reply to self
+        {
+            // try to always reply to real player
+            time_t lastChat = 0;
+            if (auto* ctx = GetAiObjectContext())
+            {
+                if (auto* lastChatVal = ctx->GetValue<time_t>("last said", "chat"))
+                    lastChat = lastChatVal->Get();
+            }
+            bool isPaused = time(0) < lastChat;
+            bool isFromFreeBot = false;
+            sObjectMgr.GetPlayerNameByGUID(guid1, name);
+            uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid1);
+            isFromFreeBot = sPlayerbotAIConfig.IsInRandomAccountList(accountId);
+            if (!isFromFreeBot)
+            {
+                isFromFreeBot = sPlayerbotAIConfig.IsFreeAltBot(guid1);
+
+                if (isFromFreeBot)
+                {
+                    Player* player = sObjectMgr.GetPlayer(guid1);
+                    if (player && IsRealPlayer(player))
+                        isFromFreeBot = false;
+                }
+            }
+
+            bool isMentioned = message.find(bot->GetName()) != std::string::npos;
+
+            // random bot speaks, chat CD
+            if (isFromFreeBot && isPaused)
+                return;
+
+            // BG: react only if mentioned or if not channel and real player spoke
+            if (bot->InBattleGround() && !(isMentioned || (msgtype != CHAT_MSG_CHANNEL && !isFromFreeBot)))
+                return;
+
+            if (HasRealPlayerMaster() && guid1 != GetMaster()->GetObjectGuid())
+                return;
+
+            if (lang == LANG_ADDON)
+                return;
+
+            if (boost::algorithm::istarts_with(message, sPlayerbotAIConfig.toxicLinksPrefix)
+                && (GetChatHelper()->ExtractAllItemIds(message).size() > 0 || GetChatHelper()->ExtractAllQuestIds(message).size() > 0)
+                && sPlayerbotAIConfig.toxicLinksRepliesChance)
+            {
+                if (urand(0, 50) > 0 || urand(1, 100) > sPlayerbotAIConfig.toxicLinksRepliesChance)
+                {
+                    return;
+                }
+            }
+            else if ((GetChatHelper()->ExtractAllItemIds(message).count(19019) && sPlayerbotAIConfig.thunderfuryRepliesChance))
+            {
+                if (urand(0, 60) > 0 || urand(1, 100) > sPlayerbotAIConfig.thunderfuryRepliesChance)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                if (isFromFreeBot && urand(0, 20))
+                    return;
+
+                if (msgtype == CHAT_MSG_GUILD && (!sPlayerbotAIConfig.guildRepliesRate || urand(1, 100) >= sPlayerbotAIConfig.guildRepliesRate))
+                    return;
+
+                if (!isFromFreeBot)
+                {
+                    if (!isMentioned && urand(0, 4))
+                        return;
+                }
+                else
+                {
+                    if (urand(0, 20 + 10 * isMentioned))
+                        return;
+                }
+            }
+
+            MANGOS_ASSERT(!message.empty());
+            QueueChatResponse(msgtype, guid1, ObjectGuid(), message, chanName, name, false);
+            if (auto* ctx = GetAiObjectContext())
+            {
+                if (auto* lastChatVal = ctx->GetValue<time_t>("last said", "chat"))
+                    lastChatVal->Set(time(0) + urand(5, 25));
+            }
+
+            return;
+        }
+    }
+}
+
 void PlayerbotAI::SpellInterrupted(uint32 spellid)
 {
-    LastSpellCast& lastSpell = aiObjectContext->GetValue<LastSpellCast&>("last spell cast")->Get();
+    if (!aiObjectContext)
+        return;
+
+    auto* lastSpellVal = aiObjectContext->GetValue<LastSpellCast&>("last spell cast");
+    if (!lastSpellVal)
+        return;
+
+    LastSpellCast& lastSpell = lastSpellVal->Get();
     if (!spellid || lastSpell.id != spellid)
         return;
 
@@ -2580,9 +2592,15 @@ void PlayerbotAI::DoNextAction(bool min)
                 // group-target chooser can copy the leader's destination.
                 if (group && !group->IsLeader(bot->GetObjectGuid()))
                 {
-                    TravelTarget* travelTarget = GetAiObjectContext()->GetValue<TravelTarget*>("travel target")->Get();
-                    if (travelTarget && !travelTarget->IsForced() && !travelTarget->IsGroupCopy())
-                        sTravelMgr.SetNullTravelTarget(travelTarget);
+                    if (auto* ctx = GetAiObjectContext())
+                    {
+                        if (auto* travelTargetVal = ctx->GetValue<TravelTarget*>("travel target"))
+                        {
+                            TravelTarget* travelTarget = travelTargetVal->Get();
+                            if (travelTarget && !travelTarget->IsForced() && !travelTarget->IsGroupCopy())
+                                sTravelMgr.SetNullTravelTarget(travelTarget);
+                        }
+                    }
                 }
             }
 

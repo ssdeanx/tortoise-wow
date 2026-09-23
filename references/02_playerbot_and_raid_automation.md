@@ -3,13 +3,13 @@
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework (ike3 / r-o-sh) + mod-dungeon-clear
 > **Source Verification**: `modules/mod-playerbots/src/playerbot/`, `ChatTriggerContext.h`, `ChatActionContext.h`, `Formations.cpp`, `Stances.cpp`, `ChatFilter.cpp`, `modules/mod-dungeon-clear/`
 > **Security Coverage**: Accessible to all players (`SEC_PLAYER` / Level 0) with elevated GM commands where noted
-> **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📜 Volume 01: GM Handbook](./01_game_master_handbook.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [⚔️ Volume 04: BiS Gear & Specs](./04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md) • [🤖 RandomBot Guide (rndbot_commands.md)](../rndbot_commands.md)
+> **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📜 Volume 01: GM Handbook](./01_game_master_handbook.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [⚔️ Volume 04: BiS Gear & Specs](./04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md) • [🏰 Volume 06: Raid Operations](./06_automated_raid_and_dungeon_operations.md) • [🛡️ Volume 07: Guilds](./07_guilds_and_guild_operations.md) • [🌍 Volume 08: World & Strategies](./08_open_world_control_and_strategies.md)
 
 ---
 
 ## 📑 Table of Contents
 
-1. [Unified 5-Volume Master Reference Architecture](#unified-5-volume-master-reference-architecture)
+1. [Unified 8-Volume Master Reference Architecture](#unified-8-volume-master-reference-architecture)
 2. [Master Macro UI Cheat Sheet (Copy-Paste Ready)](#1-master-macro-ui-cheat-sheet-copy-paste-ready)
    - [Target Tokens & Scope Syntax](#target-tokens--scope-syntax)
    - [Category A: Group Assembly, Gearing & Preparation Macros](#category-a-group-assembly-gearing--preparation-macros)
@@ -23,11 +23,11 @@
 4. [RandomBot Population & Realm AI Manager (.rndbot)](#3-randombot-population--realm-ai-manager-rndbot)
    - [Realm Telemetry & Population Health](#realm-telemetry--population-health)
    - [World Bot Dispatch & RPG Simulation](#world-bot-dispatch--rpg-simulation)
-   - [Memory, Tick Rate & PID Controller Tuning](#memory-tick-rate--pid-controller-tuning)
 5. [In-Game Whispers & Single-Letter Shortcuts Dictionary](#4-in-game-whispers--single-letter-shortcuts-dictionary)
    - [Fast Single-Letter Shortcuts](#fast-single-letter-shortcuts)
    - [Complete Whisper Command Directory](#complete-whisper-command-directory)
-   - [Management, AI State & Custom Macros](#management-ai-state--custom-macros)
+   - [Bot Cheats Subsystem](#bot-cheats-subsystem-w-bot-cheat)
+   - [Bot Professions, Skills & Crafting](#bot-professions-skills--crafting)
 6. [Chat Filter Syntax & Targeting Token Engine (@filter)](#5-chat-filter-syntax--targeting-token-engine-filter)
    - [Role, Combat Type & Specialization Filters](#role-combat-type--specialization-filters)
    - [Raid Target Icon (RTI) Filters](#raid-target-icon-rti-filters)
@@ -56,15 +56,18 @@
 
 ---
 
-## Unified 5-Volume Master Reference Architecture
+## Unified 8-Volume Master Reference Architecture
 
 | Volume | Handbook Title | Domain & Core Coverage | Direct Link |
 | :---: | :--- | :--- | :---: |
-| **01** | **[Game Master & World Administration](./01_game_master_handbook.md)** | **100% of GM commands**: Self progression/cheats (`.god`, `.fly`, `.levelup 60`), accounts, security (0–6), spawning (`.npc`, `.gobject`), economy, moderation, 106+ `.reload` tables & diagnostics. | [Open Volume 01](./01_game_master_handbook.md) |
+| **01** | **[Game Master & World Administration](./01_game_master_handbook.md)** | **100% of GM commands**: Self progression/cheats (`.god`, `.levelup 60`), accounts, security (0–4), spawning (`.npc`, `.gobject`), economy, moderation, 106+ `.reload` tables & diagnostics. | [Open Volume 01](./01_game_master_handbook.md) |
 | **02** | **Playerbot & Raid Automation** | **Complete Bot Control Center**: `.bot` & `.rndbot` suites, single-letter whisper shortcuts (`c`, `u`, `e`, `t`, `s`, `r`), chat filters (`@tank`, `@skull`), strategy tokens (`co`/`nc`), `.dc` autonomous dungeon clear solver & raid macros. | **Current File** |
 | **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens**: Kalimdor, Eastern Kingdoms, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements. | [Open Volume 03](./03_turtle_world_and_teleports.md) |
 | **04** | **[Class Specs & Endgame Gear Directory](./04_class_specs_and_endgame_gear.md)** | **All 9 Classes**: 1-Click BiS gear loadout macros, complete Tier 1/2/3 set IDs, weapons, trinkets, enchants & verified 1.18.1 talent builds across 30 distinct specializations. | [Open Volume 04](./04_class_specs_and_endgame_gear.md) |
 | **05** | **[Eluna Scripting & Core Development Engine](./05_developer_eluna_and_engine.md)** | **Eluna Lua API**: Live reloads (`.reload eluna`), Event 42 Custom Command dispatch, Turtle-WoW `SpellInfo` compatibility layer, and production server hook mechanics. | [Open Volume 05](./05_developer_eluna_and_engine.md) |
+| **06** | **[Automated Raid & Dungeon Operations](./06_automated_raid_and_dungeon_operations.md)** | **1-Click .raid ready pipeline**, instant raid attunements, master keyring spawner, autonomous `.dc` tank autopilot, and tactical macros. | [Open Volume 06](./06_automated_raid_and_dungeon_operations.md) |
+| **07** | **[Guilds & Guild Operations](./07_guilds_and_guild_operations.md)** | **Complete Guild System**: `.bot <guild>` batch operations (`gear guild best`, `prep guild epic`, `summon guild`), charter signing, `/w <bot> guild` invites/promotions/demotions/kicks/transfers, guild bank (`gb`), and 25-guild realm simulation. | [Open Volume 07](./07_guilds_and_guild_operations.md) |
+| **08** | **[Open World Bot Control & Strategies](./08_open_world_control_and_strategies.md)** | **Autonomous Open World Operations**: `.rndbot grind`, `.rndbot rpg`, `.rndbot teleport/revive/upgrade`, dynamic realm load balancing (diff/pid/clean), bot persistence (`.bot always`), complete strategy token encyclopedia (co/nc/dead/react), and full real-time feedback inspection suite. | [Open Volume 08](./08_open_world_control_and_strategies.md) |
 
 ---
 
@@ -81,6 +84,27 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 - **`/p @<rti>`**: Raid Target Icon Filter. Directs commands to marks (e.g. `/p @skull attack`).
 
 ---
+
+## Buff Spell IDs
+
+```lua
+-- Dungeon Buffs
+.additem 22818
+.additem 22817
+.additem 22820
+
+-- World Buffs
+.additem 15366
+.additem 23768
+.additem 23736
+.additem 23767
+.additem 23766
+.additem 23769
+.additem 23738
+.additem 23737
+.additem 23735
+.additem 16609
+```
 
 ### Category A: Group Assembly, Gearing & Preparation Macros
 
@@ -459,8 +483,58 @@ Direct chat communication with party bots via `/w %t <action>` or `/p @all <acti
 | `rtsc` | `RTSCAction` | Real-Time Strategy Control: click-to-move tactical squad mode. | `/w %t rtsc` |
 | `glyph` | `GlyphAction` | Equips Turtle-WoW custom class glyph on bot. | `/w %t glyph 12` |
 | `outfit` | `OutfitAction` | Saves or equips named equipment loadouts (`save`, `load`). | `/w %t outfit save pvp` |
-| `cheat` | `CheatAction` | Toggles bot cheats (infinite mana, taxi cheat, godmode). | `/w %t cheat god` |
+| `cheat` | `CheatAction` | Manages bot engine cheats (`+`, `-`, `~`, `?`). | `/w %t cheat +health,+mana` |
+| `skill` | `TellSkillAction` | Dumps list of all bot learned skills and current ratings. | `/w %t skill` |
+| `craft` | `CraftAction` | Orders bot to craft linked recipe item from inventory materials. | `/w %t craft [Lesser Healing Potion]` |
+| `trainer learn` | `TrainerAction` | Orders bot to purchase all available abilities from targeted trainer. | `/w %t trainer learn` |
 | `give leader` | `GiveLeaderAction` | Transfers group leadership to the bot or master. | `/w %t give leader` |
+
+---
+
+### Bot Cheats Subsystem (`/w <bot> cheat`)
+
+> **Source**: `CheatAction.cpp`, `PlayerbotAIConfig.h`
+> **Security Requirement**: `SEC_GAMEMASTER` (Level 2+) for manual `/w` overrides.
+
+Bots can be granted individual cheat flags using prefix operators:
+
+- **`?`**: Query active and default configuration cheats (`/w %t cheat ?`).
+- **`+<name>`**: Enable cheat flag (`/w %t cheat +health`).
+- **`-<name>`**: Disable cheat flag (`/w %t cheat -health`).
+- **`~<name>`**: Toggle cheat flag (`/w %t cheat ~health`).
+- **Multi-Cheat Chaining**: Combine multiple cheats with commas: `/w %t cheat +health,+mana,+cooldown,+movespeed`
+
+| Cheat Token | Engine Effect on Bot |
+| :--- | :--- |
+| **`health`** | Infinite health; bot cannot be killed. |
+| **`mana`** | Infinite mana pool; bot never runs oom. |
+| **`power`** | Infinite rage, energy, and mana resources. |
+| **`cooldown`** | Bypasses all ability and spell cooldown timers. |
+| **`movespeed`** | Grants accelerated run, walk, and swim speeds. |
+| **`attackspeed`** | Applies massive melee, ranged, and spell haste buffs (Spells `15181`, `15182`, `15183`). |
+| **`gold`** | Free gold for all training, repairs, and vendor purchases. |
+| **`repair`** | Automatically keeps equipped armor at 100% durability without cost. |
+| **`taxi`** | Unlocks all worldwide flight path taxi nodes immediately. |
+| **`item`** | Bypasses consumable reagent requirements (shards, powder, reagents). |
+| **`breath`** | Grants infinite underwater breathing. |
+| **`glyph`** | Bypasses Turtle-WoW class glyph limitations. |
+| **`quest`** | Auto-completes and accepts quest objectives. |
+
+#### In-Game Macro: All Party Bots Ultra God Mode
+
+```lua
+/p @all cheat +health,+mana,+cooldown,+movespeed,+repair
+```
+
+---
+
+### Bot Professions, Skills & Crafting
+
+Bots can gather, learn tradeskills, and craft items on command:
+
+- **Check Bot Skills**: `/w %t skill` — Whispers back all learned weapon, defense, and profession skill ratings.
+- **Order Bot to Craft**: `/w %t craft [Item Link]` — If the bot knows the recipe and possesses the materials in its inventory, it will immediately cast the tradeskill recipe and trade the crafted item.
+- **Learn from Class / Profession Trainer**: Target any trainer NPC and whisper `/w %t trainer learn` to order the bot to train all available spells.
 
 ---
 
@@ -848,7 +922,7 @@ Blueprints for assembling, tuning, and resetting raid instances with playerbots.
 
 | Raid Bracket | Target Instance | Recommended Composition | Macro Assembly Sequence |
 | :--- | :--- | :--- | :--- |
-| **10-Man** | Upper Blackrock Spire (UBRS), Karazhan Crypts | 2 Tanks, 3 Healers, 5 DPS | `.bot group size=5` (Party 1)<br>`/ra @subgroup=1 formation shield` |
+| **10-Man** | Upper Blackrock Spire (UBRS), Karazhan Crypts | 2 Tanks, 3 Healers, 5 DPS | `.bot group size=5` (Party 1) + `/ra @subgroup=1 formation shield` |
 | **20-Man** | Zul'Gurub (ZG), Ruins of Ahn'Qiraj (AQ20) | 3 Tanks, 5 Healers, 12 DPS | 4 balanced groups with class dispels (Priest/Paladin/Shaman/Mage) |
 | **40-Man** | Molten Core, Blackwing Lair, AQ40, Naxxramas | 4–6 Tanks, 10–12 Healers, 22–26 DPS | 8 balanced subgroups, windfury totems, paladin blessing rotas |
 

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  * Copyright (C) 2009-2011 MaNGOSZero <https://github.com/mangos/zero>
  * Copyright (C) 2011-2016 Nostalrius <https://nostalrius.org>
@@ -25,6 +25,7 @@
 #include "World.h"
 #include "SocialMgr.h"
 #include "MasterPlayer.h"
+#include "Player.h"
 #include "Chat.h"
 #include "Config/Config.h"
 #include "Util.h"
@@ -95,6 +96,12 @@ Channel::Channel(std::string const& name, Team InTeam)
             m_announce = false;
         }
     }
+}
+
+void Channel::Join(Player const* player, const char* password)
+{
+    if (player)
+        Join(player->GetObjectGuid(), password);
 }
 
 void Channel::Join(ObjectGuid guid, const char *password, bool checkPassword)
@@ -663,6 +670,12 @@ Channel::SayRefusal Channel::CheckSay(ObjectGuid guid, bool skipCheck)
         return SAY_NOT_MODERATOR;
 
     return SAY_OK;
+}
+
+void Channel::Say(Player const* player, const char* what, uint32 lang, bool skipCheck)
+{
+    if (player)
+        Say(player->GetObjectGuid(), what, lang, skipCheck);
 }
 
 void Channel::Say(ObjectGuid guid, const char *text, uint32 lang, bool skipCheck)

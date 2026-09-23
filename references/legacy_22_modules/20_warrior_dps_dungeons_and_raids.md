@@ -83,6 +83,25 @@ Execute these commands in chat or bind them to an in-game macro (`/m`) to comple
 .additem 61225 10  -- Lucidity Potion (Turtle Custom: Immune to Sleep/Charm/Polymorph)
 .additem 15997 200 -- Thorium Shells (Ranged ammo for gun pulls)
 
+.additem 13510 5
+.additem 13452 20
+.additem 9206 20
+.additem 13442 20
+.additem 13446 20
+.additem 3387 10
+.additem 5634 10
+.additem 18262 20
+.additem 12820 20
+.additem 20452 40
+.additem 12451 20
+.additem 12460 20
+.additem 12450 20
+.additem 8410 5
+.additem 8412 5
+.additem 61181 10
+.additem 61225 10
+.additem 15997 200
+
 -- 4. Auto-Apply Permanent Enchants & Durability
 .bot enchants *
 .repairitems

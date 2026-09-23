@@ -27,9 +27,14 @@
 
 #include <list>
 #include <map>
+#include <vector>
 
 #include "Policies/Singleton.h"
 #include "Common.h"
+
+class Player;
+class Group;
+class WorldPacket;
 
 enum ClassRoles
 {
@@ -86,6 +91,15 @@ struct LFGGroupQueueInfo
     uint32 groupTimer;
 };
 
+struct MeetingStoneInfo
+{
+    uint32 area = 0;
+    char const* name = "";
+    uint32 minLevel = 0;
+    uint32 maxLevel = 0;
+};
+typedef std::vector<MeetingStoneInfo> MeetingStoneSet;
+
 class LFGQueue
 {
     public:
@@ -95,6 +109,7 @@ class LFGQueue
         void AddToQueue(Player* leader, uint32 queAreaID);
         void RestoreOfflinePlayer(Player* player);
         bool IsPlayerInQueue(const ObjectGuid& plrGuid) const;
+        bool IsGroupInQueue(uint32 groupId) const { return m_QueuedGroups.find(groupId) != m_QueuedGroups.end(); }
         // Read access for modules: the queue entry of one player, if queued.
         void GetPlayerQueueInfo(LFGPlayerQueueInfo* info, ObjectGuid plrGuid) const
         {
@@ -102,6 +117,13 @@ class LFGQueue
             if (it != m_QueuedPlayers.end() && info)
                 *info = it->second;
         }
+        void GetGroupQueueInfo(LFGGroupQueueInfo* info, uint32 groupId) const
+        {
+            auto it = m_QueuedGroups.find(groupId);
+            if (it != m_QueuedGroups.end() && info)
+                *info = it->second;
+        }
+        MeetingStoneSet GetDungeonsForPlayer(Player* /*player*/) const { return {}; }
         void RemovePlayerFromQueue(const ObjectGuid& plrGuid, PlayerLeaveMethod leaveMethod = PLAYER_CLIENT_LEAVE); // 0 == by default system (cmsg, leader leave), 1 == by lfg system (no need report text you left queu)
         void RemoveGroupFromQueue(uint32 groupId, GroupLeaveMethod leaveMethod = GROUP_CLIENT_LEAVE);
         void Update(uint32 diff);
@@ -113,7 +135,12 @@ class LFGQueue
         static void BuildCompletePacket(WorldPacket &data);
 
         static ClassRoles CalculateRoles(Classes playerClass);
+        static ClassRoles CalculateTalentRoles(Player const* player);
         static RolesPriority getPriority(Classes playerClass, ClassRoles playerRoles);
+        static RolesPriority GetPriority(Classes playerClass, ClassRoles playerRoles)
+        {
+            return getPriority(playerClass, playerRoles);
+        }
 
         static uint32 GetMaximumDPSSlots() { return 3u; }
 

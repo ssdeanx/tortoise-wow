@@ -80,6 +80,9 @@ class LFTManager
         // World-thread only. Copy of current queue for module policy decisions.
         std::vector<QueuedInfo> GetQueuedPlayers() const;
 
+        bool IsFillBot(ObjectGuid const& guid) const;
+        void ForgetFillBot(ObjectGuid const& guid);
+
     private:
         struct ListingSignup
         {
@@ -210,15 +213,28 @@ class LFTManager
         void RecountListing(Listing& listing) const;
         void CleanupPlayer(ObjectGuid const& guid);
 
+        // Bot fill
+        bool RealPlayerWaitsFor(std::string const& instance, time_t& oldestJoin) const;
+        void DropUnneededFillBots();
+        void SeedBotOnlyQueue();
+        Player* TakeFromBotOnlyGroup(uint8 wanted, QueuedPlayer const& waiter, uint32 below, uint32 above);
+        Player* TakeBotAndRespecFor(uint8 wanted, QueuedPlayer const& waiter, uint32 below, uint32 above);
+        void FillInstanceWithBots(std::string const& instance, QueuedPlayer const& waiter);
+        void AcceptOffersForFillBots();
+        void UpdateBotFill(uint32 diff);
+
         ListingsMap m_listings;
         QueueMap m_queue;
         RolecheckMap m_rolechecks;
         OffersMap m_offers;
         std::map<ObjectGuid, uint32> m_playerOffers;
+        std::set<ObjectGuid> m_fillBots;
+        std::set<uint32> m_lftGroupIds;
         uint32 m_nextListingId;
         uint32 m_nextOfferId;
         uint64 m_nextQueueOrder;
         bool m_listingsLoaded;
+        uint32 m_botFillTimer;
 };
 
 extern LFTManager sLFTMgr;

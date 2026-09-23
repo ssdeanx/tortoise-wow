@@ -132,6 +132,10 @@ void LFGQueue::RestoreOfflinePlayer(Player* player)
         player->GetSession()->SendMeetingstoneSetqueue(0, MEETINGSTONE_STATUS_NONE);
     }
 }
+ClassRoles LFGQueue::CalculateTalentRoles(Player const* player)
+{
+    return player ? CalculateRoles(static_cast<Classes>(player->getClass())) : LFG_ROLE_NONE;
+}
 
 ClassRoles LFGQueue::CalculateRoles(Classes playerClass)
 {

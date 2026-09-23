@@ -38,10 +38,15 @@ public:
     void outErrorDb(const char* fmt, ...) ATTR_PRINTF(2, 3);
 
     // The LOG macros in Log.h (DETAIL_LOG, BASIC_LOG, etc.) call these on
-    // sLog before calling out*. Return permissive values so the macros
-    // always forward to our out* methods.
-    bool HasLogLevelOrHigher(LogLevel /*loglvl*/) const { return true; }
-    bool HasLogFilter(uint32 /*filter*/) const { return false; }
+    // sLog before calling out*. Return appropriate level so macros
+    // do not evaluate formatting when detail/debug is suppressed.
+    bool HasLogLevelOrHigher(LogLevel loglvl) const
+    {
+        if (m_file && !m_debugEnabled && (loglvl == LOG_LVL_DETAIL || loglvl == LOG_LVL_DEBUG))
+            return false;
+        return Log::Instance().HasLogLevelOrHigher(loglvl);
+    }
+    bool HasLogFilter(uint32 filter) const { return Log::Instance().HasLogFilter(filter); }
 
 private:
     FILE*      m_file = nullptr;

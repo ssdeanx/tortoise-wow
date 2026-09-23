@@ -282,6 +282,14 @@ void WorldSession::SendTrainingFailure(ObjectGuid guid, uint32 serviceId, uint32
     SendPacket(&data);
 }
 
+void WorldSession::SendPlaySpellVisual(ObjectGuid guid, uint32 id)
+{
+    WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 8 + 4);
+    data << ObjectGuid(guid);
+    data << uint32(id);
+    SendPacket(&data);
+}
+
 void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recv_data)
 {
     ObjectGuid guid;

@@ -431,6 +431,7 @@ namespace ai
             creators["wait for attack time"] = [](PlayerbotAI* ai) { return new WaitForAttackTimeValue(ai); };
 
             creators["mc runes"] = [](PlayerbotAI* ai) { return new MCRunesValue(ai); };
+            creators["mc douseable runes"] = [](PlayerbotAI* ai) { return new MCDouseableRunesValue(ai); };
             creators["suppression devices"] = [](PlayerbotAI* ai) { return new SuppressionDevicesValue(ai); };
             creators["gos"] = [](PlayerbotAI* ai) { return new GameObjectsValue(ai); };
             creators["entry filter"] = [](PlayerbotAI* ai) { return new EntryFilterValue(ai); };

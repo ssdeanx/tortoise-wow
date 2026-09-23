@@ -654,6 +654,10 @@ Player::Player(WorldSession *session) : Unit(),
 
     m_session = session;
 
+    m_lastAIUpdateTime = 0;
+    m_backgroundAIDueTime = 0;
+    m_mapWorkGeneration = 0;
+
     m_ExtraFlags = 0;
     if (GetSession()->GetSecurity() > SEC_PLAYER)
     {
@@ -825,6 +829,7 @@ Player::Player(WorldSession *session) : Unit(),
 
     m_totalDeathCount = 0;
     m_worldBuffCheckTimer = 0;
+    memset(m_moduleSlots, 0, sizeof(m_moduleSlots));
 
     ++PerfStats::g_totalPlayers;
 }
@@ -2999,7 +3004,8 @@ void Player::RemoveFromWorld()
     ///- The player should only be removed when logging out
     if (IsInWorld())
     {
-        GetSession()->GetAntiCheat()->LeaveWorld();
+        if (auto* ac = GetSession()->GetAntiCheat())
+            ac->LeaveWorld();
         GetCamera().ResetView();
     }
 
@@ -3299,64 +3305,123 @@ void Player::RecallPvPGear()
     }
 }
 
-bool Player::CanInteractWithNPC(Creature const* pCreature, uint32 npcflagmask) const
+bool Player::CanInteractWithNPC(Creature const* pCreature, uint32 npcflagmask, char const** failure) const
 {
+    if (failure)
+        *failure = nullptr;
+
     if (!pCreature)
+    {
+        if (failure)
+            *failure = "null_creature";
         return false;
+    }
 
     // some basic checks
     if (!IsInWorld() || IsTaxiFlying())
+    {
+        if (failure)
+            *failure = "not_in_world_or_taxi";
         return false;
+    }
 
     // not in interactive state
     if (HasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
+    {
+        if (failure)
+            *failure = "lost_control";
         return false;
+    }
 
     // appropriate npc type
     if (npcflagmask && !pCreature->HasFlag(UNIT_NPC_FLAGS, npcflagmask))
+    {
+        if (failure)
+            *failure = "npc_flag_mismatch";
         return false;
+    }
 
     if (npcflagmask == UNIT_NPC_FLAG_STABLEMASTER)
     {
         if (GetClass() != CLASS_HUNTER)
+        {
+            if (failure)
+                *failure = "not_hunter_stablemaster";
             return false;
+        }
     }
 
     if (!pCreature->IsAlive())
+    {
+        if (failure)
+            *failure = "dead";
         return false;
+    }
 
     if (IsAlive() && pCreature->IsInvisibleForAlive())
+    {
+        if (failure)
+            *failure = "invisible_for_alive";
         return false;
+    }
 
     if (!IsAlive() && !pCreature->HasTypeFlag(CREATURE_TYPEFLAGS_GHOST_VISIBLE))
+    {
+        if (failure)
+            *failure = "ghost_not_visible";
         return false;
+    }
 
     // not allow interaction under control, but allow with own pets
     if (pCreature->GetCharmerGuid())
+    {
+        if (failure)
+            *failure = "charmed";
         return false;
+    }
 
     // not enemy
-   if (pCreature->IsHostileTo(this))
+    if (pCreature->IsHostileTo(this))
+    {
+        if (failure)
+            *failure = "hostile";
         return false;
+    }
 
     // combat check
     if (pCreature->IsInCombat())
+    {
+        if (failure)
+            *failure = "in_combat";
         return false;
+    }
 
     // not interactable
     if (pCreature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE))
+    {
+        if (failure)
+            *failure = "not_selectable";
         return false;
+    }
 
     // not unfriendly
     if (FactionTemplateEntry const* factionTemplate = sObjectMgr.GetFactionTemplateEntry(pCreature->GetFactionTemplateId()))
         if (factionTemplate->faction)
             if (FactionEntry const* faction = sObjectMgr.GetFactionEntry(factionTemplate->faction))
                 if (faction->reputationListID >= 0 && GetReputationMgr().GetRank(faction) <= REP_UNFRIENDLY)
+                {
+                    if (failure)
+                        *failure = "unfriendly";
                     return false;
+                }
 
     // not too far
     if (!pCreature->IsWithinDistInMap(this, INTERACTION_DISTANCE))
+    {
+        if (failure)
+            *failure = "too_far";
         return false;
+    }
 
     return true;
 }
@@ -7642,6 +7707,12 @@ void Player::SendDirectMessage(WorldPacket *data) const
     GetSession()->SendPacket(data);
 }
 
+void Player::SendMessageToPlayer(std::string const& message) const
+{
+    if (GetSession())
+        ChatHandler(const_cast<Player*>(this)).SendSysMessage(message.c_str());
+}
+
 void Player::SendCinematicStart(uint32 CinematicSequenceId)
 {
     WorldPacket data(SMSG_TRIGGER_CINEMATIC, 4);
@@ -7742,7 +7813,8 @@ void Player::CheckAreaExploreAndOutdoor()
             sLog.outError("PLAYER: Player %u discovered unknown area (x: %f y: %f map: %u", GetGUIDLow(), GetPositionX(), GetPositionY(), GetMapId());
         else
         {
-            GetSession()->GetAntiCheat()->OnExplore(p);
+            if (auto* ac = GetSession()->GetAntiCheat())
+                ac->OnExplore(p);
             //GetCheatData()->OnExplore(p);
             uint32 area = p->Id;
             uint32 xp = 0;
@@ -10559,6 +10631,17 @@ Item* Player::GetItemByGuid(ObjectGuid guid) const
                         return pItem;
 
     return nullptr;
+}
+
+Item* Player::GetItemByEntry(uint32 entry, bool inBankAlso) const
+{
+    Item* found = nullptr;
+    auto finder = [&found, entry](Item* item) {
+        if (!found && item && item->GetEntry() == entry)
+            found = item;
+    };
+    ApplyForAllItems(finder, inBankAlso);
+    return found;
 }
 
 Item* Player::GetItemByPos(uint16 pos) const
@@ -19264,6 +19347,28 @@ void Player::TextEmote(std::string const& text) const
         SendMessageToSetInRange(&data, sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE), true, !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT));
 }
 
+void Player::Whisper(std::string const& text, const uint32 language, ObjectGuid receiverGuid) const
+{
+    Player* receiver = ObjectAccessor::FindPlayer(receiverGuid);
+    if (!receiver || !receiver->GetSession())
+        return;
+
+    uint32 lang = language;
+    if (lang != LANG_ADDON)
+        lang = LANG_UNIVERSAL;
+
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, text.c_str(), Language(lang), GetChatTag(), GetObjectGuid(), GetName());
+    receiver->GetSession()->SendPacket(&data);
+
+    if (lang != LANG_ADDON && GetSession())
+    {
+        data.clear();
+        ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, text.c_str(), Language(lang), receiver->GetChatTag(), receiver->GetObjectGuid());
+        GetSession()->SendPacket(&data);
+    }
+}
+
 void Player::PetSpellInitialize()
 {
     Pet* pet = GetPet();
@@ -20901,7 +21006,6 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             UpdateVisibilityOf_helper(m_visibleGUIDs, target);
             lock.unlock();
 
-            AddBroadcastListener(target, this);
             DEBUG_FILTER_LOG(LOG_FILTER_VISIBILITY_CHANGES, "%s is visible now for %s. Distance = %f", target->GetGuidStr().c_str(), GetGuidStr().c_str(), GetDistance(target));
         }
     }
@@ -20913,6 +21017,18 @@ template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, Corpse*  
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, GameObject*    target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, DynamicObject* target, UpdateData& data, std::set<WorldObject*>& visibleNow);
 template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject*   target, UpdateData& data, std::set<WorldObject*>& visibleNow);
+
+void Player::ActivateBroadcastListeners(std::set<WorldObject*> const& visibleNow)
+{
+    for (WorldObject* obj : visibleNow)
+    {
+        if (Player* target = obj->ToPlayer())
+        {
+            if (target->m_broadcaster)
+                target->m_broadcaster->AddListener(this);
+        }
+    }
+}
 
 void Player::SetLongSight(const Aura* aura)
 {
@@ -21378,11 +21494,15 @@ void Player::LearnGameMasterSpells()
 void Player::SetSemaphoreTeleportNear(bool semphsetting)
 {
     mSemaphoreTeleport_Near = semphsetting;
+    if (semphsetting)
+        ++m_mapWorkGeneration;
 }
 
 void Player::SetSemaphoreTeleportFar(bool semphsetting)
 {
     mSemaphoreTeleport_Far = semphsetting;
+    if (semphsetting)
+        ++m_mapWorkGeneration;
 }
 
 BattleGround* Player::GetBattleGround() const
@@ -21487,7 +21607,11 @@ BattleGroundBracketId Player::GetBattleGroundBracketIdFromLevel(BattleGroundType
 
 float Player::GetReputationPriceDiscount(Creature const* pCreature) const
 {
-    FactionTemplateEntry const* vendor_faction = pCreature->GetFactionTemplateEntry();
+    return pCreature ? GetReputationPriceDiscount(pCreature->GetFactionTemplateEntry()) : 1.0f;
+}
+
+float Player::GetReputationPriceDiscount(FactionTemplateEntry const* vendor_faction) const
+{
     if (!vendor_faction || !vendor_faction->faction)
         return 1.0f;
 
@@ -25677,3 +25801,74 @@ void Player::ClearTemporaryWarWithFactions()
         m_temporaryAtWarFactions.clear();
     }
 }
+
+static PlayerMails s_emptyPlayerMails;
+
+PlayerMails::iterator Player::GetMailBegin()
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        return GetSession()->GetMasterPlayer()->GetMailBegin();
+    return s_emptyPlayerMails.begin();
+}
+
+PlayerMails::iterator Player::GetMailEnd()
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        return GetSession()->GetMasterPlayer()->GetMailEnd();
+    return s_emptyPlayerMails.end();
+}
+
+uint32 Player::GetMailSize()
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        return GetSession()->GetMasterPlayer()->GetMailSize();
+    return 0;
+}
+
+void Player::SendMailResult(uint32 mailId, MailResponseType mailAction, MailResponseResult mailError, uint32 equipError, uint32 item_guid, uint32 item_count)
+{
+    if (GetSession())
+        GetSession()->SendMailResult(mailId, mailAction, mailError, equipError, item_guid, item_count);
+}
+
+void Player::RemoveMail(uint32 id, bool remove)
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        GetSession()->GetMasterPlayer()->RemoveMail(id, remove);
+}
+
+Item* Player::GetMItem(uint32 id)
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        return GetSession()->GetMasterPlayer()->GetMItem(id);
+    return nullptr;
+}
+
+bool Player::RemoveMItem(uint32 id)
+{
+    if (GetSession() && GetSession()->GetMasterPlayer())
+        return GetSession()->GetMasterPlayer()->RemoveMItem(id);
+    return false;
+}
+
+Player::MountInfo const* Player::GetMountInfo() const
+{
+    static thread_local MountInfo s_info;
+    uint32 mountId = GetMountID();
+    if (!mountId)
+        return nullptr;
+    if (CreatureDisplayInfoEntry const* displayInfo = sCreatureDisplayInfoStore.LookupEntry(mountId))
+    {
+        if (CreatureModelDataEntry const* modelData = sCreatureModelDataStore.LookupEntry(displayInfo->ModelId))
+        {
+            if (modelData->modelName)
+            {
+                s_info.Name = modelData->modelName;
+                return &s_info;
+            }
+        }
+    }
+    return nullptr;
+}
+
+

@@ -31,6 +31,8 @@
 #include <map>
 #include <string>
 
+class Player;
+
 class ChannelMgr
 {
     public:
@@ -42,7 +44,9 @@ class ChannelMgr
         ~ChannelMgr();
 
         Channel *GetOrCreateChannel(std::string const& name, bool allowAreaDependantChans = true);
+        Channel *GetJoinChannel(std::string const& name, uint32 /*channelId*/ = 0) { return GetOrCreateChannel(name); }
         Channel *GetChannel(std::string const& name, PlayerPointer p, bool pkt = true);
+        Channel *GetChannel(std::string const& name, Player* p, bool pkt = true);
         // Read access for modules: every channel of this faction.
         ChannelMap const& GetChannels() const { return channels; }
         void LeftChannel(std::string const& name);

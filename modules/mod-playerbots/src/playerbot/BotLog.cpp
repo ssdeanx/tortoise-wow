@@ -122,6 +122,21 @@ void BotLog::outInfo(const char* fmt, ...)
 
 void BotLog::outDetail(const char* fmt, ...)
 {
+    if (!m_debugEnabled)
+    {
+        // Detail suppressed by default; fall through to sLog when no file is open.
+        std::lock_guard<std::mutex> g(m_mutex);
+        if (!m_file)
+        {
+            char _msg[4096];
+            va_list _ap;
+            va_start(_ap, fmt);
+            vsnprintf(_msg, sizeof(_msg), fmt, _ap);
+            va_end(_ap);
+            Log::Instance().outDetail("%s", _msg);
+        }
+        return;
+    }
     BOTLOG_IMPL("[DETAIL] ", outDetail)
 }
 

@@ -25,15 +25,37 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 #### 🌟 Macro 1: Complete Level 60 Boost Suite (Spells + Skills + Full Resources)
 
-Instantly levels character to 60, teaches all class abilities and trainer recipes, maxes all weapon and defense skills to 300, and fully restores HP/mana:
+Instantly levels character to 60, teaches all class abilities and trainer spells, maxes all weapon and defense skills to 300, and fully restores HP/mana:
 
 ```lua
-.levelup 60
-.learn all_myspells
-.learn all_trainer
-.learn all_recipes
-.maxskill
-.replenish
+/castsequence .levelup 60, .learn all_myspells, .learn all_trainer, .maxskill, .replenish
+```
+
+> [!IMPORTANT]
+> **Engine Reality Note on `.maxskill` and `.learn all_recipes`:**
+>
+> 1. In `Player::UpdateSkillsToMaxSkillsForLevel()`, the engine explicitly ignores professions and riding (`if (IsProfessionOrRidingSkill(pskill)) continue;`). `.maxskill` only updates weapons and defense.
+> 2. `.learn all_recipes` requires an explicit profession name parameter (e.g. `.learn all_recipes first aid`). Calling bare `.learn all_recipes` will silently abort.
+>
+> To max all 4 secondary skills and unlock their complete recipe libraries, run Macro 1B below:
+
+#### 🍳 Macro 1B: Secondary Skills & Full Recipe Maxing Suite (All 4 Secondary Skills)
+
+Teaches apprentice ranks, sets all 4 secondary skills (First Aid, Cooking, Fishing, Turtle Survival) to 300/300, and teaches every recipe in their spellbooks:
+
+```lua
+.learn 3273
+.learn 2550
+.learn 7620
+.learn 50305
+.setskill 129 300 300
+.setskill 185 300 300
+.setskill 356 300 300
+.setskill 762 300 300
+.learn all_recipes first aid
+.learn all_recipes cooking
+.learn all_recipes fishing
+.learn all_recipes survival
 ```
 
 #### 🛡️ Macro 2: Panic Raid Recovery (God Mode + Drop Combat + Clear Cooldowns)
@@ -217,10 +239,10 @@ Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
   - **What it does**: Teaches all available trainer spells for target's class.
   - **Example**: `.learn all_trainer`
 
-- `.learn all_recipes`
+- `.learn all_recipes <profession_name>`
   - **Security**: Developer (3)
-  - **What it does**: Teaches all recipes for current active professions.
-  - **Example**: `.learn all_recipes`
+  - **What it does**: Teaches all recipes for the specified profession name and sets its skill rating directly to 300/300. Note: A profession name argument is required (e.g. `first aid`, `cooking`, `fishing`, `survival`, `alchemy`, `blacksmithing`, `enchanting`, `engineering`, `leatherworking`, `tailoring`, `herbalism`, `mining`, `skinning`).
+  - **Example**: `.learn all_recipes first aid`
 
 - `.learn all_items`
   - **Security**: Developer (3)
@@ -244,18 +266,37 @@ Verified against CMaNGOS command handlers (`src/game/Chat/Chat.cpp`):
 
 - `.maxskill`
   - **Security**: Developer (3)
-  - **What it does**: Raises all known weapon, defense, and profession skills to current level cap (300 at level 60).
+  - **What it does**: Raises all currently known weapon skills, defense, and racial weapon proficiencies to the current level cap (300 at level 60). Note: The engine deliberately skips professions and riding skills in `.maxskill`; use `.setskill <id> 300 300` or `.learn all_recipes <prof>` to max professions.
   - **Example**: `.maxskill`
 
 - `.setskill <id> <val> [max]`
   - **Security**: Developer (3)
-  - **What it does**: Sets specific skill ID value and maximum.
+  - **What it does**: Sets specific skill ID value and maximum cap.
   - **Example**: `.setskill 95 300 300` *(Defense)*
 
 - `.getskillvalue <id>`
   - **Security**: Developer (3)
-  - **What it does**: Displays the current skill value and cap for target.
-  - **Example**: `.getskillvalue 95`
+  - **What it does**: Displays the current skill value and maximum cap for the selected character.
+  - **Example**: `.getskillvalue 129` *(Checks First Aid rating)*
+
+#### 📋 Quick Skill ID Reference Directory
+
+| Skill Category | Skill Name | Skill ID | Apprentice Spell ID | Recipes Command |
+| :--- | :--- | :---: | :---: | :--- |
+| **Secondary** | First Aid | `129` | `3273` | `.learn all_recipes first aid` |
+| **Secondary** | Cooking | `185` | `2550` | `.learn all_recipes cooking` |
+| **Secondary** | Fishing | `356` | `7620` | `.learn all_recipes fishing` |
+| **Secondary** | Turtle Survival | `762` | `50305` | `.learn all_recipes survival` |
+| **Riding** | Riding (Generic/Base) | `142` | — | `.setskill 142 300 300` |
+| **Primary** | Alchemy | `171` | `2259` | `.learn all_recipes alchemy` |
+| **Primary** | Blacksmithing | `164` | `2018` | `.learn all_recipes blacksmithing` |
+| **Primary** | Enchanting | `333` | `7411` | `.learn all_recipes enchanting` |
+| **Primary** | Engineering | `202` | `4036` | `.learn all_recipes engineering` |
+| **Primary** | Herbalism | `182` | `2366` | `.setskill 182 300 300` |
+| **Primary** | Leatherworking | `165` | `2108` | `.learn all_recipes leatherworking` |
+| **Primary** | Mining | `186` | `2575` | `.learn all_recipes mining` |
+| **Primary** | Skinning | `393` | `8613` | `.setskill 393 300 300` |
+| **Primary** | Tailoring | `197` | `3908` | `.learn all_recipes tailoring` |
 
 - `.reset talents`
   - **Security**: Developer (3)

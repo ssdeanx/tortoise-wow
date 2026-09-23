@@ -452,7 +452,7 @@ bool WorldSession::CanProcessPackets() const
     return IsHeadless() || (m_Socket && !m_Socket->IsClosed());
 }
 
-void WorldSession::ProcessPackets(PacketFilter& updater)
+void WorldSession::ProcessPackets(PacketFilter& updater, bool force, uint32 maxPackets)
 {
     WorldPacket* packet = nullptr;
     _receivedPacketType[updater.PacketProcessType()] = false;
@@ -461,10 +461,9 @@ void WorldSession::ProcessPackets(PacketFilter& updater)
 
     std::vector<WorldPacket*> requeuePackets;
 
-    constexpr uint32 MaxPacketsPerUpdate = 200;
     uint32 totalPackets = 0;
 
-    while (CanProcessPackets() && _recvQueue[updater.PacketProcessType()].next(packet, updater))
+    while ((force || CanProcessPackets()) && _recvQueue[updater.PacketProcessType()].next(packet, updater))
     {
         ++totalPackets;
 
@@ -588,9 +587,14 @@ void WorldSession::ProcessPackets(PacketFilter& updater)
             ProcessAnticheatAction("Anticrash", "Exception raised", CHEAT_ACTION_KICK);
         }
 
+        ScriptRegistry<ServerScript>::ForEachEnabledHook(SERVERHOOK_ON_PACKET_HANDLED, [&](ServerScript* script)
+        {
+            script->OnPacketHandled(this, *packet);
+        });
+
         delete packet;
 
-        if (totalPackets > MaxPacketsPerUpdate)
+        if (totalPackets >= maxPackets)
             break;
     }
 
@@ -600,6 +604,32 @@ void WorldSession::ProcessPackets(PacketFilter& updater)
     }
 }
 
+void WorldSession::HandleBotPackets()
+{
+    // Bounded synthetic packet integration
+    constexpr uint32 MaxPacketsPerUpdate = 32;
+    uint32 totalPackets = 0;
+    bool const gameplayInput = true;
+    bool const botPackets = true;
+    if (gameplayInput && !botPackets)
+        return;
+
+    for (PacketProcessing type : {PACKET_PROCESS_WORLD, PACKET_PROCESS_MAP})
+    {
+        PacketFilter filter(this);
+        filter.SetProcessType(type);
+        if (totalPackets < MaxPacketsPerUpdate)
+        {
+            ProcessPackets(filter, true);
+            ++totalPackets;
+        }
+    }
+}
+
+void WorldSession::SetNoAnticheat()
+{
+    m_antiCheat = std::make_unique<NullSessionAnticheat>(this);
+}
 
 void WorldSession::ClearIncomingPacketsByType(PacketProcessing type)
 {

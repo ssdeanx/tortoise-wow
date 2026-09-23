@@ -1,8 +1,8 @@
 #pragma once
 #include "DungeonActions.h"
 #include "ChangeStrategyAction.h"
-#include "MovementActions.h"
 #include "UseItemAction.h"
+#include "RemoveAuraAction.h"
 #include "playerbot/strategy/values/GuidPositionValues.h"
 
 namespace ai
@@ -29,7 +29,7 @@ namespace ai
         bool Execute(Event& event) override
         {
             std::list<GuidPosition> gos = AI_VALUE(std::list<GuidPosition>, "go usable filter::go trapped filter::entry filter::{gos in sight,suppression devices}");
-            
+
             if (gos.empty())
                 return false;
 
@@ -49,7 +49,7 @@ namespace ai
 
             if (!closest)
                 return false;
-            
+
             if (ai->HasStrategy("debug move", BotState::BOT_STATE_NON_COMBAT))
             {
                 ai->TellPlayerNoFacing(GetMaster(), "Moving to Suppression Device at " + std::to_string((int)closestDist) + " yards");
@@ -117,7 +117,7 @@ namespace ai
         bool Execute(Event& event) override
         {
             std::list<GuidPosition> gos = AI_VALUE(std::list<GuidPosition>, "entry filter::{gos close,suppression devices}");
-            
+
             if (gos.empty())
                 return false;
 
@@ -168,7 +168,7 @@ namespace ai
                 return false;
 
             std::list<GuidPosition> gos = AI_VALUE(std::list<GuidPosition>, "go usable filter::go trapped filter::entry filter::{gos close,suppression devices}");
-            
+
             if (gos.empty())
                 return false;
 
@@ -206,8 +206,8 @@ namespace ai
 
         bool isPossible() override
         {
-            return bot->getClass() == CLASS_ROGUE && 
-                   bot->HasSpell(SPELL_DISARM_TRAP) && 
+            return bot->getClass() == CLASS_ROGUE &&
+                   bot->HasSpell(SPELL_DISARM_TRAP) &&
                    ai->CanMove();
         }
 
@@ -216,5 +216,112 @@ namespace ai
             std::list<GuidPosition> gos = AI_VALUE(std::list<GuidPosition>, "go usable filter::go trapped filter::entry filter::{gos close,suppression devices}");
             return !gos.empty();
         }
+    };
+
+    // Suppression room auto-enable/disable.
+    class SuppressionRoomEnableStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        SuppressionRoomEnableStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable suppression room strategy", "+suppression room") {}
+    };
+
+    class SuppressionRoomDisableStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        SuppressionRoomDisableStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable suppression room strategy", "-suppression room") {}
+    };
+
+    // Boss fight strategy enable/disable.
+    class RazorgoreEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        RazorgoreEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable razorgore fight strategy", "+razorgore") {}
+    };
+
+    class RazorgoreDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        RazorgoreDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable razorgore fight strategy", "-razorgore") {}
+    };
+
+    class VaelEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        VaelEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable vael fight strategy", "+vael") {}
+    };
+
+    class VaelDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        VaelDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable vael fight strategy", "-vael") {}
+    };
+
+    class ChromaggusEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        ChromaggusEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable chromaggus fight strategy", "+chromaggus") {}
+    };
+
+    class ChromaggusDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        ChromaggusDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable chromaggus fight strategy", "-chromaggus") {}
+    };
+
+    class NefarianEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        NefarianEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable nefarian fight strategy", "+nefarian") {}
+    };
+
+    class NefarianDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        NefarianDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable nefarian fight strategy", "-nefarian") {}
+    };
+
+    class FiremawEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        FiremawEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable firemaw fight strategy", "+firemaw") {}
+    };
+
+    class FiremawDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        FiremawDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable firemaw fight strategy", "-firemaw") {}
+    };
+
+    class EbonrocEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        EbonrocEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable ebonroc fight strategy", "+ebonroc") {}
+    };
+
+    class EbonrocDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        EbonrocDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable ebonroc fight strategy", "-ebonroc") {}
+    };
+
+    class FlamegorEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        FlamegorEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable flamegor fight strategy", "+flamegor") {}
+    };
+
+    class FlamegorDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        FlamegorDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable flamegor fight strategy", "-flamegor") {}
+    };
+
+    // Brood Affliction: Bronze (23170) clear - afflictions are dispel-immune, so
+    // the aura is removed directly (same approach as the upstream scale-cloak /
+    // device cheats).
+    class ClearChromaggusBronzeAction : public RemoveAuraAction
+    {
+    public:
+        ClearChromaggusBronzeAction(PlayerbotAI* ai) : RemoveAuraAction(ai, "23170") {}
     };
 }

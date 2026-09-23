@@ -1,0 +1,82 @@
+###################################################################################################
+# mod-llm-chat Module Configuration
+# High-Performance, Non-Blocking Generative Dialogue for Playerbots
+###################################################################################################
+
+[ModLlmChat]
+
+# Enable or disable the LLM Chat module (0 = Disabled, 1 = Enabled)
+ModLlmChat.Enable = 1
+
+# API Provider Endpoint
+# For OpenCode Go: https://opencode.ai/zen/go/v1
+# For local Ollama: http://127.0.0.1:11434/v1
+# For OpenAI: https://api.openai.com/v1
+ModLlmChat.ApiEndpoint = "https://opencode.ai/zen/go/v1"
+
+# API Key for authentication.
+# If left empty (""), the module will automatically check for an existing key in
+# ~/.local/share/opencode/auth.json under ["opencode-go"]["key"].
+ModLlmChat.ApiKey = ""
+
+# Model identifier
+# OpenCode Go free tier: "union-alpha" (Anthropic Messages protocol)
+# OpenCode Go cheap tier: "glm-5.3-flash" (OpenAI Chat Completions protocol)
+# OpenCode Go contributor tier: "muse-spark-1.3-contributor" (OpenAI Responses protocol)
+# Local Ollama: "llama3.2"
+ModLlmChat.Model = "union-alpha"
+
+# Maximum generation tokens
+# NOTE: For union-alpha, must be at least 350-400 tokens because it generates internal reasoning.
+# For glm-5.3-flash or local Ollama, 80-120 tokens is ideal.
+ModLlmChat.MaxTokens = 400
+
+# Generation temperature (0.0 to 1.0)
+ModLlmChat.Temperature = 0.7
+
+# Channel Response Rates (0 to 100 percent)
+# Whisper: Direct player whisper to a bot (100% recommended)
+ModLlmChat.WhisperRate = 100
+
+# Party: Percentage chance per bot to reply when a player speaks in /party
+# (At 20% in a 5-man group with 4 bots, group reply chance is ~59%)
+ModLlmChat.PartyRate = 20
+
+# Guild: Percentage chance that a random online guild bot chimes in to /guild chat
+ModLlmChat.GuildRate = 15
+
+# Say: Percentage chance for nearby bots to reply to player /say in taverns or towns
+ModLlmChat.SayRate = 15
+
+# Raid: Percentage chance for a bot to chime in to raid chat
+ModLlmChat.RaidRate = 5
+
+# Dialogue Level of Detail (LOD) - Human Presence Enforcement
+# If enabled (1), bots will NEVER generate ambient chat into the void unless a real human is present:
+# - Party/Raid: Only if a real human player is in the group.
+# - Guild: Only if at least one real human guild member is currently logged in.
+# - Say: Only if a real human player is within HumanPresenceRadius yards.
+ModLlmChat.RequireHumanPresent = 1
+
+# Observer proximity distance in yards for /say chat
+ModLlmChat.HumanPresenceRadius = 30.0
+
+# Bot-to-Bot Interactions
+# Allow bots to reply to other bots in ambient channels (1 = Yes, 0 = No)
+ModLlmChat.BotToBotEnabled = 1
+
+# Maximum conversation depth for bot-to-bot dialogue before ending the topic (prevents chat loops)
+# Example: Depth 2 = Bot A replies to Player -> Bot B chimes in to Bot A -> Topic closes.
+ModLlmChat.MaxConversationDepth = 2
+
+# Cooldown in seconds of quiet time on a channel after a bot-to-bot exchange completes
+ModLlmChat.ConversationCooldown = 45
+
+# Immersion: Perform an immediate emote (/ponder, /nod) when whispered while thinking
+ModLlmChat.EmoteOnWhisper = 1
+
+# Per-bot whisper cooldown in seconds to prevent spam
+ModLlmChat.WhisperCooldown = 10
+
+# Enable detailed debug logging to server console (0 = Off, 1 = On)
+ModLlmChat.Debug = 0

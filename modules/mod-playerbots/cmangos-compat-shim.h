@@ -855,7 +855,7 @@ inline AreaEntry const* GetAreaEntryByMapId(uint32 mapId) {
 
 // === MeetingStoneInfo / MeetingStoneSet (cmangos LFG) ===
 // Definition lives in LFGMgr.h so both host (game.vcxproj) and bot module see the same type.
-typedef std::vector<MeetingStoneInfo> MeetingStoneSet;
+#include "LFG/LFGMgr.h"
 
 // === CharSections (cmangos-only DBC) ===
 // Penqle has no CharSections.dbc loader, but the file exists in the data dir.

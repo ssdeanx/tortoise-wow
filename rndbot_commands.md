@@ -474,6 +474,72 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 ---
 
+## ⚡ Bot Cheats Subsystem (`/w <bot> cheat`)
+
+> **Security Requirement**: `SEC_GAMEMASTER` (Level 2+) for manual `/w` overrides.
+
+Bots can be granted engine-level cheat flags using prefix operators:
+
+- **`?`**: Query active and configuration default cheats (`/w %t cheat ?`).
+- **`+<name>`**: Enable cheat flag (`/w %t cheat +health`).
+- **`-<name>`**: Disable cheat flag (`/w %t cheat -health`).
+- **`~<name>`**: Toggle cheat flag (`/w %t cheat ~health`).
+- **Multi-Cheat Chaining**: Combine flags with commas: `/w %t cheat +health,+mana,+cooldown,+movespeed`
+
+| Cheat Token | Engine Effect on Bot |
+| :--- | :--- |
+| **`health`** | Infinite health; bot cannot be killed. |
+| **`mana`** | Infinite mana pool; bot never runs oom. |
+| **`power`** | Infinite rage, energy, and mana resources. |
+| **`cooldown`** | Bypasses all ability and spell cooldown timers. |
+| **`movespeed`** | Grants accelerated run, walk, and swim speeds. |
+| **`attackspeed`** | Applies massive melee, ranged, and spell haste buffs (Spells `15181`, `15182`, `15183`). |
+| **`gold`** | Free gold for all training, repairs, and vendor purchases. |
+| **`repair`** | Automatically keeps equipped armor at 100% durability without cost. |
+| **`taxi`** | Unlocks all worldwide flight path taxi nodes immediately. |
+| **`item`** | Bypasses consumable reagent requirements (shards, powder, reagents). |
+| **`breath`** | Grants infinite underwater breathing. |
+| **`glyph`** | Bypasses Turtle-WoW class glyph limitations. |
+| **`quest`** | Auto-completes and accepts quest objectives. |
+
+### In-Game Macro: Ultra Bot God Mode
+
+```lua
+/p @all cheat +health,+mana,+cooldown,+movespeed,+repair
+```
+
+---
+
+## 🛠️ Bot Professions, Skills & Crafting
+
+Bots can inspect skills, gather resources, and craft items on demand:
+
+- **Check Bot Skills**: `/w %t skill` — Whispers back all learned weapon, defense, and profession skill ratings.
+- **Order Bot to Craft**: `/w %t craft [Item Link]` — If the bot knows the recipe and possesses materials in its inventory, it will cast the recipe and trade the crafted item.
+- **Learn from Trainer**: Target any class or profession trainer NPC and whisper `/w %t trainer learn` to order the bot to train all available spells.
+
+---
+
+## 📈 AI Performance Profiler (`.perfmon`)
+
+The `.perfmon` command toggles real-time performance monitoring across all active Playerbots:
+
+- **Syntax**: `.perfmon`
+- **Output**: Dumps AI tick latency, active strategy evaluations, pathfinding queries per second, and memory allocations per bot holder.
+
+---
+
+## 🏛️ Auxiliary Economy: Auction House Bot (`.ahbot`)
+
+While RandomBots trade and simulate the world, the **AHBot** manages auction listings across Alliance, Horde, and Neutral goblin auction houses:
+
+- `.ahbot status [all]` — Displays active bot auction counts and economy balance.
+- `.ahbot rebuild [all]` — Flushes and repopulates all auction houses.
+- `.ahbot reload` — Hot-reloads `run/ahbot.conf` settings without rebooting.
+- See [01_game_master_handbook.md (Section 14)](./references/01_game_master_handbook.md#14-auction-house-bot-administration-ahbot) for full AHBot command directory.
+
+---
+
 ## 📋 `.rndbot` vs `.bot` Quick Reference
 
 | Feature | `.rndbot` | `.bot` |
@@ -489,4 +555,4 @@ Copy and paste these macros directly into your World of Warcraft **Macro UI** (`
 
 ---
 
-[🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📜 Volume 01: GM Handbook](./references/01_game_master_handbook.md) • [🤖 Volume 02: Playerbot & Raid Automation](./references/02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./references/03_turtle_world_and_teleports.md) • [⚔️ Volume 04: Class Specs & Gear](./references/04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./references/05_developer_eluna_and_engine.md)
+[🏠 Master GM Portal (gm_commands.md)](./gm_commands.md) • [📋 Operations (commands.md)](./commands.md) • [📜 Volume 01: GM Handbook](./references/01_game_master_handbook.md) • [🤖 Volume 02: Playerbot & Raid Automation](./references/02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./references/03_turtle_world_and_teleports.md) • [⚔️ Volume 04: Class Specs & Gear](./references/04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./references/05_developer_eluna_and_engine.md) • [🏰 Volume 06: Raid Operations](./references/06_automated_raid_and_dungeon_operations.md)

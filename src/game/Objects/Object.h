@@ -161,6 +161,7 @@ class Item;
 class Aura;
 class UpdateMask;
 class InstanceData;
+using InstanceScript = InstanceData;
 class TerrainInfo;
 class ZoneScript;
 class Transport;
@@ -407,6 +408,7 @@ class Object
          ObjectGuid const& GetObjectGuid() const { return GetGuidValue(OBJECT_FIELD_GUID); }
         const uint64& GetGUID() const { return GetUInt64Value(OBJECT_FIELD_GUID); } // Conserve par Nostalrius
         uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
+        uint32 GetDbGuid() const { return GetGUIDLow(); }
         PackedGuid const& GetPackGUID() const { return m_PackGUID; }
         std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
 
@@ -894,6 +896,7 @@ class WorldObject : public Object
 
         virtual float GetObjectBoundingRadius() const { return DEFAULT_WORLD_OBJECT_SIZE; }
         virtual float GetCombatReach() const { return 0.f; }
+        virtual float GetObjectSize() const { return GetObjectBoundingRadius(); }
 
         bool IsPositionValid() const;
         void UpdateGroundPositionZ(float x, float y, float &z) const;
@@ -912,6 +915,7 @@ class WorldObject : public Object
         void LoadMapCellsAround(float dist) const;
 
         InstanceData* GetInstanceData() const;
+        InstanceData* GetInstanceScript() const { return GetInstanceData(); }
 
         virtual char const* GetName() const = 0;
         virtual const char* GetNameForLocaleIdx(int32 /*locale_idx*/) const { return GetName(); }
@@ -1003,6 +1007,11 @@ class WorldObject : public Object
 
         float GetAngle(WorldObject const* obj) const;
         float GetAngle(const float x, const float y) const;
+        static float GetAngleAt(float fromX, float fromY, float toX, float toY)
+        {
+            float const dx = toX - fromX, dy = toY - fromY, ang = atan2(dy, dx);
+            return (ang >= 0) ? ang : 2 * M_PI_F + ang;
+        }
         bool HasInArc(WorldObject const* target, float const arcangle = M_PI_F, float offset = 0.0f) const;
         bool HasInArc(const float arcangle, const float x, const float y) const;
         bool IsFacingTarget(WorldObject const* target) const;
@@ -1038,6 +1047,7 @@ class WorldObject : public Object
         bool IsMoving() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_MASK_MOVING); }
         // AzerothCore spellings, for module code written against that core.
         bool isMoving() const { return IsMoving(); }
+        bool isMovingOrTurning() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_MASK_MOVING_OR_TURN); }
         float GetExactDist2d(float px, float py) const
         {
             float const dx = GetPositionX() - px, dy = GetPositionY() - py;
@@ -1140,6 +1150,14 @@ class WorldObject : public Object
         ReputationRank static GetFactionReactionTo(FactionTemplateEntry const* factionTemplateEntry, WorldObject const* target);
         bool IsValidAttackTarget(Unit const* target, bool checkAlive = true) const;
         virtual bool IsVisibleForOrDetect(WorldObject const* pDetector, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool* alert = nullptr) const { return IsVisibleForInState(pDetector, viewPoint, inVisibleList); }
+        bool CanSeeOrDetect(WorldObject const* obj, bool ignoreStealth = false, bool distanceCheck = false, bool checkAlert = false) const
+        {
+            if (!obj)
+                return false;
+            if (obj == this)
+                return true;
+            return obj->IsVisibleForOrDetect(this, this, !ignoreStealth);
+        }
 
         bool IsControlledByPlayer() const;
         bool IsLikePlayer() const;

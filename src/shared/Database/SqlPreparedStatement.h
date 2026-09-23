@@ -23,6 +23,7 @@
 #include <ace/TSS_T.h>
 #include <vector>
 #include <stdexcept>
+#include <atomic>
 
 class Database;
 class SqlConnection;
@@ -172,19 +173,37 @@ class SqlStmtParameters
 class SqlStatementID
 {
     public:
-        SqlStatementID() : m_bInitialized(false) {}
+        SqlStatementID() : m_nIndex(-1), m_nArguments(0), m_bInitialized(false) {}
+        SqlStatementID(const SqlStatementID& other)
+            : m_nIndex(other.m_nIndex), m_nArguments(other.m_nArguments),
+              m_bInitialized(other.m_bInitialized.load(std::memory_order_relaxed)) {}
+        SqlStatementID& operator=(const SqlStatementID& other)
+        {
+            if (this != &other)
+            {
+                m_nIndex = other.m_nIndex;
+                m_nArguments = other.m_nArguments;
+                m_bInitialized.store(other.m_bInitialized.load(std::memory_order_relaxed), std::memory_order_relaxed);
+            }
+            return *this;
+        }
 
         int ID() const { return m_nIndex; }
         int arguments() const { return m_nArguments; }
-        bool initialized() const { return m_bInitialized; }
+        bool initialized() const { return m_bInitialized.load(std::memory_order_acquire); }
 
     private:
         friend class Database;
-        void init(int nID, int nArgs) { m_nIndex = nID; m_nArguments = nArgs; m_bInitialized = true; }
+        void init(int nID, int nArgs)
+        {
+            m_nIndex = nID;
+            m_nArguments = nArgs;
+            m_bInitialized.store(true, std::memory_order_release);
+        }
 
         int m_nIndex;
         int m_nArguments;
-        bool m_bInitialized;
+        std::atomic<bool> m_bInitialized;
 };
 
 //statement index

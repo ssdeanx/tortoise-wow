@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-set (game_SRCS 
+set (game_SRCS
     AccountMgr.cpp
     AuraRemovalMgr.cpp
     AutoBroadCastMgr.cpp
@@ -79,6 +79,7 @@ set (game_SRCS
     AI/ScriptedPetAI.cpp
     AI/TotemAI.cpp
 	Analysis/AccountAnalyser.cpp
+    Autoscaling/AutoScaler.cpp
     AuctionHouse/AuctionHouseMgr.cpp
     Battlegrounds/BattleGround.cpp
     Battlegrounds/BattleGroundAB.cpp
@@ -137,6 +138,7 @@ set (game_SRCS
     HttpApi/TransferController.cpp
     HttpApi/TransferController.hpp
     LFG/LFGMgr.cpp
+    LFT/LFTBotFill.cpp
     LFT/LFTMgr.cpp
     LFT/LFTQeueue.cpp
     LFT/LFTUserGroups.cpp
@@ -466,7 +468,7 @@ if(USE_DISCORD_BOT)
       DiscordBot/LoginCommandHandler.cpp
       DiscordBot/LoginCommandHandler.hpp
       DiscordBot/PlayerCommandHandler.cpp
-      DiscordBot/PlayerCommandHandler.hpp 
+      DiscordBot/PlayerCommandHandler.hpp
     )
 endif()
 
@@ -508,6 +510,50 @@ if(USE_ANTICHEAT)
     list(APPEND game_SRCS
         Anticheat/Anticheat.cpp
     )
+endif()
+
+if(BUILD_ELUNA)
+  list(APPEND game_SRCS
+    ElunaScriptBridge.cpp
+    Eluna/CustomMethods.h
+  )
+
+  file(GLOB ELUNA_SRCS CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/*.h
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks/*.h
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/methods/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/methods/VMangos/*.h
+  )
+
+  if(MSVC)
+    # Eluna's parameter-pack name `Is` conflicts with its LuaRet<T>::Is
+    # predicate in current MSVC. Build a generated, semantically identical
+    # copy so the pinned submodule remains pristine.
+    set(ELUNA_MSVC_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/eluna-msvc)
+    file(MAKE_DIRECTORY ${ELUNA_MSVC_SOURCE_DIR})
+    configure_file(
+      ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks/SpellHooks.cpp
+      ${ELUNA_MSVC_SOURCE_DIR}/SpellHooks.cpp
+      COPYONLY
+    )
+    file(READ ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks/HookHelpers.h ELUNA_HOOK_HELPERS)
+    string(FIND "${ELUNA_HOOK_HELPERS}" "size_t... Is" ELUNA_MSVC_RENAME_POSITION)
+    if(NOT ELUNA_MSVC_RENAME_POSITION EQUAL -1)
+      string(REPLACE "size_t... Is" "size_t... ReturnIndices" ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+      string(REPLACE "index_sequence<Is...>" "index_sequence<ReturnIndices...>" ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+      string(REPLACE "tuple_element_t<Is," "tuple_element_t<ReturnIndices," ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+      string(REPLACE "static_cast<int>(Is)" "static_cast<int>(ReturnIndices)" ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+      string(REPLACE "std::get<Is>" "std::get<ReturnIndices>" ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+      string(REPLACE "indices[Is]" "indices[ReturnIndices]" ELUNA_HOOK_HELPERS "${ELUNA_HOOK_HELPERS}")
+    endif()
+    file(WRITE ${ELUNA_MSVC_SOURCE_DIR}/HookHelpers.h "${ELUNA_HOOK_HELPERS}")
+    list(REMOVE_ITEM ELUNA_SRCS ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks/SpellHooks.cpp)
+    list(APPEND ELUNA_SRCS ${ELUNA_MSVC_SOURCE_DIR}/SpellHooks.cpp)
+  endif()
+
+  list(APPEND game_SRCS ${ELUNA_SRCS})
 endif()
 
 
@@ -603,6 +649,17 @@ source_group("HttpApi"
   REGULAR_EXPRESSION HttpApi
 )
 
+if(BUILD_ELUNA)
+  source_group("Eluna" FILES ${ELUNA_SRCS})
+endif()
+
+
+# playerbots host-hook stubs for non-bot builds.
+# When BUILD_PLAYERBOTS=OFF, the host-hook call sites need stub implementations.
+# With BUILD_PLAYERBOTS=ON, real implementations are in playerbots.lib.
+if(NOT BUILD_PLAYERBOTS)
+    list(APPEND game_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/PlayerbotStubs.cpp)
+endif()
 
 add_library(game STATIC
   ${game_SRCS}
@@ -615,6 +672,27 @@ target_link_libraries(game
   shared
   Detour
 )
+
+if(BUILD_ELUNA)
+  target_link_libraries(game lualib)
+  target_compile_definitions(game PUBLIC
+    ENABLE_ELUNA
+    ELUNA_EXPANSION=0
+    ELUNA_VMANGOS
+    ELUNA_USE_CUSTOM_METHODS
+  )
+  target_include_directories(game PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Eluna
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/hooks
+    ${CMAKE_SOURCE_DIR}/src/modules/Eluna/methods/VMangos
+  )
+
+  install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/src/modules/Eluna/extensions
+    DESTINATION ${BIN_DIR}/lua_scripts
+  )
+endif()
 
 if(WIN32)
 	if (ENABLE_PROFILING)

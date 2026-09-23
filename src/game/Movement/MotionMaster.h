@@ -57,6 +57,7 @@ enum MovementGeneratorType
     PATROL_MOTION_TYPE              = 16,
     CHARGE_MOTION_TYPE              = 17,
     DISTANCING_MOTION_TYPE          = 18,
+    NULL_MOTION_TYPE                = 19,
 };
 
 enum MMCleanFlag
@@ -129,27 +130,48 @@ class MotionMaster : std::stack<MovementGenerator *>
         void MoveRandom(bool use_current_position = false, float wander_distance = 0.0f, uint32 expire_time = 0);
         void MoveTargetedHome();
         void MoveFollow(Unit* target, float dist, float angle);
+        void MoveFollow(Unit* target, float dist, float angle, bool /*followMain*/, bool /*isRelative*/ = false)
+        {
+            MoveFollow(target, dist, angle);
+        }
+        void DistanceYourself(float /*dist*/) {}
+        template <typename T>
+        void MoveInFormation(T const& /*form*/) {}
         void MoveChase(Unit* target, float dist = 0.0f, float angle = 0.0f);
         void MoveConfused();
         void MoveFleeing(Unit* enemy, uint32 time = 0);
         void MoveFeared(Unit* enemy, uint32 time = 0);
         void MovePoint(uint32 id, const Movement::Location& location, uint32 options = MOVE_NONE, float speed = 0.0f, float finalOrientation = -10);
         void MovePoint(uint32 id, float x, float y, float z, uint32 options = MOVE_NONE, float speed = 0.0f, float finalOrientation = -10);
+        void MovePoint(uint32 id, float x, float y, float z, uint32 forcedMovement, float speed, float finalOrientation, bool generatePath, bool forceDestination = false)
+        {
+            uint32 options = MOVE_NONE;
+            if (generatePath)
+                options |= MOVE_PATHFINDING;
+            MovePoint(id, x, y, z, options, speed, finalOrientation);
+        }
         void MoveSeekAssistance(float x,float y,float z);
         void MoveSeekAssistanceDistract(uint32 timer);
         void MoveWaypoint(uint32 startPoint = 0, uint32 source = 0, uint32 initialDelay = 0, uint32 overwriteGuid = 0, uint32 overwriteEntry = 0, bool repeat = true);
         void MoveWaypointAsDefault(uint32 startPoint = 0, uint32 source = 0, uint32 initialDelay = 0, uint32 overwriteGuid = 0, uint32 overwriteEntry = 0, bool repeat = true);
+        void PauseWaypoints(uint32 pauseTimer);
         void MoveTaxiFlight(uint32 path, uint32 pathnode);
         void MoveTaxiFlight();
         void MoveDistract(uint32 timeLimit);
         void MoveJump(float x, float y, float z, float horizontalSpeed, float max_height, uint32 id = 0);
         void MoveCharge(Unit* target, uint32 delay = 0, bool triggerAutoAttack = false);
         void MoveDistance(Unit* target, float distance);
+        bool MoveFall();
         void ReInitializePatrolMovement();
 
         // A module supplies a precomputed path and expects the unit to travel along
         // it: a spline through the points, walk == false selects run speed.
         void MovePath(Movement::PointsArray const& pointPath, uint32 moveMode, bool flying, bool walk = false);
+        void MoveSplinePath(Movement::PointsArray const* pointPath, uint32 moveMode = 0)
+        {
+            if (pointPath)
+                MovePath(*pointPath, moveMode, false, false);
+        }
 
         MovementGeneratorType GetCurrentMovementGeneratorType() const;
         static char const* GetMovementGeneratorTypeName(MovementGeneratorType generator);

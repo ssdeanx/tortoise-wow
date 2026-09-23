@@ -1,5 +1,6 @@
 #pragma once
 #include "playerbot/strategy/Trigger.h"
+#include "ScriptedInstance.h"
 
 namespace ai
 {
@@ -210,5 +211,68 @@ namespace ai
 
     private:
         uint32 buffID;
+    };
+
+    // Finds an alive raid-visible unit of the given entry among "possible attack
+    // targets". Shared helper for raid boss-aura checks (Geddon inferno etc.);
+    // defined in DungeonTriggers.cpp.
+    Unit* GetRaidTargetByEntry(PlayerbotAI* ai, uint32 entryId);
+
+    // Stack count of a spell aura on a unit (0 when absent). Shared helper for
+    // stack-based fight triggers (drake Wing Buffet swaps, Gluth Mortal Wound);
+    // defined in DungeonTriggers.cpp.
+    uint32 GetSpellStacks(Unit* unit, uint32 spellId);
+
+    // True when any possible attack target (alive, raid-visible) has the given
+    // creature entry. Qualified with the entry id: "attackers entry::12099".
+    // Drives add-priority kill orders (Garr Firesworn, Lucifron Protectors, ...).
+    class AttackersEntryTrigger : public Trigger, public Qualified
+    {
+    public:
+        AttackersEntryTrigger(PlayerbotAI* ai, std::string name = "attackers entry", int checkInterval = 1)
+        : Trigger(ai, name, checkInterval), Qualified() {}
+
+        bool IsActive() override;
+    };
+
+    // CloseToCreatureTrigger with a runtime qualifier "{entry},{range}".
+    // Optional third element "{entry},{range},{ignoreVictim}" - when true the
+    // trigger also fires while the creature is targeting this bot (melee run-out
+    // cases like Geddon Inferno).
+    class EntryProximityTrigger : public Trigger, public Qualified
+    {
+    public:
+        EntryProximityTrigger(PlayerbotAI* ai, std::string name = "entry proximity", int checkInterval = 1)
+        : Trigger(ai, name, checkInterval), Qualified() {}
+
+        bool IsActive() override;
+    };
+
+    // True while the encounter type is DONE in the map's instance data. Qualified
+    // with the instance's TYPE_* index, e.g. "instance encounter done::8" for the
+    // Majordomo surrender in Molten Core.
+    class InstanceEncounterDoneTrigger : public Trigger, public Qualified
+    {
+    public:
+        InstanceEncounterDoneTrigger(PlayerbotAI* ai, std::string name = "instance encounter done", int checkInterval = 3)
+        : Trigger(ai, name, checkInterval), Qualified() {}
+
+        bool IsActive() override;
+    };
+
+    // Protection potions (raid-generic): Greater Fire Protection Potion
+    // (13457 -> buff 17543) and Greater Shadow Protection Potion
+    // (13459 -> buff 17548). IDs verified against tw_world.item_template /
+    // spell_template. Used by every raid boss fight of the matching school.
+    class FireProtectionPotionReadyTrigger : public ItemBuffReadyTrigger
+    {
+    public:
+        FireProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "fire protection potion ready", 13457, 17543) {}
+    };
+
+    class ShadowProtectionPotionReadyTrigger : public ItemBuffReadyTrigger
+    {
+    public:
+        ShadowProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "shadow protection potion ready", 13459, 17548) {}
     };
 }

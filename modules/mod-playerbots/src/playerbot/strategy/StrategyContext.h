@@ -179,6 +179,39 @@ namespace ai
             creators["prince malchezaar"] = [](PlayerbotAI* ai) { return new PrinceMalchezaarFightStrategy(ai); };
             creators["four horseman"] = [](PlayerbotAI* ai) { return new FourHorsemanFightStrategy(ai); };
 
+            // Naxxramas boss fight strategies
+            creators["anubrekhan"] = [](PlayerbotAI* ai) { return new AnubRekhanFightStrategy(ai); };
+            creators["faerlina"] = [](PlayerbotAI* ai) { return new FaerlinaFightStrategy(ai); };
+            creators["maexxna"] = [](PlayerbotAI* ai) { return new MaexxnaFightStrategy(ai); };
+            creators["noth"] = [](PlayerbotAI* ai) { return new NothFightStrategy(ai); };
+            creators["heigan"] = [](PlayerbotAI* ai) { return new HeiganFightStrategy(ai); };
+            creators["loatheb"] = [](PlayerbotAI* ai) { return new LoathebFightStrategy(ai); };
+            creators["grobbulus"] = [](PlayerbotAI* ai) { return new GrobbulusFightStrategy(ai); };
+            creators["gluth"] = [](PlayerbotAI* ai) { return new GluthFightStrategy(ai); };
+            creators["thaddius"] = [](PlayerbotAI* ai) { return new ThaddiusFightStrategy(ai); };
+            creators["sapphiron"] = [](PlayerbotAI* ai) { return new SapphironFightStrategy(ai); };
+            creators["kelthuzad"] = [](PlayerbotAI* ai) { return new KelThuzadFightStrategy(ai); };
+
+            // Blackwing Lair boss fight strategies
+            creators["razorgore"] = [](PlayerbotAI* ai) { return new RazorgoreFightStrategy(ai); };
+            creators["vael"] = [](PlayerbotAI* ai) { return new VaelFightStrategy(ai); };
+            creators["firemaw"] = [](PlayerbotAI* ai) { return new FiremawFightStrategy(ai); };
+            creators["ebonroc"] = [](PlayerbotAI* ai) { return new EbonrocFightStrategy(ai); };
+            creators["flamegor"] = [](PlayerbotAI* ai) { return new FlamegorFightStrategy(ai); };
+            creators["chromaggus"] = [](PlayerbotAI* ai) { return new ChromaggusFightStrategy(ai); };
+            creators["nefarian"] = [](PlayerbotAI* ai) { return new NefarianFightStrategy(ai); };
+
+            // Molten Core boss fight strategies
+            creators["lucifron"] = [](PlayerbotAI* ai) { return new LucifronFightStrategy(ai); };
+            creators["gehennas"] = [](PlayerbotAI* ai) { return new GehennasFightStrategy(ai); };
+            creators["garr"] = [](PlayerbotAI* ai) { return new GarrFightStrategy(ai); };
+            creators["geddon"] = [](PlayerbotAI* ai) { return new GeddonFightStrategy(ai); };
+            creators["shazzrah"] = [](PlayerbotAI* ai) { return new ShazzrahFightStrategy(ai); };
+            creators["golemagg"] = [](PlayerbotAI* ai) { return new GolemaggFightStrategy(ai); };
+            creators["sulfuron"] = [](PlayerbotAI* ai) { return new SulfuronFightStrategy(ai); };
+            creators["domo"] = [](PlayerbotAI* ai) { return new DomoFightStrategy(ai); };
+            creators["ragnaros"] = [](PlayerbotAI* ai) { return new RagnarosFightStrategy(ai); };
+
 #ifdef GenerateBotTests
             creators["test"] = [](PlayerbotAI* ai) { return new TestStrategy(ai); };
 #endif
