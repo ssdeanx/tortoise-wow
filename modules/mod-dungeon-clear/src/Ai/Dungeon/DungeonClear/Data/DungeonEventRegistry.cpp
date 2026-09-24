@@ -427,6 +427,8 @@ namespace
             RegisterUldamanEvents(t);
             RegisterScholomanceEvents(t);
             RegisterDireMaulEvents(t);
+            RegisterZulGurubEvents(t);
+            RegisterMoltenCoreEvents(t);
             RegisterHellfireRampartsEvents(t);
             RegisterBloodFurnaceEvents(t);
             RegisterSlavePensEvents(t);

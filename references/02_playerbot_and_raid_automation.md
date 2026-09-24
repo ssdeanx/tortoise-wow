@@ -145,6 +145,93 @@ Creates a balanced 5-man party (1 Tank, 1 Healer, 3 DPS) matching your level:
 .bot prep *
 ```
 
+##### ⚙️ `.bot group` Mechanics (`f776c7a` Native Behavior)
+
+- **`size=<2..40>`**: Target group size (2 to 5 for party; 6 to 40 automatically converts to raid). Default is 5.
+- **How it works**: Evaluates missing party roles (Tank, Healer, DPS) using `LfgAction::AllowedClassRoleNr`, randomly selects appropriate classes for missing roles, and calls `HandleCreate` to generate fresh level-matched bots directly on your master account.
+- **Pass-through parameters**: Any extra parameters passed to `.bot group` (e.g. `race=<race>`, `spec=<spec>`) pass through directly to `HandleCreate`.
+
+> [!WARNING]
+> **Account Character Limit (10 Max) & `"Account has max characters"`**:
+> Because native `f776c7a` creates characters directly on your master account, it is bound by the 10-character realm limit (1 player + 9 bots). If your account already has 10 characters, running `.bot group` will fail with `"Account has max characters"`.
+
+---
+
+##### 🔍 How to Check & Delete Characters on Your Account
+
+###### 1. Check Characters on an Account
+
+- **List characters on any account (In-Game GM)**:
+
+  ```text
+  .account characters <AccountName>
+  ```
+
+  *(Displays all character names, levels, and GUIDs on that account).*
+
+- **List active bots in world**:
+
+  ```text
+  .bot list
+  ```
+
+- **Inspect target's account**: Target any player/bot and type `.pinfo`.
+
+- **Client login screen**: Log into the account with your WoW client to see the visual 10-slot character list.
+
+###### 2. Delete Characters to Free Account Slots
+
+- **In-Game (Quick Bot Delete)**:
+
+  ```text
+  .bot delete <BotName>
+  ```
+
+  *(Or target the bot and run `.bot delete`). If the bot was created on your account, this immediately and permanently purges it from the database, instantly freeing your character slot!*
+
+- **Client Character Selection Screen**:
+  Select the character &rarr; click the red **Delete Character** button &rarr; type **`DELETE`** to confirm.
+
+- **Wipe an entire alt account**:
+
+  ```text
+  .account delete <AccountName>
+  ```
+
+---
+
+##### 🛡️ Raids with Your Own Characters (Multi-Account Alt Bots)
+
+Because a single account cannot exceed 10 characters, use **Multi-Account Alt Bots** (`AiPlayerbot.AllowMultiAccountAltBots = 1`) to field a 10, 20, or 40-man roster using your own custom characters without clogging your main account:
+
+- **Do I need to create the accounts first?** **Yes.** Run `.account create <name> <password>`.
+- **Should I make a couple of them?** **Yes**, based on your raid bracket:
+  - **10-Man Raid**: 1 alt account (holds up to 10 characters)
+  - **20-Man Raid**: 2 alt accounts (holds up to 20 characters)
+  - **40-Man Raid**: 4 alt accounts (holds up to 40 characters)
+
+###### 💡 Recommended Account Structure & 1-Click Summon
+
+```text
+-- 1. Create dedicated alt accounts in-game:
+.account create sam_tanks password
+.account create sam_healers password
+.account create sam_melee password
+.account create sam_ranged password
+
+-- 2. Log into each account and create up to 10 characters with your desired specs/races
+
+-- 3. Log onto your main character and summon entire account rosters at once:
+.bot add sam_tanks     -- Adds all characters from sam_tanks
+.bot add sam_healers   -- Adds all characters from sam_healers
+.bot add sam_melee     -- Adds all characters from sam_melee
+.bot add sam_ranged    -- Adds all characters from sam_ranged
+
+-- 4. Teleport and fully prepare the raid:
+.bot summon *
+.raid ready world      -- Equips Level 60 Epics, enchants, consumables, world buffs, and attunements!
+```
+
 #### 📋 Macro 4: Party / Raid Ready Check
 
 Queries all bots in party for health, mana, consumable stock, and readiness before pulling:
@@ -922,9 +1009,135 @@ Blueprints for assembling, tuning, and resetting raid instances with playerbots.
 
 | Raid Bracket | Target Instance | Recommended Composition | Macro Assembly Sequence |
 | :--- | :--- | :--- | :--- |
-| **10-Man** | Upper Blackrock Spire (UBRS), Karazhan Crypts | 2 Tanks, 3 Healers, 5 DPS | `.bot group size=5` (Party 1) + `/ra @subgroup=1 formation shield` |
+| **10-Man** | Upper Blackrock Spire (UBRS), Karazhan Crypts | 2 Tanks, 3 Healers, 5 DPS | `.bot group size=10` (or `.bot add <Account>`) + `/ra @subgroup=1 formation shield` |
 | **20-Man** | Zul'Gurub (ZG), Ruins of Ahn'Qiraj (AQ20) | 3 Tanks, 5 Healers, 12 DPS | 4 balanced groups with class dispels (Priest/Paladin/Shaman/Mage) |
 | **40-Man** | Molten Core, Blackwing Lair, AQ40, Naxxramas | 4–6 Tanks, 10–12 Healers, 22–26 DPS | 8 balanced subgroups, windfury totems, paladin blessing rotas |
+
+---
+
+### 🛡️ Personal Character Raids & Account Character Limits
+
+#### 1. Why Single Accounts Are Capped at 10 Characters
+
+- **Client Constraint**: The World of Warcraft 1.12.1 / Turtle 1.18.1 client GUI (`CharacterSelect.xml` and `CharacterSelect.lua`) possesses exactly **10 fixed character button frames** (`CharacterSelectCharacterButton1..10`). When the server transmits the character list (`SMSG_CHAR_ENUM`), sending more than 10 characters causes Lua `nil` index errors, crashing the client login screen or preventing character selection.
+- **Server Constraint**: In `src/game/World.cpp`, `CharactersPerRealm` is clamped to a maximum of 10 (`CONFIG_UINT32_CHARACTERS_PER_REALM`).
+- **"Account has max characters" Diagnostic**:
+  - In commit `f776c7a`, `.bot group` creates bots directly on your master account in `tw_char.characters`.
+  - Once your account reaches 10 characters (your main + 9 bots), `CreateBot` hits `maxCharsPerAccount = 9` and reports `"Account has max characters"`.
+
+---
+
+#### 2. How to Inspect & Delete Characters on an Account
+
+##### 🔍 Inspecting Characters on an Account
+
+- **In-Game GM Command**:
+
+  ```text
+  .account characters <AccountName>
+  ```
+
+  *(Lists all character names, GUIDs, and levels registered under that account).*
+
+- **Client Login Screen**: Log into the account from your WoW client. All characters on that account are rendered visually on the character selection screen.
+
+- **Active Party/World Bots**:
+
+  ```text
+  .bot list
+  ```
+
+  *(Displays all bots currently loaded and active in the world under your session).*
+
+- **Target Account Inspection**: Target any bot or character and run `.pinfo` to see their assigned Account ID and account username.
+
+##### 🗑️ Deleting Characters to Free Account Slots
+
+- **In-Game Bot Delete (For Bots on Your Account)**:
+
+  ```text
+  .bot delete <BotName>
+  ```
+
+  *(Or target the bot and run `.bot delete`). If the bot was created on your account, this immediately and permanently purges the character from the `tw_char` database, instantly freeing the character slot for new bots or alts!*
+
+- **Client Character Selection Screen**:
+  Log into the account, click on the bot/character you wish to remove, click the red **Delete Character** button in the bottom right, and type **`DELETE`** to confirm.
+
+- **Purge Entire Alt Account**:
+  If you want to completely erase an entire alt account and all characters residing on it:
+
+  ```text
+  .account delete <AccountName>
+  ```
+
+---
+
+#### 3. Field Your Own Characters via Multi-Account Alt Bots (`AiPlayerbot.AllowMultiAccountAltBots = 1`)
+
+Playerbots natively solves the 10-character barrier through **Multi-Account Alt Bots**, allowing you to command a complete 40-man raid roster made entirely of your own custom characters without polluting your main account:
+
+##### ❓ Do I Have to Create the Account First? Should I Make a Couple?
+
+- **Yes, the account must be created first** before you can create characters on it or summon them with `.bot add`.
+- **Yes, make a couple of accounts based on your target raid size**, because each account holds at most 10 characters:
+  - **10-Man Raid (UBRS / Karazhan Crypts)**: Create **1 alt account** (holds up to 10 characters).
+  - **20-Man Raid (ZG / AQ20)**: Create **2 alt accounts** (holds up to 20 characters total).
+  - **40-Man Raid (MC / BWL / AQ40 / Naxxramas)**: Create **4 alt accounts** (holds up to 40 characters total).
+
+##### 💡 Recommended Account Structure (Organized by Role)
+
+Organizing accounts by role makes summoning your raid effortless:
+
+| Account Name | Recommended Purpose | Maximum Roster | Example Summon Command |
+| :--- | :--- | :---: | :--- |
+| `sam_tanks` | Protection Warriors, Feral Druids, Paladins | Up to 10 | `.bot add sam_tanks` |
+| `sam_healers` | Holy Priests, Resto Shamans/Druids, Holy Paladins | Up to 10 | `.bot add sam_healers` |
+| `sam_melee` | Rogues, Fury Warriors, Enhancement Shamans | Up to 10 | `.bot add sam_melee` |
+| `sam_ranged` | Mages, Warlocks, Hunters, Shadow Priests | Up to 10 | `.bot add sam_ranged` |
+
+##### 🚀 Step-by-Step Setup Sequence
+
+1. **Create Dedicated Alt Accounts**:
+   From inside the game on your GM character (or via the server terminal):
+
+   ```text
+   .account create sam_tanks password
+   .account create sam_healers password
+   .account create sam_melee password
+   .account create sam_ranged password
+   ```
+
+2. **Build Your Characters**:
+   Log into each account with your WoW client. Create up to 10 characters per account with your desired names, races, classes, and talent specializations.
+
+3. **Assemble Your Raid (1-Click Account Batches)**:
+   Log into your main character. You can summon individual alts or **entire 10-character accounts** at once:
+
+   ```text
+   .bot add sam_tanks     -- Logs in and adds all characters from sam_tanks
+   .bot add sam_healers   -- Logs in and adds all characters from sam_healers
+   .bot add sam_melee     -- Logs in and adds all characters from sam_melee
+   .bot add sam_ranged    -- Logs in and adds all characters from sam_ranged
+   .bot add <CharName>    -- Adds an individual alt character by name
+   ```
+
+4. **Automatic Raid Conversion & Preparation**:
+   - The engine automatically converts your party to a raid as soon as membership exceeds 5 (`group->ConvertToRaid()`).
+   - Teleport the entire raid to your coordinates:
+
+     ```text
+     .bot summon *
+     ```
+
+   - Buff, gear, and attune the entire raid simultaneously:
+
+     ```text
+     .raid ready world
+     ```
+
+     *(Equips Level 60 Epics, enchants, restocks consumables, completes attunements, spawns keys, and applies full world buffs).*
+
 
 ### Instance Lockouts, Unbinding & Raid Resets
 

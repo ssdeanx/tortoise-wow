@@ -634,6 +634,51 @@ namespace ai
         virtual uint32 GetItemId() override { return 13459; }
     };
 
+    // Greater Nature Protection Potion (13458, buff 17546) - nature fights
+    // (AQ20 Buru/Ayamiss, AQ40 Bug Trio/Huhuran/Viscidus/Ouro).
+    class UseNatureProtectionPotionAction : public UseItemIdAction
+    {
+    public:
+        UseNatureProtectionPotionAction(PlayerbotAI* ai) : UseItemIdAction(ai, "nature protection potion") {}
+
+        virtual bool isUseful() override
+        {
+            return UseItemIdAction::isUseful() && !bot->HasAura(17546) && (bot->GetLevel() >= 48);
+        }
+
+        virtual uint32 GetItemId() override { return 13458; }
+    };
+
+    // Greater Arcane Protection Potion (13461, buff 17549) - arcane fights
+    // (AQ20 Moam, AQ40 Skeram).
+    class UseArcaneProtectionPotionAction : public UseItemIdAction
+    {
+    public:
+        UseArcaneProtectionPotionAction(PlayerbotAI* ai) : UseItemIdAction(ai, "arcane protection potion") {}
+
+        virtual bool isUseful() override
+        {
+            return UseItemIdAction::isUseful() && !bot->HasAura(17549) && (bot->GetLevel() >= 48);
+        }
+
+        virtual uint32 GetItemId() override { return 13461; }
+    };
+
+    // Greater Frost Protection Potion (13456, buff 17544) - frost fights
+    // (Naxxramas Sapphiron).
+    class UseFrostProtectionPotionAction : public UseItemIdAction
+    {
+    public:
+        UseFrostProtectionPotionAction(PlayerbotAI* ai) : UseItemIdAction(ai, "frost protection potion") {}
+
+        virtual bool isUseful() override
+        {
+            return UseItemIdAction::isUseful() && !bot->HasAura(17544) && (bot->GetLevel() >= 48);
+        }
+
+        virtual uint32 GetItemId() override { return 13456; }
+    };
+
     class UseFreeActionPotionAction : public UseItemIdAction
     {
     public:

@@ -84,6 +84,13 @@ namespace DcTestDungeonRegistry
             { "dm-north",        "Dire Maul: North",              429,   255.25f,   -16.06f,   -2.59f, 4.700f, 60, "North" },
             { "scholo",          "Scholomance",                   289,   196.37f,   127.05f,  134.91f, 6.090f, 60, "" },
             { "strat",           "Stratholme",                    329,  3593.15f, -3646.56f,  138.50f, 5.330f, 60, "" },
+            // Zul'Gurub (map 309) - a 20-man raid, not a 5-man dungeon. The
+            // harness runs a 5-bot party, so a ZG run is a ROUTE/TRASH/PULL
+            // smoke test (order rows + the Marli room-aggro pre-clear + the
+            // Mandokir gate + the Arlokk gong objective), not a full clear:
+            // expect the bosses to require the real raid. Entrance from
+            // areatrigger_teleport 3928 "Zul'Gurub - Entrance".
+            { "zg",              "Zul'Gurub",                      309, -11916.60f, -1243.52f,   92.53f, 4.712f, 60, "" },
             // --- The Burning Crusade --------------------------------------
             { "ramparts",        "Hellfire Ramparts",             543, -1355.24f,  1641.12f,   68.25f, 0.669f, 62, "", 70 },
             { "blood-furnace",   "The Blood Furnace",             542,    -4.00f,    14.64f,  -44.80f, 4.887f, 63, "", 70 },

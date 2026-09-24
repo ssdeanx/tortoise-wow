@@ -158,6 +158,22 @@ namespace ai
         SapphironFightStrategy(PlayerbotAI* ai) : NaxxramasFightStrategy(ai) {}
         std::string getName() override { return "sapphiron"; }
 
+        // Frost Aura is raid-wide frost damage: the dropper shaman keeps the
+        // Frost Resistance Totem down for the fight.
+        void OnStrategyAdded(BotState state) override
+        {
+            NaxxramasFightStrategy::OnStrategyAdded(state);
+            if (state == BotState::BOT_STATE_COMBAT)
+                OnRaidFightStrategyAddedFrostTotem(ai, ai->GetBot(), raidState_);
+        }
+
+        void OnStrategyRemoved(BotState state) override
+        {
+            if (state == BotState::BOT_STATE_COMBAT)
+                OnRaidFightStrategyRemovedFrostTotem(ai, ai->GetBot(), raidState_);
+            NaxxramasFightStrategy::OnStrategyRemoved(state);
+        }
+
     private:
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
@@ -183,6 +199,48 @@ namespace ai
     public:
         FourHorsemanFightStrategy(PlayerbotAI* ai) : NaxxramasFightStrategy(ai) {}
         std::string getName() override { return "four horseman"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
+    // Gothik (16060): the raid is split by side (>=10 alive per side of the
+    // combat gate before the waves); the wave adds are killed as they spawn.
+    class GothikFightStrategy : public NaxxramasFightStrategy
+    {
+    public:
+        GothikFightStrategy(PlayerbotAI* ai) : NaxxramasFightStrategy(ai) {}
+        std::string getName() override { return "gothik"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
+    // Razuvious (16061): a priest mind-controls an Understudy, which Shield
+    // Walls and then Taunts him. Fallback for MC-less raids: tank and heal.
+    class RazuviousFightStrategy : public NaxxramasFightStrategy
+    {
+    public:
+        RazuviousFightStrategy(PlayerbotAI* ai) : NaxxramasFightStrategy(ai) {}
+        std::string getName() override { return "razuvious"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
+    // Patchwerk (16028): pure tank'n'spank - the strategy carries the
+    // consumable lifecycle and validation only.
+    class PatchwerkFightStrategy : public NaxxramasFightStrategy
+    {
+    public:
+        PatchwerkFightStrategy(PlayerbotAI* ai) : NaxxramasFightStrategy(ai) {}
+        std::string getName() override { return "patchwerk"; }
 
     private:
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;

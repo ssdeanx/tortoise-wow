@@ -47,6 +47,8 @@ namespace
             RegisterStratholmeRoster(t);
             RegisterDireMaulRoster(t);
             RegisterUldamanRoster(t);
+            RegisterZulGurubRoster(t);
+            RegisterMoltenCoreRoster(t);
             RegisterHellfireRampartsRoster(t);
             RegisterSlavePensRoster(t);
             RegisterUnderbogRoster(t);

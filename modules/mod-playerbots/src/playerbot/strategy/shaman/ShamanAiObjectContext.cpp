@@ -169,6 +169,7 @@ namespace ai
                 creators["totembar spirits"] = [](PlayerbotAI* ai) { return new ShamanTotemBarSpiritsStrategy(ai); };
                 creators["totem water cleansing"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water cleansing", "water totem", "disease cleansing totem"); };
                 creators["totem water resistance"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water resistance", "water totem", "fire resistance totem"); };
+                creators["totem water frost resistance"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water frost resistance", "water totem", "frost resistance totem"); };
                 creators["totem water healing"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water healing", "water totem", "healing stream totem"); };
                 creators["totem water mana"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water mana", "water totem", "mana spring totem"); };
                 creators["totem water poison"] = [](PlayerbotAI* ai) { return new ShamanManualTotemStrategy(ai, "totem water poison", "water totem", "poison cleansing totem"); };

@@ -137,6 +137,30 @@ namespace
             // has parked the party at him — and the hook it drives only writes his
             // faction, which is meaningless from afar anyway.
             {209, 3},
+            // Zul'Gurub (309) Mandokir prerequisite: ZgMandokirSpeakerAlive
+            // returns false until the tank is within 80yd of Mandokir's anchor
+            // at the top of the stairs, so the Vilebranch Speaker kill
+            // (KillCreatureEngage) can neither arm nor complete from the
+            // instance entrance. Repeatable besides, and it reads false the
+            // moment the Speaker dies, so a completed step latches nothing.
+            {309, 2},
+            // Molten Core (409) Core Hound pack clears (events 1-5): each
+            // McPackWindowX predicate requires the tank within 70yd of the
+            // pack's own centre AND Lucifron at least 80yd away from it, so
+            // the ClearRadius can neither arm nor complete from the instance
+            // entrance. Repeatable besides, and the condition reads false the
+            // moment the pack is down.
+            {409, 1},
+            {409, 2},
+            {409, 3},
+            {409, 4},
+            {409, 5},
+            // Molten Core (409) "clear the two packs before Lucifron" hold
+            // (event 16): McLucifronClearFirst requires the tank within 60yd of
+            // Lucifron's home AND a live hound near one of the two pre-Lucifron
+            // packs AND neither pack's patrol window open, so the Wait can
+            // never arm from the instance entrance. Repeatable besides.
+            {409, 16},
             // Black Morass "Close the time rift": BmWaveHostilesActive requires the
             // leader within 250yd of the arena centroid AND (an open Time Rift or
             // a live wave hostile) within a 250yd grid scan OF THE BOT. Its lone
@@ -152,8 +176,7 @@ namespace
             // has parked the party at him — and the hook it drives only fires his
             // intro DoAction, which is meaningless from afar anyway (the Zum'rah
             // pattern verbatim).
-            {540, 5},
-            // Underbog "Send Ghaz'an up to his platform": deliberately map-wide,
+            {540, 5},            // Underbog "Send Ghaz'an up to his platform": deliberately map-wide,
             // and the one case where near-gating would be WRONG. Its hook fires
             // the same DoAction areatrigger 4302 fires, and path 1383921 opens by
             // swimming AWAY into deeper water — so he has to be sent up BEFORE he

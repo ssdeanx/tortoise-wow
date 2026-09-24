@@ -56,6 +56,9 @@
 #include "generic/BlackwingLairDungeonStrategies.h"
 #include "generic/KarazhanDungeonStrategies.h"
 #include "generic/NaxxramasDungeonStrategies.h"
+#include "generic/RuinsOfAhnQirajDungeonStrategies.h"
+#include "generic/TempleOfAhnQirajDungeonStrategies.h"
+#include "generic/ZulGurubDungeonStrategies.h"
 
 namespace ai
 {
@@ -170,6 +173,9 @@ namespace ai
             creators["blackwing lair"] = [](PlayerbotAI* ai) { return new BlackwingLairDungeonStrategy(ai); };
             creators["karazhan"] = [](PlayerbotAI* ai) { return new KarazhanDungeonStrategy(ai); };
             creators["naxxramas"] = [](PlayerbotAI* ai) { return new NaxxramasDungeonStrategy(ai); };
+            creators["ruins of ahnqiraj"] = [](PlayerbotAI* ai) { return new RuinsOfAhnQirajDungeonStrategy(ai); };
+            creators["temple of ahnqiraj"] = [](PlayerbotAI* ai) { return new TempleOfAhnQirajDungeonStrategy(ai); };
+            creators["zul'gurub"] = [](PlayerbotAI* ai) { return new ZulGurubDungeonStrategy(ai); };
 
             // Dungeon Boss Strategies
             creators["onyxia"] = [](PlayerbotAI* ai) { return new OnyxiaFightStrategy(ai); };
@@ -191,6 +197,38 @@ namespace ai
             creators["thaddius"] = [](PlayerbotAI* ai) { return new ThaddiusFightStrategy(ai); };
             creators["sapphiron"] = [](PlayerbotAI* ai) { return new SapphironFightStrategy(ai); };
             creators["kelthuzad"] = [](PlayerbotAI* ai) { return new KelThuzadFightStrategy(ai); };
+            creators["gothik"] = [](PlayerbotAI* ai) { return new GothikFightStrategy(ai); };
+            creators["razuvious"] = [](PlayerbotAI* ai) { return new RazuviousFightStrategy(ai); };
+            creators["patchwerk"] = [](PlayerbotAI* ai) { return new PatchwerkFightStrategy(ai); };
+
+            // Ruins of Ahn'Qiraj boss fight strategies
+            creators["kurinnaxx"] = [](PlayerbotAI* ai) { return new KurinnaxxFightStrategy(ai); };
+            creators["rajaxx"] = [](PlayerbotAI* ai) { return new RajaxxFightStrategy(ai); };
+            creators["buru"] = [](PlayerbotAI* ai) { return new BuruFightStrategy(ai); };
+            creators["moam"] = [](PlayerbotAI* ai) { return new MoamFightStrategy(ai); };
+            creators["ayamiss"] = [](PlayerbotAI* ai) { return new AyamissFightStrategy(ai); };
+            creators["ossirian"] = [](PlayerbotAI* ai) { return new OssirianFightStrategy(ai); };
+
+            // Temple of Ahn'Qiraj boss fight strategies
+            creators["skeram"] = [](PlayerbotAI* ai) { return new SkeramFightStrategy(ai); };
+            creators["bug trio"] = [](PlayerbotAI* ai) { return new BugTrioFightStrategy(ai); };
+            creators["sartura"] = [](PlayerbotAI* ai) { return new SarturaFightStrategy(ai); };
+            creators["fankriss"] = [](PlayerbotAI* ai) { return new FankrissFightStrategy(ai); };
+            creators["viscidus"] = [](PlayerbotAI* ai) { return new ViscidusFightStrategy(ai); };
+            creators["huhuran"] = [](PlayerbotAI* ai) { return new HuhuranFightStrategy(ai); };
+            creators["twins"] = [](PlayerbotAI* ai) { return new TwinsFightStrategy(ai); };
+            creators["ouro"] = [](PlayerbotAI* ai) { return new OuroFightStrategy(ai); };
+            creators["cthun"] = [](PlayerbotAI* ai) { return new CthunFightStrategy(ai); };
+
+            // Zul'Gurub boss fight strategies
+            creators["jeklik"] = [](PlayerbotAI* ai) { return new JeklikFightStrategy(ai); };
+            creators["venoxis"] = [](PlayerbotAI* ai) { return new VenoxisFightStrategy(ai); };
+            creators["marli"] = [](PlayerbotAI* ai) { return new MarliFightStrategy(ai); };
+            creators["mandokir"] = [](PlayerbotAI* ai) { return new MandokirFightStrategy(ai); };
+            creators["thekal"] = [](PlayerbotAI* ai) { return new ThekalFightStrategy(ai); };
+            creators["arlokk"] = [](PlayerbotAI* ai) { return new ArlokkFightStrategy(ai); };
+            creators["jindo"] = [](PlayerbotAI* ai) { return new JindoFightStrategy(ai); };
+            creators["hakkar"] = [](PlayerbotAI* ai) { return new HakkarFightStrategy(ai); };
 
             // Blackwing Lair boss fight strategies
             creators["razorgore"] = [](PlayerbotAI* ai) { return new RazorgoreFightStrategy(ai); };
@@ -211,6 +249,9 @@ namespace ai
             creators["sulfuron"] = [](PlayerbotAI* ai) { return new SulfuronFightStrategy(ai); };
             creators["domo"] = [](PlayerbotAI* ai) { return new DomoFightStrategy(ai); };
             creators["ragnaros"] = [](PlayerbotAI* ai) { return new RagnarosFightStrategy(ai); };
+            creators["twin golem"] = [](PlayerbotAI* ai) { return new TwinGolemFightStrategy(ai); };
+            creators["thaurissan"] = [](PlayerbotAI* ai) { return new ThaurissanFightStrategy(ai); };
+            creators["incindis"] = [](PlayerbotAI* ai) { return new IncindisFightStrategy(ai); };
 
 #ifdef GenerateBotTests
             creators["test"] = [](PlayerbotAI* ai) { return new TestStrategy(ai); };

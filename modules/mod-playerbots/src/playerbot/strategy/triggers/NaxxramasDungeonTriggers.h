@@ -1,6 +1,10 @@
 #pragma once
 #include "DungeonTriggers.h"
 #include "GenericTriggers.h"
+#include "Group/Group.h"
+
+#include <algorithm>
+#include <vector>
 
 namespace ai
 {
@@ -295,5 +299,181 @@ namespace ai
         KelThuzadManaDetonationTrigger(PlayerbotAI* ai) : Trigger(ai, "kelthuzad mana detonation", 1) {}
 
         bool IsActive() override { return ai->HasAura(27819, bot); }
+    };
+
+    // Kel'Thuzad: Shadow Fissure (27810 summons 16129, script mob_shadow_fissure)
+    // explodes with Void Blast (27812) - walk out of it.
+    class KelThuzadShadowFissureTrigger : public CloseToCreatureHazardTrigger
+    {
+    public:
+        KelThuzadShadowFissureTrigger(PlayerbotAI* ai) : CloseToCreatureHazardTrigger(ai, "kelthuzad shadow fissure", 16129, 10.0f, 30) {}
+    };
+
+    // Kel'Thuzad: Chains of Kel'Thuzad (28410, AOE_CHARM) mind-controls up to
+    // five players - they are CC'd, not killed (same handling as Skeram).
+    class KelThuzadChainedPlayerTrigger : public MindControlledAllyTrigger
+    {
+    public:
+        KelThuzadChainedPlayerTrigger(PlayerbotAI* ai) : MindControlledAllyTrigger(ai, "chained player", 28410) {}
+    };
+
+    // Sapphiron (15989): Frost Breath (28524, 7 s cast; 30101 dummy telegraphs
+    // it 0.5 s earlier) - break LoS behind an Ice Block (GO 181247).
+    class SapphironFrostBreathTrigger : public Trigger
+    {
+    public:
+        SapphironFrostBreathTrigger(PlayerbotAI* ai) : Trigger(ai, "sapphiron frost breath", 1) {}
+
+        bool IsActive() override
+        {
+            Unit* boss = GetRaidTargetByEntry(ai, 15989);
+            return boss && boss->IsInCombat() &&
+                (boss->FindCurrentSpellBySpellId(28524) != nullptr || boss->FindCurrentSpellBySpellId(30101) != nullptr);
+        }
+    };
+
+    // Gothik (16060): the encounter demands at least 10 living players on each
+    // side of the combat gate before the waves start (HasLessPlayersPerSide).
+    // Half the raid is assigned to each side deterministically by GUID; each
+    // bot walks to its side post while it has no combat target (speech phase /
+    // between waves). Side 0 = right (dead side, y <= gate), 1 = left (live).
+    inline int GothikSideIndex(PlayerbotAI* ai)
+    {
+        Player* bot = ai->GetBot();
+        Group* group = bot->GetGroup();
+        if (!group)
+            return -1;
+
+        std::vector<ObjectGuid> members;
+        Group::MemberSlotList const& slots = group->GetMemberSlots();
+        for (Group::member_citerator itr = slots.begin(); itr != slots.end(); itr++)
+        {
+            Unit* unit = ai->GetUnit(itr->guid);
+            if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
+                continue;
+
+            Player* member = (Player*)unit;
+            if (!member->IsAlive() || !member->IsInWorld() || member->IsBeingTeleported())
+                continue;
+
+            members.push_back(itr->guid);
+        }
+
+        std::sort(members.begin(), members.end());
+
+        const size_t half = members.size() / 2;
+        for (size_t i = 0; i < members.size(); i++)
+        {
+            if (members[i] == bot->GetObjectGuid())
+                return i < half ? 0 : 1;
+        }
+
+        return -1;
+    }
+
+    class GothikStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        GothikStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start gothik fight", "gothik", 16060) {}
+    };
+
+    class GothikEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        GothikEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end gothik fight", "gothik", 16060) {}
+    };
+
+    class GothikSplitTrigger : public Trigger
+    {
+    public:
+        GothikSplitTrigger(PlayerbotAI* ai) : Trigger(ai, "gothik split", 2) {}
+
+        bool IsActive() override
+        {
+            if (GothikSideIndex(ai) < 0)
+                return false;
+
+            // Only while idle - never pull a bot off a wave add.
+            return AI_VALUE(Unit*, "current target") == nullptr;
+        }
+    };
+
+    // Instructor Razuvious (16061): his Deathknight Understudies (16803,
+    // humanoid) are mind-controlled by a priest and use the understudy's
+    // Shield Wall (29061) + Taunt (29060) to tank him. Mind Exhaustion (29051)
+    // blocks the next mind control for a while.
+    inline Unit* FindRazuviousUnderstudy(PlayerbotAI* ai)
+    {
+        Player* bot = ai->GetBot();
+        AiObjectContext* context = ai->GetAiObjectContext();
+        for (const ObjectGuid& guid : AI_VALUE(std::list<ObjectGuid>, "possible attack targets"))
+        {
+            Creature* understudy = ai->GetCreature(guid);
+            if (understudy && understudy->IsAlive() && understudy->GetEntry() == 16803 &&
+                !understudy->HasAura(29051) && understudy->GetDistance(bot) <= 30.0f)
+                return understudy;
+        }
+
+        return nullptr;
+    }
+
+    class RazuviousStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        RazuviousStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start razuvious fight", "razuvious", 16061) {}
+    };
+
+    class RazuviousEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        RazuviousEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end razuvious fight", "razuvious", 16061) {}
+    };
+
+    class RazuviousMindControlTrigger : public Trigger
+    {
+    public:
+        RazuviousMindControlTrigger(PlayerbotAI* ai) : Trigger(ai, "razuvious mind control", 2) {}
+
+        bool IsActive() override
+        {
+            if (bot->getClass() != CLASS_PRIEST || bot->GetCharm())
+                return false;
+
+            Unit* boss = GetRaidTargetByEntry(ai, 16061);
+            if (!boss || !boss->IsInCombat())
+                return false;
+
+            return FindRazuviousUnderstudy(ai) != nullptr;
+        }
+    };
+
+    class UnderstudyTauntTrigger : public Trigger
+    {
+    public:
+        UnderstudyTauntTrigger(PlayerbotAI* ai) : Trigger(ai, "understudy taunt", 1) {}
+
+        bool IsActive() override
+        {
+            Unit* charm = bot->GetCharm();
+            if (!charm || charm->GetEntry() != 16803)
+                return false;
+
+            Unit* boss = GetRaidTargetByEntry(ai, 16061);
+            return boss && boss->IsInCombat();
+        }
+    };
+
+    // Patchwerk (16028): pure tank'n'spank - the strategy only carries the
+    // consumable lifecycle and validation, no special triggers.
+    class PatchwerkStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        PatchwerkStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start patchwerk fight", "patchwerk", 16028) {}
+    };
+
+    class PatchwerkEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        PatchwerkEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end patchwerk fight", "patchwerk", 16028) {}
     };
 }

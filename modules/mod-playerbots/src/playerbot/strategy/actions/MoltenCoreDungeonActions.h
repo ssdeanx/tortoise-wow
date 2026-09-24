@@ -151,6 +151,53 @@ namespace ai
         RagnarosDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable ragnaros fight strategy", "-ragnaros") {}
     };
 
+    // Thaurissan's runes (52725 Detonation / 52726 Combustion) are self-centred
+    // enemy AoEs: TARGET_LOCATION_CASTER_SRC + ENEMY_AOE_AT_SRC_LOC, radius
+    // index 12 = 18yd around HIM (not a marked-player debuff). The reaction is
+    // to step out of that radius, exactly like the Geddon inferno pattern.
+    class MoveAwayFromThaurissanAction : public MoveAwayFromCreature
+    {
+    public:
+        MoveAwayFromThaurissanAction(PlayerbotAI* ai) : MoveAwayFromCreature(ai, "move away from thaurissan", 57642, 20.0f) {}
+    };
+
+    // Turtle's custom MC bosses (raid plan Phase 13).
+    class TwinGolemEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        TwinGolemEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable twin golem fight strategy", "+twin golem") {}
+    };
+
+    class TwinGolemDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        TwinGolemDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable twin golem fight strategy", "-twin golem") {}
+    };
+
+    class ThaurissanEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        ThaurissanEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable thaurissan fight strategy", "+thaurissan") {}
+    };
+
+    class ThaurissanDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        ThaurissanDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable thaurissan fight strategy", "-thaurissan") {}
+    };
+
+    class IncindisEnableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        IncindisEnableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "enable incindis fight strategy", "+incindis") {}
+    };
+
+    class IncindisDisableFightStrategyAction : public ChangeAllStrategyAction
+    {
+    public:
+        IncindisDisableFightStrategyAction(PlayerbotAI* ai) : ChangeAllStrategyAction(ai, "disable incindis fight strategy", "-incindis") {}
+    };
+
     // Baron Geddon (12056): run out of Armageddon blast radius / Inferno channel.
     class MoveAwayFromGeddonAction : public MoveAwayFromCreature
     {

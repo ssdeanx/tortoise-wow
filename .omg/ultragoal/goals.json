@@ -1,26 +1,26 @@
 [
   {
     "id": "goal-1",
-    "description": "Project Analysis, 30s Storyboard & Script Pacing Design",
+    "description": "Comparative Analysis of .bot group size=5 across origin, f776c7a, and 77e6937, detailing code paths and aiplayerbot.conf options",
     "status": "completed",
-    "verification_criteria": "Accurate technical summary of installation and features; complete second-by-second 30s storyboard approved with visual direction."
+    "verification_criteria": "Comprehensive architectural diff identifying exact line numbers, account resolution mechanics, and behavioral discrepancies between versions."
   },
   {
     "id": "goal-2",
-    "description": "Visual Asset Generation & Motion Graphics Engine Setup",
+    "description": "Raid Assembly & 10-Character Account Limit Investigation (Client SMSG_CHAR_ENUM, Server CharactersPerRealm, and Multi-Account Alt Bots)",
     "status": "completed",
-    "verification_criteria": "Branding art, graphical badges, high-res terminal frames, and automated Python/PIL/ffmpeg rendering pipeline initialized."
+    "verification_criteria": "Full diagnostic explanation of 'Account has max characters', why client/server limits exist, and how to operate 10/20/40 raids with personal characters."
   },
   {
     "id": "goal-3",
-    "description": "Scene Animation & Kinetic Motion Composition",
+    "description": "Engine Enhancement: Configurable .bot group recruitment vs generation behavior in aiplayerbot.conf",
     "status": "completed",
-    "verification_criteria": "All 4 scenes synthesized with smooth 60fps transitions, particle/glow effects, and synchronized on-screen text."
+    "verification_criteria": "Configurable engine logic in PlayerbotMgr/PlayerbotAIConfig with compile validation ensuring players can select desired group-creation semantics."
   },
   {
     "id": "goal-4",
-    "description": "Full Video Rendering, Multi-Format Polish & Final Delivery",
+    "description": "Documentation, Build Verification & Operations Guide for Personal Raid Rosters",
     "status": "completed",
-    "verification_criteria": "Render broadcast-ready 1080p60 MP4 (30.00s duration), verify frame playback, and package video artifact with documentation."
+    "verification_criteria": "Clean Release build validation and verified operational commands for multi-account alt raid formation and .bot group usage."
   }
 ]

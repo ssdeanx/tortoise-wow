@@ -46,6 +46,23 @@ void MoltenCoreDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& trig
     triggers.push_back(new TriggerNode(
         "start ragnaros fight",
         NextAction::array(0, new NextAction("enable ragnaros fight strategy", 100.0f), NULL)));
+
+    // Turtle's custom MC bosses (Phase 13).
+    triggers.push_back(new TriggerNode(
+        "start twin golem fight",
+        NextAction::array(0, new NextAction("enable twin golem fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start twin golem fight 2",
+        NextAction::array(0, new NextAction("enable twin golem fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start thaurissan fight",
+        NextAction::array(0, new NextAction("enable thaurissan fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start incindis fight",
+        NextAction::array(0, new NextAction("enable incindis fight strategy", 100.0f), NULL)));
 }
 
 void MoltenCoreDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -140,9 +157,17 @@ void LucifronFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
 {
     Player* bot = ai->GetBot();
 
+    // Owner's kill order: the offtank picks up ONE Flamewaker Protector while
+    // the other is CC'd (the mage sheep rides the generic `cc target` +
+    // polymorph machinery, or a human RTI-CC mark), then the picked-up one
+    // dies, then the CC'd one, then Lucifron - he reportedly gains a buff per
+    // Protector death (NOT found in tw_world data; verify live). Protectors
+    // also cast Dominate Mind 20740 (CC the mind-controlled ally via the
+    // existing CcMindControlledAllyAction) and Cleave 20677.
     triggers.push_back(new TriggerNode(
         "attackers entry::12119",
-        NextAction::array(0, new NextAction("attack entry::12119", 60.0f), NULL)));
+        NextAction::array(0, new NextAction("offtank entry::12119", 65.0f),
+                             new NextAction("attack entry::12119", 60.0f), NULL)));
 
     if (bot->getClass() == CLASS_PALADIN && IsGroupResistDropper(ai, bot))
     {
@@ -180,9 +205,14 @@ void GehennasFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
 {
     Player* bot = ai->GetBot();
 
+    // The 2 Flamewaker adds (11661) are the threat: tanked APART (offtank
+    // pickup, tanks only) and DPS-bursted down. Fist of Ragnaros 20277 stuns
+    // the tank; Rain of Fire 19717 is a 32s ground DoT the generic
+    // "has area debuff" avoidance already steps bots out of.
     triggers.push_back(new TriggerNode(
         "attackers entry::11661",
-        NextAction::array(0, new NextAction("attack entry::11661", 60.0f), NULL)));
+        NextAction::array(0, new NextAction("offtank entry::11661", 65.0f),
+                             new NextAction("attack entry::11661", 60.0f), NULL)));
 
     if (bot->getClass() == CLASS_PALADIN && IsGroupResistDropper(ai, bot))
     {
@@ -218,9 +248,17 @@ void GehennasFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
 
 void GarrFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
+    // All 8 Firesworn (12099) are tanked and kept SEPARATED (offtank pickup,
+    // tanks only) and killed ONE at a time - each death fires Eruption 19497
+    // (~3500 AoE) and stacks Garr's Enrage 19516. Never drag one >45yd from
+    // Garr (Separation Anxiety 23492). AoE is locked out in OnStrategyAdded.
+    // The warlock's banish (the generic "banish" on the cc target) is the
+    // control that works: mob_fireswornAI/mob_garr's forced Massive Eruption
+    // 20483 SKIPS banished adds (the on-death Eruption still fires).
     triggers.push_back(new TriggerNode(
         "attackers entry::12099",
-        NextAction::array(0, new NextAction("attack entry::12099", 55.0f), NULL)));
+        NextAction::array(0, new NextAction("offtank entry::12099", 65.0f),
+                             new NextAction("attack entry::12099", 55.0f), NULL)));
 }
 
 void GarrFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -329,9 +367,17 @@ void ShazzrahFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
 
 void SulfuronFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
+    // The 4 Flamewaker Priests (11662) heal Sulfuron with Dark Mending 19775
+    // (~27.7k): tanks pull them OUT of his line of sight (offtank pickup) and
+    // the raid kills them; the class rotations' "on enemy healer" interrupts
+    // (mage counterspell / warrior pummel / shaman wind shear / hunter
+    // silencing shot / druid bash) cover Dark Mending. Sulfuron himself buffs
+    // self + allies with Inspire 19779 and uses Dark Strike / Knockdown on the
+    // tank.
     triggers.push_back(new TriggerNode(
         "attackers entry::11662",
-        NextAction::array(0, new NextAction("attack entry::11662", 60.0f), NULL)));
+        NextAction::array(0, new NextAction("offtank entry::11662", 65.0f),
+                             new NextAction("attack entry::11662", 60.0f), NULL)));
 }
 
 void SulfuronFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -457,4 +503,155 @@ void RagnarosFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "end ragnaros fight",
         NextAction::array(0, new NextAction("disable ragnaros fight strategy", 100.0f), NULL)));
+}
+
+// ---------------------------------------------------------------------------
+// Turtle's custom MC bosses (raid plan Phase 13) -----------------------------
+// Mechanics verified in tw_world (creature_template / creature_spells /
+// creature_movement) and src/scripts/dungeons/molten_core/.
+// ---------------------------------------------------------------------------
+
+// Twin Golems: Basalthar 65020 + Smoldaris 65021 (boss_twin_golem.cpp).
+// Aggro links both; damage to one mirrors the same PERCENT to the other;
+// heals mirror; killing one kills the twin. ~1.0M HP each, melee 2.0-3.1k.
+void TwinGolemFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    Player* bot = ai->GetBot();
+
+    // Split tanks: the offtank holds Smoldaris (tanks only) while the raid
+    // burns Basalthar. DPS must NOT split - the % mirror kills the twin when
+    // one dies, so splitting only slows the kill.
+    triggers.push_back(new TriggerNode(
+        "attackers entry::65021",
+        NextAction::array(0, new NextAction("offtank entry::65021", 70.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::65020",
+        NextAction::array(0, new NextAction("attack entry::65020", 60.0f), NULL)));
+
+    if (bot->getClass() == CLASS_PALADIN && IsGroupResistDropper(ai, bot))
+    {
+        triggers.push_back(new TriggerNode(
+            "fire resistance aura",
+            NextAction::array(0, new NextAction("fire resistance aura", 10.0f), NULL)));
+    }
+
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 90.0f), NULL)));
+}
+
+void TwinGolemFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end twin golem fight",
+        NextAction::array(0, new NextAction("disable twin golem fight strategy", 100.0f), NULL)));
+}
+
+void TwinGolemFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end twin golem fight",
+        NextAction::array(0, new NextAction("disable twin golem fight strategy", 100.0f), NULL)));
+}
+
+// Sorcerer-Thane Thaurissan 57642 (boss_thane.cpp). 1.2M HP, melee 2.0-2.7k.
+// Arcane Rupture 52722 on the tank (6s), Arcane Barrage 52723 on a random
+// target (16s), Rune of Power 52724/52729 (self dynamic-object buff, re-cast
+// at 5s and 75/50/25% HP), Mirror Image 52727 at 50% -> Image of Thane 57643,
+// and alternating Rune of Detonation 52725 (1149/tick) / Rune of Combustion
+// 52726 (4499/tick) every 20s WITH RAID WARNINGS.
+void ThaurissanFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Rune of Detonation 52725 / Combustion 52726: an 18yd enemy AoE at
+    // THAURISSAN's location (TARGET_LOCATION_CASTER_SRC + ENEMY_AOE_AT_SRC_LOC,
+    // radius index 12 = 18yd) - everyone inside steps out (Combustion ticks
+    // 4499, lethal to non-tanks). Also in the reaction set so it runs in every
+    // combat state.
+    triggers.push_back(new TriggerNode(
+        "thaurissan rune debuff",
+        NextAction::array(0, new NextAction("move away from thaurissan", 100.0f), NULL)));
+
+    // Mirror Image: offtank the Image and burn it down.
+    triggers.push_back(new TriggerNode(
+        "attackers entry::57643",
+        NextAction::array(0, new NextAction("offtank entry::57643", 65.0f),
+                             new NextAction("attack entry::57643", 62.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::57642",
+        NextAction::array(0, new NextAction("attack entry::57642", 55.0f), NULL)));
+}
+
+void ThaurissanFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end thaurissan fight",
+        NextAction::array(0, new NextAction("disable thaurissan fight strategy", 100.0f), NULL)));
+}
+
+void ThaurissanFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end thaurissan fight",
+        NextAction::array(0, new NextAction("disable thaurissan fight strategy", 100.0f), NULL)));
+}
+
+void ThaurissanFightStrategy::InitReactionTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Rune of Detonation / Combustion: an 18yd enemy AoE centred on Thaurissan
+    // - step out of his radius (see the combat-trigger comment).
+    triggers.push_back(new TriggerNode(
+        "thaurissan rune debuff",
+        NextAction::array(0, new NextAction("move away from thaurissan", 100.0f), NULL)));
+}
+
+// Incindis 52145 (boss_incindis.cpp). 988k HP, melee 2.5-3.4k. Molten Bite
+// 42040 on the tank (applies Molten Armor 42039), Quaking Stomp 42036 then
+// Fire Nova 42037 one second later, and at 50% HP spawns 1 large + 2 small
+// Incendic Eggs (52147/52146) that hatch into 52149/52148 adds.
+void IncindisFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    Player* bot = ai->GetBot();
+
+    // The hatched adds are the mid-fight threat: pick them up and kill them,
+    // then back to the boss.
+    triggers.push_back(new TriggerNode(
+        "attackers entry::52148",
+        NextAction::array(0, new NextAction("offtank entry::52148", 65.0f),
+                             new NextAction("attack entry::52148", 60.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::52149",
+        NextAction::array(0, new NextAction("offtank entry::52149", 64.0f),
+                             new NextAction("attack entry::52149", 59.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::52145",
+        NextAction::array(0, new NextAction("attack entry::52145", 55.0f), NULL)));
+
+    if (bot->getClass() == CLASS_PALADIN && IsGroupResistDropper(ai, bot))
+    {
+        triggers.push_back(new TriggerNode(
+            "fire resistance aura",
+            NextAction::array(0, new NextAction("fire resistance aura", 10.0f), NULL)));
+    }
+
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 90.0f), NULL)));
+}
+
+void IncindisFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end incindis fight",
+        NextAction::array(0, new NextAction("disable incindis fight strategy", 100.0f), NULL)));
+}
+
+void IncindisFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end incindis fight",
+        NextAction::array(0, new NextAction("disable incindis fight strategy", 100.0f), NULL)));
 }

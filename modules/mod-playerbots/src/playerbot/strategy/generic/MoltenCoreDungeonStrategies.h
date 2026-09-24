@@ -221,4 +221,49 @@ namespace ai
         void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
     };
+
+    // --- Turtle's custom MC bosses (raid plan Phase 13) ----------------------
+    // Twin Golems (Basalthar 65020 + Smoldaris 65021): shared damage mirror +
+    // linked death. Split tanks; the raid burns ONE target - the % mirror
+    // kills the other, so splitting DPS only slows the kill.
+    class TwinGolemFightStrategy : public MoltenCoreFightStrategy
+    {
+    public:
+        TwinGolemFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai) {}
+        std::string getName() override { return "twin golem"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
+    // Sorcerer-Thane Thaurissan (57642): marked runes run out, Mirror Image at
+    // 50% (Image of Thane 57643), Arcane Rupture on the tank.
+    class ThaurissanFightStrategy : public MoltenCoreFightStrategy
+    {
+    public:
+        ThaurissanFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai) {}
+        std::string getName() override { return "thaurissan"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitReactionTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
+    // Incindis (52145): Quaking Stomp -> Fire Nova, and at 50% the Incendic
+    // Eggs hatch into 52148/52149 adds.
+    class IncindisFightStrategy : public MoltenCoreFightStrategy
+    {
+    public:
+        IncindisFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai) {}
+        std::string getName() override { return "incindis"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
 }

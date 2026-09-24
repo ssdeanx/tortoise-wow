@@ -260,6 +260,45 @@ namespace ai
         bool IsActive() override;
     };
 
+    // True while a mind-controlled ally is nearby and not yet CC'd. The aura
+    // that marks the control comes from the per-raid subclass: Skeram's True
+    // Fulfillment (785) and Kel'Thuzad's Chains of Kel'Thuzad (28410).
+    class MindControlledAllyTrigger : public Trigger
+    {
+    public:
+        MindControlledAllyTrigger(PlayerbotAI* ai, std::string name, uint32 auraId)
+        : Trigger(ai, name, 2)
+        , auraId(auraId) {}
+
+        bool IsActive() override
+        {
+            for (const ObjectGuid& guid : AI_VALUE(std::list<ObjectGuid>, "attackers"))
+            {
+                Unit* unit = ai->GetUnit(guid);
+                if (!unit || unit->GetTypeId() != TYPEID_PLAYER || !unit->IsAlive() || !unit->IsInWorld())
+                    continue;
+
+                if (!unit->HasAura(auraId))
+                    continue;
+
+                if (unit->HasAuraType(SPELL_AURA_MOD_CONFUSE) ||
+                    unit->HasAuraType(SPELL_AURA_MOD_STUN) ||
+                    unit->HasAuraType(SPELL_AURA_MOD_FEAR))
+                    continue;
+
+                if (unit->GetDistance(bot) > 40.0f)
+                    continue;
+
+                return true;
+            }
+
+            return false;
+        }
+
+    private:
+        uint32 auraId;
+    };
+
     // Protection potions (raid-generic): Greater Fire Protection Potion
     // (13457 -> buff 17543) and Greater Shadow Protection Potion
     // (13459 -> buff 17548). IDs verified against tw_world.item_template /
@@ -274,5 +313,27 @@ namespace ai
     {
     public:
         ShadowProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "shadow protection potion ready", 13459, 17548) {}
+    };
+
+    // Greater Nature Protection Potion (13458 -> 17546), Greater Arcane
+    // Protection Potion (13461 -> 17549) and Greater Frost Protection Potion
+    // (13456 -> 17544) - same pattern as fire/shadow; wired on the fights whose
+    // damage school matches.
+    class NatureProtectionPotionReadyTrigger : public ItemBuffReadyTrigger
+    {
+    public:
+        NatureProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "nature protection potion ready", 13458, 17546) {}
+    };
+
+    class ArcaneProtectionPotionReadyTrigger : public ItemBuffReadyTrigger
+    {
+    public:
+        ArcaneProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "arcane protection potion ready", 13461, 17549) {}
+    };
+
+    class FrostProtectionPotionReadyTrigger : public ItemBuffReadyTrigger
+    {
+    public:
+        FrostProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "frost protection potion ready", 13456, 17544) {}
     };
 }

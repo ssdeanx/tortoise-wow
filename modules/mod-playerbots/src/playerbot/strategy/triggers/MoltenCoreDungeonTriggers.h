@@ -204,6 +204,70 @@ namespace ai
         RagnarosTooCloseTrigger(PlayerbotAI* ai) : CloseToCreatureTrigger(ai, "ragnaros too close", 11502, 25.0f) {}
     };
 
+    // --- Turtle's custom MC bosses (raid plan Phase 13) ----------------------
+    // Twin Golems Basalthar (65020) + Smoldaris (65021): aggro links both,
+    // damage mirrors the same PERCENT to the other, and killing one kills the
+    // twin. ONE strategy for the pair - the script puts both in combat
+    // whenever either is engaged, so a single start/end trigger on Basalthar
+    // covers the encounter.
+    class TwinGolemStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        TwinGolemStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start twin golem fight", "twin golem", 65020) {}
+    };
+
+    // Second copy for Smoldaris: StartBossFightTrigger keys on the bot's OWN
+    // attackers list, so a bot the script linked into the fight but whose
+    // attacker list only holds 65021 would otherwise never enable the strategy.
+    class TwinGolemStartFightTrigger2 : public StartBossFightTrigger
+    {
+    public:
+        TwinGolemStartFightTrigger2(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start twin golem fight 2", "twin golem", 65021) {}
+    };
+
+    class TwinGolemEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        TwinGolemEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end twin golem fight", "twin golem", 65020) {}
+    };
+
+    // Sorcerer-Thane Thaurissan (57642).
+    class ThaurissanStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        ThaurissanStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start thaurissan fight", "thaurissan", 57642) {}
+    };
+
+    class ThaurissanEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        ThaurissanEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end thaurissan fight", "thaurissan", 57642) {}
+    };
+
+    // Rune of Detonation 52725 / Rune of Combustion 52726: a MARKED player must
+    // run out of the raid (the Geddon Living Bomb shape; Combustion ticks
+    // 4499/tick, Detonation 1149/tick).
+    class ThaurissanRuneDebuffTrigger : public Trigger
+    {
+    public:
+        ThaurissanRuneDebuffTrigger(PlayerbotAI* ai) : Trigger(ai, "thaurissan rune debuff", 1) {}
+
+        bool IsActive() override { return ai->HasAura(52725, bot) || ai->HasAura(52726, bot); }
+    };
+
+    // Incindis (52145).
+    class IncindisStartFightTrigger : public StartBossFightTrigger
+    {
+    public:
+        IncindisStartFightTrigger(PlayerbotAI* ai) : StartBossFightTrigger(ai, "start incindis fight", "incindis", 52145) {}
+    };
+
+    class IncindisEndFightTrigger : public EndBossFightTrigger
+    {
+    public:
+        IncindisEndFightTrigger(PlayerbotAI* ai) : EndBossFightTrigger(ai, "end incindis fight", "incindis", 52145) {}
+    };
+
     // Every bot entering MC should carry a douse item for the rune chain; the
     // grant runs only on map 409 and only when neither item is present.
     class MCDouseItemMissingTrigger : public Trigger

@@ -44,6 +44,18 @@ namespace
     // inside the southern edge — the party is out of the box within a step.
     FightInPlaceZone const kZones[] =
     {
+        // Zul'Gurub (309) — High Priest Venoxis' snake temple. boss_venoxis
+        // evades the encounter when HIS z leaves 27..43, i.e. the moment he is
+        // dragged off the temple floor while the room's Razzashi trash
+        // (Serpent 11371, Adder 11372, Cobra 11373, spawns x -12078..-11984 /
+        // y -1752..-1671 / z 39-40) is pulled out through the doorway with him
+        // in tow. Same shape as Selin's room: fight the temple in place. Box
+        // sized off the live spawn data (the room's mobs + Venoxis at
+        // -12029.8, -1707.9, z 39) with a margin that stays on the temple
+        // floor; the entrance corridor and the rest of the wing stay normally
+        // pullable.
+        { 309, -12080.0f, -11980.0f, -1760.0f, -1650.0f },
+
         { 585, 216.0f, 260.0f, -45.0f, 45.0f },  // Magisters' Terrace — Selin Fireheart's room
         { 601, 470.0f, 640.0f, 480.0f, 625.0f }, // Azjol-Nerub — Hadronox's shaft
     };

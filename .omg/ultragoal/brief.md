@@ -1,33 +1,37 @@
-# Ultragoal Brief: Autonomous Group & Raid Controller for Tortoise-WoW (5, 10, 20, 40-Man)
+# Ultragoal Brief: Playerbot Group Sizing, Raid Character Assembly & Account Limit Architecture
 
-## Objective
-Build a unified, end-to-end automation engine (via an Eluna Lua script and command suite) that eliminates the manual grind of typing dozens of macros and whispering individual bots when forming groups and raids (5, 10, 20, and 40-man). The system must:
-1. **Leverage the 5-Volume Master Reference Suite** (`references/01`–`05` and `legacy_22_modules`):
-   - Volume 01: Character progression, instant boost, and instance unbinding.
-   - Volume 02 & Legacy 21: Full playerbot control (`.bot`), chat filter targeting tokens (`/p @tank`, `/p @heal`, etc.), strategy tokens (`co`/`nc`), whisper shortcuts, and 10/20/40-man raid compositions.
-   - Volume 03: Fast group teleports (`.tele group <instance>`), keys, and attunements.
-   - Volume 04: Class specs, BiS gear loadouts, tier sets, enchants, and verified 1.18.1 talent builds.
-   - Volume 05: Eluna Lua engine event hooks (`RegisterPlayerEvent(42, ...)` for custom commands, `RegisterGroupEvent`, `MAP_EVENT_ON_PLAYER_ENTER`, `player:RunCommand`).
-2. **Support LFT (Looking For Turtle) & Custom Group/Raid Formation**:
-   - Work seamlessly whether a group is formed via the native group finder (`LFTBotFill`) or assembled on-demand.
-   - Support dynamic scaling: 5-man dungeon, 10-man (UBRS, Karazhan Crypts), 20-man (ZG, AQ20), and 40-man (MC, BWL, AQ40, Naxx).
-3. **Automate the Tedious Configuration**:
-   - **Automatic Role & Spec Detection**: Detect bot class/spec and assign proper combat roles (`tank`, `heal`, `melee`, `ranged`), combat strategies (`co`), and non-combat behaviors (`nc`).
-   - **1-Click Gearing & Preparation**: Run `.bot gear * best`, `.bot enchants *`, `.bot prep *`, potions, food, and class reagents across the entire raid.
-   - **Instant Full Raid Buffing**: Apply full rank raid buffs (Fortitude, Shadow Protection, Arcane Brilliance, Gift of the Wild, Greater Blessings, Paladin Auras) to all 40 members without waiting 10 minutes for mana.
-   - **Autonomous Dungeon Clear (`.dc`) Integration**: Automatically designate the Main Tank bot, toggle `.dc on`, set pull mode (`.dc pull dynamic`), and coordinate followers when entering an instance.
-4. **Intuitive User Interface**:
-   - Provide clean custom commands (`.raid 10`, `.raid 20`, `.raid 40`, `.raid buff`, `.raid gear`, `.raid start`, `.raid pause`, `.raid reset`).
-   - Optional interactive Gossip Menu / item (Raid Commander Stone) so the player can control the entire raid with single clicks.
+## 1. Executive Summary & Problem Statement
+The user has inquired about three interrelated Playerbot subsystems:
+1. **Behavioral Divergence in `.bot group size=5`**:
+   - How does `.bot group size=5` work now compared to origin / commit `f776c7aa399820600275ea1012611a8ec3bcf1be`?
+   - How can we make it work like it used to, and what role does `run/aiplayerbot.conf` play?
+2. **Raids & Using Own Characters**:
+   - How raid assembly works with bots.
+   - How players can use their own characters in 10-man, 20-man, and 40-man raids.
+   - Why the old way only made 10 characters and why the player's account is now reporting "Account has max characters".
+3. **Character Limits per Account**:
+   - Feasibility, risks, and client/server constraints of increasing max characters per account beyond 10 (`CharactersPerRealm`, `SMSG_CHAR_ENUM`, `CharacterSelect.lua`).
+   - Definitive alternative solutions (Multi-Account Alt Bots via `AiPlayerbot.AllowMultiAccountAltBots`).
 
-## Sequential Execution Pipeline
-1. **Goal 1 (Active)**: Audit and Synthesize Master References for Raid Automation Commands.
-2. **Goal 2**: Develop the Core Eluna Raid Automation Script (`lua_scripts/raid_automation.lua`).
-3. **Goal 3**: Implement Autonomous Dungeon Clear (`.dc`) & Instance Entry Triggers.
-4. **Goal 4**: Implement the In-Game Command Deck (`.raid`) & Gossip UI Controller.
-5. **Goal 5**: Validate Syntax, Verify Server Configuration & Document Usage.
+## 2. Core Technical Findings
+- **Commit `f776c7aa399820600275ea1012611a8ec3bcf1be` / Origin**:
+  - `PlayerbotHolder::HandleGroup` looped `HandleCreate(master, paramStr, security)`.
+  - `CreateBot` delegated account selection to `PlayerbotHolder::GetOrCreateAccount`, returning `master->GetSession()->GetAccountId()`.
+  - Characters were created directly on the player's account.
+  - Guardrail: `if (sAccountMgr.GetCharactersCount(accountId) >= maxCharsPerAccount)` (where `maxCharsPerAccount = 9` in `MANGOSBOT_ZERO`).
+  - Once 10 characters existed on the account (1 player + 9 bots), any further creation failed with `"Account has max characters"`, blocking raid creation beyond 10 and filling the account.
+- **Commit `77e69376` (Current HEAD)**:
+  - `HandleGroup` was rewritten to a 2-phase recruitment system:
+    - Phase 1: Hijacks active online world randombots (`sRandomPlayerbotMgr.GetPlayers()`) matching role and level criteria.
+    - Phase 2: Spawns shortfall bots via `sRandomPlayerbotMgr.HandleCreate(..., login=1 temporary=1)` into the `RNDBOT` pool (`rndbot0`..`rndbot500`), avoiding personal account pollution.
+  - However, players who expected clean, level-scaled, dedicated party bots (or alt bots) find world bots kidnapped or behavior altered with no configuration toggle in `run/aiplayerbot.conf`.
+- **Character Limit Constraints**:
+  - `World.cpp:1133` enforces `setConfigMinMax(CONFIG_UINT32_CHARACTERS_PER_REALM, "CharactersPerRealm", 10, 1, 10)`.
+  - The Vanilla 1.12 / 1.18 client character select screen contains exactly 10 button frames (`CharacterSelectCharacterButton1..10`). Sending >10 in `SMSG_CHAR_ENUM` breaks client glue UI without client mods.
+  - Native architecture solution: `AiPlayerbot.AllowMultiAccountAltBots = 1` lets players create separate alt accounts (`sam1`, `sam2`) and summon whole accounts (`.bot add <account>`) or specific alts into raids without limit.
 
-## Boundaries & Constraints
-- Platform: Turtle-WoW 1.18.1 (Build 7272) on CMaNGOS with `mod-playerbots`, `mod-dungeon-clear`, and `Eluna`.
-- Script Location: `lua_scripts/` (executed live via `.reload eluna`).
-- Zero manual bot micromanagement: All bot targeting and role tuning must be fully automated across all group members.
+## 3. Scope of Work & Constraints
+- Adhere strictly to `RULE[/home/sam/tortoise-wow/AGENTS.md]`:
+  - Preserve core native contracts, generic behaviors, and Turtle compatibility.
+  - Do not run unauthorized server start/stop or database operations outside SOP.
+  - Provide a clean, configurable implementation allowing users to choose how `.bot group` behaves (recruit online vs generate fresh bots on rndbot pool vs alt bots).

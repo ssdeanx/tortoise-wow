@@ -70,6 +70,17 @@ void RegisterStratholmeEvents(std::vector<DungeonEvent>& out);
 void RegisterUldamanEvents(std::vector<DungeonEvent>& out);
 void RegisterScholomanceEvents(std::vector<DungeonEvent>& out);
 void RegisterDireMaulEvents(std::vector<DungeonEvent>& out);
+// Zul'Gurub (map 309): Mar'li's room-aggro pre-clear, the Mandokir /
+// Vilebranch Speaker prerequisite gate, and the Arlokk gong objective +
+// anchored summon/kill event. See ZulGurubEvents.cpp.
+void RegisterZulGurubEvents(std::vector<DungeonEvent>& out);
+void RegisterZulGurubRoster(std::vector<BossRosterPatch>& t);
+// Molten Core (map 409): the 5 Core Hound pack clears (Lucifron patrol
+// window), the 7 rune-chain safety nets, the Majordomo + Ragnaros objectives
+// and the Shadowforge Descent bridge (Thaurissan's navmesh break). See
+// MoltenCoreEvents.cpp.
+void RegisterMoltenCoreEvents(std::vector<DungeonEvent>& out);
+void RegisterMoltenCoreRoster(std::vector<BossRosterPatch>& t);
 // Hellfire Ramparts (map 543) final-approach gate — see HellfireRampartsEvents.cpp
 // for the measurements. Exposed so t/TestRampartsLedgeProbe can assert against the
 // real navmesh that the zone-in platform lies outside the gate; the numbers are

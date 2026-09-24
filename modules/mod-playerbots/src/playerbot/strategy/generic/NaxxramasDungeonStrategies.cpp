@@ -73,6 +73,18 @@ void NaxxramasDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigg
     triggers.push_back(new TriggerNode(
         "start kelthuzad fight",
         NextAction::array(0, new NextAction("enable kelthuzad fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start gothik fight",
+        NextAction::array(0, new NextAction("enable gothik fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start razuvious fight",
+        NextAction::array(0, new NextAction("enable razuvious fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "start patchwerk fight",
+        NextAction::array(0, new NextAction("enable patchwerk fight strategy", 100.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
@@ -383,12 +395,21 @@ void SapphironFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigger
         "sapphiron blizzard",
         NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
 
+    // Frost Breath (28524, 7 s cast): break LoS behind an ice block.
+    triggers.push_back(new TriggerNode(
+        "sapphiron frost breath",
+        NextAction::array(0, new NextAction("hide behind iceblock", 100.0f), NULL)));
+
     if (bot->getClass() == CLASS_PALADIN && IsGroupResistDropper(ai, bot))
     {
         triggers.push_back(new TriggerNode(
             "frost resistance aura",
             NextAction::array(0, new NextAction("frost resistance aura", 10.0f), NULL)));
     }
+
+    triggers.push_back(new TriggerNode(
+        "frost protection potion ready",
+        NextAction::array(0, new NextAction("frost protection potion", 100.0f), NULL)));
 }
 
 void SapphironFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -410,6 +431,10 @@ void SapphironFightStrategy::InitReactionTriggers(std::list<TriggerNode*>& trigg
     triggers.push_back(new TriggerNode(
         "sapphiron blizzard",
         NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "sapphiron frost breath",
+        NextAction::array(0, new NextAction("hide behind iceblock", 100.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +448,21 @@ void KelThuzadFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode(
         "kelthuzad mana detonation",
         NextAction::array(0, new NextAction("move away from raid::20", 100.0f), NULL)));
+
+    // Shadow Fissure (27810) spawns the void zone - walk out of it.
+    triggers.push_back(new TriggerNode(
+        "kelthuzad shadow fissure",
+        NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
+
+    // Chains of Kel'Thuzad (28410): CC the controlled players, do not kill them.
+    triggers.push_back(new TriggerNode(
+        "chained player",
+        NextAction::array(0, new NextAction("cc chained player", 95.0f), NULL)));
+
+    // Frostbolt / Frost Blast are frost.
+    triggers.push_back(new TriggerNode(
+        "frost protection potion ready",
+        NextAction::array(0, new NextAction("frost protection potion", 100.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
         "attackers entry::16428",
@@ -456,6 +496,14 @@ void KelThuzadFightStrategy::InitReactionTriggers(std::list<TriggerNode*>& trigg
     triggers.push_back(new TriggerNode(
         "kelthuzad mana detonation",
         NextAction::array(0, new NextAction("move away from raid::20", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "kelthuzad shadow fissure",
+        NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "chained player",
+        NextAction::array(0, new NextAction("cc chained player", 95.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
@@ -482,4 +530,120 @@ void FourHorsemanFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& trigge
     triggers.push_back(new TriggerNode(
         "end four horseman fight",
         NextAction::array(0, new NextAction("disable four horseman fight strategy", 100.0f), NULL)));
+}
+
+// ---------------------------------------------------------------------------
+// Gothik the Harvester (16060): the encounter requires >= 10 living players on
+// each side of the combat gate before the 18 add waves start (the instance's
+// HasLessPlayersPerSide check). Half the raid holds each side (GothikSideIndex,
+// deterministic by GUID) and walks to its post only while idle. Wave adds:
+// Unrelenting Trainee/Death Knight/Rider (16124/16125/16126) and Spectral
+// Trainee/Death Knight/Rider/Horse (16127/16148/16150/16149). Once Gothik
+// teleports down at the end of the waves he is the default assist target.
+// ---------------------------------------------------------------------------
+
+void GothikFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "gothik split",
+        NextAction::array(0, new NextAction("move to gothik post", 5.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16124",
+        NextAction::array(0, new NextAction("attack entry::16124,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16125",
+        NextAction::array(0, new NextAction("attack entry::16125,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16126",
+        NextAction::array(0, new NextAction("attack entry::16126,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16127",
+        NextAction::array(0, new NextAction("attack entry::16127,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16148",
+        NextAction::array(0, new NextAction("attack entry::16148,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16150",
+        NextAction::array(0, new NextAction("attack entry::16150,60", 55.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "attackers entry::16149",
+        NextAction::array(0, new NextAction("attack entry::16149,60", 55.0f), NULL)));
+}
+
+void GothikFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end gothik fight",
+        NextAction::array(0, new NextAction("disable gothik fight strategy", 100.0f), NULL)));
+}
+
+void GothikFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end gothik fight",
+        NextAction::array(0, new NextAction("disable gothik fight strategy", 100.0f), NULL)));
+}
+
+// ---------------------------------------------------------------------------
+// Instructor Razuvious (16061): a priest mind-controls a Deathknight Understudy
+// (16803, humanoid) which SHIELD WALLS FIRST (29061) and then Taunts (29060)
+// him. Two priests alternate as Mind Exhaustion (29051) locks a released
+// understudy out. Fallback without a priest: tank and heal through Unbalancing
+// Strike (26613) / Disrupting Shout (29107).
+// ---------------------------------------------------------------------------
+
+void RazuviousFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "razuvious mind control",
+        NextAction::array(0, new NextAction("mind control understudy", 95.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "understudy taunt",
+        NextAction::array(0, new NextAction("understudy taunt", 98.0f), NULL)));
+}
+
+void RazuviousFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end razuvious fight",
+        NextAction::array(0, new NextAction("disable razuvious fight strategy", 100.0f), NULL)));
+}
+
+void RazuviousFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end razuvious fight",
+        NextAction::array(0, new NextAction("disable razuvious fight strategy", 100.0f), NULL)));
+}
+
+// ---------------------------------------------------------------------------
+// Patchwerk (16028): pure tank'n'spank - no tactics. The strategy exists for
+// the consumable lifecycle and as a validation marker (Hateful Strike tanking,
+// healer throughput, hard enrage).
+// ---------------------------------------------------------------------------
+
+void PatchwerkFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+}
+
+void PatchwerkFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end patchwerk fight",
+        NextAction::array(0, new NextAction("disable patchwerk fight strategy", 100.0f), NULL)));
+}
+
+void PatchwerkFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end patchwerk fight",
+        NextAction::array(0, new NextAction("disable patchwerk fight strategy", 100.0f), NULL)));
 }

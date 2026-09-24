@@ -60,6 +60,30 @@ namespace
         { 289, 10432, 55.0f, { 10475 } }, // Scholomance — Vectus (tracked boss)
         { 289, 10433, 55.0f, { 10475 } }, // Scholomance — Marduk Blackpool (partner)
 
+        // Zul'Gurub (309) — High Priestess Jeklik (the FIRST boss). Her cave's
+        // trash is not script-force-pulled, but the room is pre-cleared before
+        // the engage per the server owner (the first boss's room has to be
+        // clear), so the bat terrace below is not dragged into her pull.
+        // Radius 120 covers her cave plus the bat-rider/witch-doctor landing
+        // ~110yd south; the whitelist is the terrace's mobs: Bloodseeker Bat
+        // 11368, Gurubashi Bat Rider 14750, Hakkari Witch Doctor 11831,
+        // Gurubashi Headhunter 11351. (The invisible Zul'Gurub Trigger 14758
+        // beside her is not a creature to clear.) The matching pre-clear event
+        // is shared (Data/Events/ZulGurubEvents.cpp, event 1).
+        { 309, 14517, 120.0f, { 11368, 14750, 11831, 11351 } }, // Jeklik
+
+        // Zul'Gurub (309) — High Priest Venoxis (second boss). His temple's
+        // trash is NOT script-force-pulled, but the room is pre-cleared before
+        // the engage for the same reason, and the z-band evade in boss_venoxis
+        // (z < 27 or > 43) makes dragging the room out through the doorway
+        // unsafe anyway — see the FightInPlaceRegistry zone for map 309. Radius
+        // 55 covers the temple interior around him (-12029.8, -1707.9, z 39);
+        // the whitelist is the room's own mobs: Razzashi Serpent 11371,
+        // Razzashi Adder 11372, Razzashi Cobra 11373 (the script respawns the
+        // cobras on his reset), Gurubashi Axe Thrower 11350, Hakkari Priest
+        // 11830, Sandfury Speaker 11387.
+        { 309, 14507, 55.0f, { 11371, 11372, 11373, 11350, 11830, 11387 } }, // Venoxis
+
         { 555, 18667, 100.0f, {} }, // Shadow Labyrinth — Blackheart the Inciter
         { 109, 5710,   90.0f, {} }, // Sunken Temple — Jammal'an the Prophet
         // Mana-Tombs — Pandemonius. boss_pandemonius::PullRoom() gathers the three
@@ -74,6 +98,19 @@ namespace
         { 601, 28684,  40.0f, {} }, // Azjol-Nerub — Krik'thir the Gatewatcher
         { 230, 9019,  166.0f, {} }, // Blackrock Depths — Emperor Dagran Thaurissan
         { 429, 14354,  50.0f, {} }, // Dire Maul East — Pusillin
+
+        // Zul'Gurub (309) — High Priestess Mar'li. Her instance
+        // SetData(TYPE_MARLI, IN_PROGRESS) walks every live Mar'li-room trash
+        // mob onto her victim the moment she is engaged: Razzashi Skitterer
+        // 14880, Razzashi Venombrood 14532, Hakkari Shadowcaster 11338,
+        // Razzashi Broodwidow 11370. The script's own bound is an AreaId check
+        // (3379), not a radius, so the radius here is the over-approximation
+        // the registry endorses; the explicit whitelist is what keeps the rest
+        // of the zone's spiders out of the pre-clear. Radius 130 covers her
+        // room's spawn cluster (measured 21-121yd from her); the
+        // RoomClearTimeout valve handles stragglers. The matching pre-clear
+        // event lives in Data/Events/ZulGurubEvents.cpp.
+        { 309, 14510, 130.0f, { 14880, 14532, 11338, 11370 } }, // Mar'li
 
         // Deadmines (36) — Gilnid, the goblin foundry.
         //

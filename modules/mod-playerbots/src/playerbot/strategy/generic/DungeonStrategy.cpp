@@ -26,6 +26,18 @@ void DungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "enter naxxramas",
         NextAction::array(0, new NextAction("enable naxxramas strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter ruins of ahnqiraj",
+        NextAction::array(0, new NextAction("enable ruins of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter temple of ahnqiraj",
+        NextAction::array(0, new NextAction("enable temple of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter zul'gurub",
+        NextAction::array(0, new NextAction("enable zul'gurub strategy", 100.0f), NULL)));
 }
 
 void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -69,4 +81,28 @@ void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "leave naxxramas",
         NextAction::array(0, new NextAction("disable naxxramas strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter ruins of ahnqiraj",
+        NextAction::array(0, new NextAction("enable ruins of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave ruins of ahnqiraj",
+        NextAction::array(0, new NextAction("disable ruins of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter temple of ahnqiraj",
+        NextAction::array(0, new NextAction("enable temple of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave temple of ahnqiraj",
+        NextAction::array(0, new NextAction("disable temple of ahnqiraj strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter zul'gurub",
+        NextAction::array(0, new NextAction("enable zul'gurub strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave zul'gurub",
+        NextAction::array(0, new NextAction("disable zul'gurub strategy", 100.0f), NULL)));
 }

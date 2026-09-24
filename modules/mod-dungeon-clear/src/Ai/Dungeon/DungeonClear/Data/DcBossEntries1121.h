@@ -166,24 +166,42 @@ inline constexpr DcBossOrderRow DC_BOSS_ORDER_1121[] = {
     { 36,  639, 8 },  // Edwin VanCleef
     { 36,  645, 9 },  // "Cookie"
 
-    // Molten Core (map 409): full clear order. Without an authored block the
-    // fallback is ascending-entry numbering, which puts Ragnaros (11502) at
-    // index 0 - the party would route straight at him past every closed rune
-    // gate. Golemagg (11988) was also missing from the credit list; the order
-    // line credits him, so the rune chain's boss set is complete.
-    // Order follows the classic route: the rune dousing after each boss, the
-    // Garr -> Shazzrah -> Geddon -> Sulfuron sweep, then Golemagg -> Domo ->
-    // Ragnaros.
+    // Molten Core (map 409): full clear order, including Turtle's custom MC
+    // bosses (verified in tw_world: Incindis 52145, the Twin Golems Basalthar
+    // 65020 + Smoldaris 65021, Sorcerer-Thane Thaurissan 57642). Without an
+    // authored block the fallback is ascending-entry numbering, which puts
+    // Ragnaros (11502) at index 0 - the party would route straight at him past
+    // every closed rune gate. Golemagg (11988) was also missing from the credit
+    // list; the order line credits him, so the rune chain's boss set is
+    // complete. An order line credits its entry, so the Turtle bosses need
+    // nothing but their rows here.
+    //
+    // Keys are order-1. Two slots are deliberately skipped and filled by
+    // code-side OBJECTIVES (RegisterMoltenCoreRoster, MoltenCoreEvents.cpp):
+    //   * key 5 = the Shadowforge Descent bridge (between Smoldaris and
+    //     Thaurissan; the navmesh break at 1035,-1275);
+    //   * keys 13/14 = Majordomo Executus and Ragnaros - both summon-only (no
+    //     spawn rows), so BossSpawnIndex can never emit them.
+    // 12119 (Flamewaker Protector) is dropped by the roster patch: it is an
+    // add, not a boss leg.
+    //
+    // Order is the proposed geometry-natural sequence (Lucifron -> Magmadar ->
+    // Incindis -> the Twin Golems -> the Shadowforge camp -> Thaurissan, then
+    // the classic ring); the owner confirms it in game.
     { 409, 12118, 1 },  // Lucifron
     { 409, 11982, 2 },  // Magmadar
-    { 409, 12259, 3 },  // Gehennas
-    { 409, 12057, 4 },  // Garr
-    { 409, 12264, 5 },  // Shazzrah
-    { 409, 12056, 6 },  // Baron Geddon
-    { 409, 12098, 7 },  // Sulfuron Harbinger
-    { 409, 11988, 8 },  // Golemagg the Incinerator
-    { 409, 12018, 9 },  // Majordomo Executus
-    { 409, 11502, 10 }, // Ragnaros
+    { 409, 52145, 3 },  // Incindis                  (Turtle custom)
+    { 409, 65020, 4 },  // Basalthar                 (Turtle custom, Twin Golems)
+    { 409, 65021, 5 },  // Smoldaris                 (Turtle custom, Twin Golems)
+    // key 5 = Shadowforge Descent bridge objective (code-side)
+    { 409, 57642, 7 },  // Sorcerer-Thane Thaurissan (Turtle custom)
+    { 409, 12259, 8 },  // Gehennas
+    { 409, 12057, 9 },  // Garr
+    { 409, 12264, 10 }, // Shazzrah
+    { 409, 12056, 11 }, // Baron Geddon
+    { 409, 12098, 12 }, // Sulfuron Harbinger
+    { 409, 11988, 13 }, // Golemagg the Incinerator
+    // keys 13/14 = Majordomo / Ragnaros objectives (code-side)
 
     // Blackwing Lair (map 469): full clear order. The fallback here would put
     // Nefarian (11583) first. Razorgore -> Vaelastrasz -> the drake wing
@@ -198,9 +216,93 @@ inline constexpr DcBossOrderRow DC_BOSS_ORDER_1121[] = {
     { 469, 14020, 6 }, // Chromaggus
     { 469, 11583, 7 }, // Nefarian
 
+    // Ruins of Ahn'Qiraj (map 509): full clear order, following the instance
+    // encounter enum (TYPE_KURINNAXX -> TYPE_OSSIRIAN). The fallback would sort
+    // by entry, which puts Ossirian (15339) first - straight past every locked
+    // encounter. General Rajaxx (15341) is not a normal boss spawn: Andorov
+    // (15471) spawns after Kurinnaxx and the seven officer waves (Qeez 15391,
+    // Tuubid 15392, Drenn 15389, Xurrem 15390, Yeggeth 15386, Pakkon 15388,
+    // Zerran 15385) start on his gossip or on any arena combat. Order measured
+    // against the instance layout, re-validate routing in game.
+    { 509, 15348, 1 }, // Kurinnaxx
+    { 509, 15341, 2 }, // General Rajaxx (event)
+    { 509, 15370, 3 }, // Buru the Gorger
+    { 509, 15340, 4 }, // Moam
+    { 509, 15369, 5 }, // Ayamiss the Hunter
+    { 509, 15339, 6 }, // Ossirian the Unscarred (end boss)
+
+    // Temple of Ahn'Qiraj (map 531): full clear order. Skeram's gate (180636)
+    // opens on his death; Huhuran opens the Twins' door (180634) and the Twins
+    // open the exit to C'Thun (180635), so those three anchor the order. The
+    // Bug Trio (all three must die before their devour mechanic stops healing
+    // the survivors) sits after the gate; Viscidus is the side room between
+    // Fankriss and Huhuran. Ouro (15517) has no static spawn - he is summoned
+    // by the Ouro Spawner (15957) when the raid approaches - so he is credited
+    // by the order line like Ragnaros/Nefarian. Route re-validate in game.
+    { 531, 15263, 1 },  // The Prophet Skeram
+    { 531, 15544, 2 },  // Vem
+    { 531, 15543, 3 },  // Princess Yauj
+    { 531, 15511, 4 },  // Lord Kri
+    { 531, 15516, 5 },  // Battleguard Sartura
+    { 531, 15510, 6 },  // Fankriss the Unyielding
+    { 531, 15299, 7 },  // Viscidus
+    { 531, 15509, 8 },  // Princess Huhuran
+    { 531, 15275, 9 },  // Emperor Vek'nilash
+    { 531, 15276, 10 }, // Emperor Vek'lor
+    { 531, 15517, 11 }, // Ouro (summoned)
+    { 531, 15727, 12 }, // C'Thun (end boss)
+
+    // Naxxramas (map 533): wing-grouped clear order. The four wings are entered
+    // from the central hub (any wing order works; each wing's bosses are kept
+    // together below), then Sapphiron and Kel'Thuzad. The Four Horsemen carry
+    // four entries (one order each so the mask credits all of them). The
+    // Abomination wing's Patchwerk/Grobbulus/Gluth/Thaddius are door-chained.
+    // Wing routing through the hub portals to be validated in game.
+    { 533, 15956, 1 },  // Anub'Rekhan          (spider wing)
+    { 533, 15953, 2 },  // Grand Widow Faerlina
+    { 533, 15952, 3 },  // Maexxna
+    { 533, 15954, 4 },  // Noth the Plaguebringer (plague wing)
+    { 533, 15936, 5 },  // Heigan the Unclean
+    { 533, 16011, 6 },  // Loatheb
+    { 533, 16061, 7 },  // Instructor Razuvious  (deathknight wing)
+    { 533, 16060, 8 },  // Gothik the Harvester
+    { 533, 16062, 9 },  // Highlord Mograine
+    { 533, 16063, 10 }, // Sir Zeliek
+    { 533, 16064, 11 }, // Thane Korth'azz
+    { 533, 16065, 12 }, // Lady Blaumeux
+    { 533, 16028, 13 }, // Patchwerk             (abomination wing)
+    { 533, 15931, 14 }, // Grobbulus
+    { 533, 15932, 15 }, // Gluth
+    { 533, 15928, 16 }, // Thaddius
+    { 533, 15989, 17 }, // Sapphiron
+    { 533, 15990, 18 }, // Kel'Thuzad (end boss)
+
+    // Zul'Gurub (map 309): clear order per the server owner -
+    //   bat (Jeklik) -> snake (Venoxis) -> spider (Mar'li) -> raptor
+    //   (Mandokir) -> tiger (Thekal) -> panther (Arlokk) -> Jin'do -> Hakkar.
+    // Boss order keys are (order - 1): Jeklik 0, Venoxis 1, Mar'li 2,
+    // Mandokir 3, Thekal 4, Arlokk 5 (objective), Jin'do 6, Hakkar 7;
+    // priests before Hakkar (each dead priest removes a Hakkar Power stack and
+    // its Aspect). Arlokk (14515) has NO creature spawn - she is summoned by
+    // the Gong of Bethekk (GO 180526) - so she is NOT an order row: she is
+    // added as a travel OBJECTIVE at order key 5 by RegisterZulGurubRoster
+    // (BossRosterRegistry patch, see Data/Events/ZulGurubEvents.cpp), with an
+    // anchored event that rings the gong, waits for her and kills her; the
+    // objective latches when that event completes. Gahz'ranka (15114) is
+    // deliberately absent (summon-only via the Mudskunk Lure, a fishing item -
+    // skipped per user direction). The Edge of Madness bosses (15082-15085)
+    // are not spawnable in tw_world at all. Route to re-validate in game.
+    { 309, 14517, 1 }, // High Priestess Jeklik   (bat - first)
+    { 309, 14507, 2 }, // High Priest Venoxis     (snake)
+    { 309, 14510, 3 }, // High Priestess Mar'li   (spider)
+    { 309, 11382, 4 }, // Bloodlord Mandokir      (raptor)
+    { 309, 14599, 5 }, // High Priest Thekal      (tiger; phase 1, tiger form 14509)
+    // key 5 = High Priestess Arlokk (panther; objective, see the roster patch)
+    { 309, 11380, 7 }, // Jin'do the Hexxer
+    { 309, 14834, 8 }, // Hakkar the Soulflayer   (end boss)
+
     // Emerald Sanctum (map 807).
     { 807, 60747, 1 }, // Erennius
     { 807, 60748, 2 }, // Solnius (end boss)
 };
-
 #endif

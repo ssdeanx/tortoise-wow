@@ -7,6 +7,33 @@
 
 #include "Ai/Dungeon/DungeonClear/Data/FightInPlaceRegistry.h"
 
+// Zul'Gurub's Venoxis temple (map 309, classic). boss_venoxis evades when HIS z
+// leaves 27..43, so an advanced pull that drags the room's Razzashi trash out
+// through the doorway with him in tow resets the encounter.
+
+TEST(FightInPlaceTest, ZulGurubVenoxisTempleIsNoPull)
+{
+    // Venoxis' spawn.
+    EXPECT_TRUE(FightInPlaceRegistry::IsNoPullZone(309, -12029.8f, -1707.9f));
+    // The room's Razzashi spawn extremes (Serpent 11371 / Adder 11372 / Cobra
+    // 11373): x -12078..-11984, y -1752..-1671.
+    EXPECT_TRUE(FightInPlaceRegistry::IsNoPullZone(309, -12078.0f, -1752.0f));
+    EXPECT_TRUE(FightInPlaceRegistry::IsNoPullZone(309, -11984.0f, -1671.0f));
+    // The room guards' spots (Axe Thrower 11350 / Hakkari Priest 11830).
+    EXPECT_TRUE(FightInPlaceRegistry::IsNoPullZone(309, -12059.0f, -1707.0f));
+    EXPECT_TRUE(FightInPlaceRegistry::IsNoPullZone(309, -12058.0f, -1705.0f));
+}
+
+TEST(FightInPlaceTest, ZulGurubKeepsTheRestOfTheWingPullable)
+{
+    // Jeklik (-12289.7, -1382.2) and Mar'li (-12326.5, -1577.1) keep the
+    // ordinary pull.
+    EXPECT_FALSE(FightInPlaceRegistry::IsNoPullZone(309, -12289.7f, -1382.2f));
+    EXPECT_FALSE(FightInPlaceRegistry::IsNoPullZone(309, -12326.5f, -1577.1f));
+    // The instance gate / zone-in.
+    EXPECT_FALSE(FightInPlaceRegistry::IsNoPullZone(309, -11916.6f, -1243.5f));
+}
+
 // Selin Fireheart's room (Magisters' Terrace, map 585). The registry must veto the
 // advanced pull for anything inside the room (X>216, the boss's own CanAIAttack
 // plane) while leaving the antechamber and the instance's other encounters pullable.

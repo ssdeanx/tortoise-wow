@@ -2,6 +2,7 @@
 #include "MovementActions.h"
 #include "AttackAction.h"
 #include "playerbot/strategy/values/HazardsValue.h"
+#include "Spells/SpellAuraDefines.h"
 
 namespace ai
 {
@@ -201,6 +202,91 @@ namespace ai
 
 namespace ai
 {
+    // CC for a mind-controlled ally (Skeram's True Fulfillment 785, Kel'Thuzad's
+    // Chains of Kel'Thuzad 28410): the controlled raid member is CC'd, NOT
+    // killed. Single-target CC per class - mage Polymorph, rogue Blind, hunter
+    // Wyvern Sting, warlock Fear, paladin Hammer of Justice. The aura that
+    // marks the control comes from the per-raid subclass.
+    class CcMindControlledAllyAction : public Action
+    {
+    public:
+        CcMindControlledAllyAction(PlayerbotAI* ai, std::string name, uint32 auraId)
+        : Action(ai, name)
+        , auraId(auraId) {}
+
+        bool Execute(Event& event) override
+        {
+            Unit* target = FindAlly();
+            if (!target)
+                return false;
+
+            switch (ai->GetBot()->getClass())
+            {
+                case CLASS_MAGE:    return ai->CastSpell("polymorph", target);
+                case CLASS_ROGUE:   return ai->CastSpell("blind", target);
+                case CLASS_HUNTER:  return ai->CastSpell("wyvern sting", target);
+                case CLASS_WARLOCK: return ai->CastSpell("fear", target);
+                case CLASS_PALADIN: return ai->CastSpell("hammer of justice", target);
+                default:            return false;
+            }
+        }
+
+        bool isUseful() override
+        {
+            if (!FindAlly())
+                return false;
+
+            switch (ai->GetBot()->getClass())
+            {
+                case CLASS_MAGE:
+                case CLASS_ROGUE:
+                case CLASS_HUNTER:
+                case CLASS_WARLOCK:
+                case CLASS_PALADIN:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+    private:
+        static bool HasAnyCc(Unit* target)
+        {
+            return target->HasAuraType(SPELL_AURA_MOD_CONFUSE) ||
+                   target->HasAuraType(SPELL_AURA_MOD_STUN) ||
+                   target->HasAuraType(SPELL_AURA_MOD_FEAR);
+        }
+
+        Unit* FindAlly()
+        {
+            if (!ai->GetBot()->IsInWorld())
+                return nullptr;
+
+            for (const ObjectGuid& guid : AI_VALUE(std::list<ObjectGuid>, "attackers"))
+            {
+                Unit* unit = ai->GetUnit(guid);
+                if (!unit || unit->GetTypeId() != TYPEID_PLAYER || !unit->IsAlive() || !unit->IsInWorld())
+                    continue;
+
+                if (!unit->HasAura(auraId))
+                    continue;
+
+                if (HasAnyCc(unit))
+                    continue;
+
+                if (unit->GetDistance(ai->GetBot()) > 40.0f)
+                    continue;
+
+                return unit;
+            }
+
+            return nullptr;
+        }
+
+    private:
+        uint32 auraId;
+    };
+
     // Exactly one resist-capable bot per raid SUBGROUP performs the resistance
     // duty. Vanilla resistance totems cover only the dropper's group (so every
     // group wants its own) but two same-class bots sharing a group must not both
@@ -213,6 +299,8 @@ namespace ai
     struct RaidFightBotState
     {
         bool hadTotemFireRes = false;
+        bool hadTotemNatureRes = false;
+        bool hadTotemFrostRes = false;
         bool hadPotions = false;
         bool hadConsumables = false;
     };
@@ -239,6 +327,48 @@ namespace ai
 
         ai->ChangeStrategy("-totem fire resistance", BotState::BOT_STATE_COMBAT);
         state.hadTotemFireRes = false;
+    }
+
+    // Same duty for nature fights (AQ20/AQ40 poisons): the dropper shaman keeps
+    // the Nature Resistance Totem down (the "air totem" slot) for the group.
+    inline void OnRaidFightStrategyAddedNatureTotem(PlayerbotAI* ai, Player* bot, RaidFightBotState& state)
+    {
+        if (bot->getClass() != CLASS_SHAMAN || !IsGroupResistDropper(ai, bot))
+            return;
+
+        state.hadTotemNatureRes = ai->HasStrategy("totem air resistance", BotState::BOT_STATE_COMBAT);
+        if (!state.hadTotemNatureRes)
+            ai->ChangeStrategy("+totem air resistance", BotState::BOT_STATE_COMBAT);
+    }
+
+    inline void OnRaidFightStrategyRemovedNatureTotem(PlayerbotAI* ai, Player* bot, RaidFightBotState& state)
+    {
+        if (bot->getClass() != CLASS_SHAMAN || !state.hadTotemNatureRes)
+            return;
+
+        ai->ChangeStrategy("-totem air resistance", BotState::BOT_STATE_COMBAT);
+        state.hadTotemNatureRes = false;
+    }
+
+    // Same duty for frost fights (Naxxramas Sapphiron): the dropper shaman
+    // keeps the Frost Resistance Totem down (water slot) for the group.
+    inline void OnRaidFightStrategyAddedFrostTotem(PlayerbotAI* ai, Player* bot, RaidFightBotState& state)
+    {
+        if (bot->getClass() != CLASS_SHAMAN || !IsGroupResistDropper(ai, bot))
+            return;
+
+        state.hadTotemFrostRes = ai->HasStrategy("totem water frost resistance", BotState::BOT_STATE_COMBAT);
+        if (!state.hadTotemFrostRes)
+            ai->ChangeStrategy("+totem water frost resistance", BotState::BOT_STATE_COMBAT);
+    }
+
+    inline void OnRaidFightStrategyRemovedFrostTotem(PlayerbotAI* ai, Player* bot, RaidFightBotState& state)
+    {
+        if (bot->getClass() != CLASS_SHAMAN || !state.hadTotemFrostRes)
+            return;
+
+        ai->ChangeStrategy("-totem water frost resistance", BotState::BOT_STATE_COMBAT);
+        state.hadTotemFrostRes = false;
     }
 
     // Consumable lifecycle for a raid boss fight: enable the "potions" strategy
