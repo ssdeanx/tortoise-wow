@@ -38,6 +38,10 @@ void DungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "enter zul'gurub",
         NextAction::array(0, new NextAction("enable zul'gurub strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter scarlet citadel",
+        NextAction::array(0, new NextAction("enable scarlet citadel strategy", 100.0f), NULL)));
 }
 
 void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -105,4 +109,12 @@ void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "leave zul'gurub",
         NextAction::array(0, new NextAction("disable zul'gurub strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter scarlet citadel",
+        NextAction::array(0, new NextAction("enable scarlet citadel strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave scarlet citadel",
+        NextAction::array(0, new NextAction("disable scarlet citadel strategy", 100.0f), NULL)));
 }

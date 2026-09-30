@@ -14,6 +14,10 @@ void BlackwingLairDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& t
         NextAction::array(0, new NextAction("enable vael fight strategy", 100.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "start broodlord fight",
+        NextAction::array(0, new NextAction("enable broodlord fight strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "start firemaw fight",
         NextAction::array(0, new NextAction("enable firemaw fight strategy", 100.0f), NULL)));
 
@@ -32,6 +36,12 @@ void BlackwingLairDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& t
     triggers.push_back(new TriggerNode(
         "start nefarian fight",
         NextAction::array(0, new NextAction("enable nefarian fight strategy", 100.0f), NULL)));
+
+    // Shadow Flame dot (22682) auto-removed across all dragons in BWL (Ebonroc, Flamegor, Nefarian)
+    // without needing Onyxia Scale Cloak (15138) on all 40 bots.
+    triggers.push_back(new TriggerNode(
+        "shadow flame dot",
+        NextAction::array(0, new NextAction("clear shadow flame dot", 100.0f), NULL)));
 
     // Suppression room turns on when a device is in sight, off once none are.
     triggers.push_back(new TriggerNode(
@@ -195,39 +205,60 @@ void SuppressionRoomStrategy::OnStrategyAdded(BotState state)
 
 void RazorgoreFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
-    // Blackwing Mages die first - their AoE nukes the egg phase.
+    // Phase 2: Burning Razorgore once all 30 eggs are destroyed (Warming Flames 23040 active).
+    triggers.push_back(new TriggerNode(
+        "razorgore warming flames",
+        NextAction::array(0, new NextAction("attack entry::12435", 95.0f), NULL)));
+
+    // Phase 2: Conflagration tank swap - offtank taunts when current tank is disoriented.
+    triggers.push_back(new TriggerNode(
+        "razorgore conflagration tank switch",
+        NextAction::array(0, new NextAction("taunt razorgore", 90.0f), NULL)));
+
+    // Phase 1: Druids put Death Talon Dragonspawn (12422) to sleep with Hibernate.
+    triggers.push_back(new TriggerNode(
+        "razorgore need sleep dragonkin",
+        NextAction::array(0, new NextAction("razorgore sleep dragonkin", 75.0f), NULL)));
+
+    // Phase 1: Each corner defends its post and kills corner adds (Mages > Legionnaires > unslept Dragonspawn).
+    triggers.push_back(new TriggerNode(
+        "razorgore has corner add",
+        NextAction::array(0, new NextAction("attack razorgore corner add", 65.0f), NULL)));
+
+    // Phase 1: If out of position and no immediate threats, move to assigned corner post.
+    triggers.push_back(new TriggerNode(
+        "razorgore need move to corner",
+        NextAction::array(0, new NextAction("move to razorgore corner", 40.0f), NULL)));
+
+    // Fallbacks if adds wander outside corner boundaries:
     triggers.push_back(new TriggerNode(
         "attackers entry::12420",
-        NextAction::array(0, new NextAction("attack entry::12420", 60.0f), NULL)));
+        NextAction::array(0, new NextAction("attack entry::12420,35", 55.0f), NULL)));
 
-    // Static gate mobs on the pull.
     triggers.push_back(new TriggerNode(
         "attackers entry::12557",
-        NextAction::array(0, new NextAction("attack entry::12557", 56.0f), NULL)));
+        NextAction::array(0, new NextAction("attack entry::12557", 53.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
         "attackers entry::14456",
-        NextAction::array(0, new NextAction("attack entry::14456", 54.0f), NULL)));
+        NextAction::array(0, new NextAction("attack entry::14456", 52.0f), NULL)));
 
-    // Legionnaires come in packs - default AoE handles them; entry order keeps
-    // the tank focused when AoE is locked.
     triggers.push_back(new TriggerNode(
         "attackers entry::12416",
-        NextAction::array(0, new NextAction("attack entry::12416", 52.0f), NULL)));
+        NextAction::array(0, new NextAction("attack entry::12416,35", 50.0f), NULL)));
 
-    // Death Talon Dragonspawn - dangerous breath; offtanks hold them away from
-    // the eggs and the orb user.
     triggers.push_back(new TriggerNode(
         "attackers entry::12422",
-        NextAction::array(0, new NextAction("offtank entry::12422", 55.0f), NULL)));
-
-    triggers.push_back(new TriggerNode(
-        "razorgore warming flames",
-        NextAction::array(0, new NextAction("attack entry::12435", 90.0f), NULL)));
+        NextAction::array(0, new NextAction("offtank entry::12422,35", 48.0f), NULL)));
 }
 
 void RazorgoreFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
 {
+    // Spread to assigned corners before / between waves
+    triggers.push_back(new TriggerNode(
+        "razorgore need move to corner",
+        NextAction::array(0, new NextAction("move to razorgore corner", 20.0f), NULL)));
+
     triggers.push_back(new TriggerNode(
         "end razorgore fight",
         NextAction::array(0, new NextAction("disable razorgore fight strategy", 100.0f), NULL)));
@@ -246,9 +277,15 @@ void RazorgoreFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
 
 void VaelFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
+    // Burning Adrenaline: afflicted bot runs away from the raid before exploding
     triggers.push_back(new TriggerNode(
         "vael burning adrenaline",
         NextAction::array(0, new NextAction("move away from raid::25", 100.0f), NULL)));
+
+    // Burning Adrenaline tank swap: offtank immediately taunts Vaelastrasz
+    triggers.push_back(new TriggerNode(
+        "vael tank switch",
+        NextAction::array(0, new NextAction("taunt vael", 95.0f), NULL)));
 }
 
 void VaelFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -270,6 +307,33 @@ void VaelFightStrategy::InitReactionTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "vael burning adrenaline",
         NextAction::array(0, new NextAction("move away from raid::25", 100.0f), NULL)));
+}
+
+// ---------------------------------------------------------------------------
+// Broodlord Lashlayer (12017) - Knock Away (18670) wipes active tank threat -> offtanks taunt.
+// Mortal Strike (16856) requires strong healing; Blast Wave (23331) slows/damages melee.
+// ---------------------------------------------------------------------------
+
+void BroodlordFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Knock Away threat wipe -> offtanks taunt the boss.
+    triggers.push_back(new TriggerNode(
+        "broodlord tank switch",
+        NextAction::array(0, new NextAction("taunt broodlord", 95.0f), NULL)));
+}
+
+void BroodlordFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end broodlord fight",
+        NextAction::array(0, new NextAction("disable broodlord fight strategy", 100.0f), NULL)));
+}
+
+void BroodlordFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
+{
+    triggers.push_back(new TriggerNode(
+        "end broodlord fight",
+        NextAction::array(0, new NextAction("disable broodlord fight strategy", 100.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
@@ -353,6 +417,10 @@ void EbonrocFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "shadow protection potion ready",
         NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "shadow flame dot",
+        NextAction::array(0, new NextAction("clear shadow flame dot", 100.0f), NULL)));
 }
 
 void EbonrocFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -398,6 +466,10 @@ void FlamegorFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
     triggers.push_back(new TriggerNode(
         "fire protection potion ready",
         NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "shadow flame dot",
+        NextAction::array(0, new NextAction("clear shadow flame dot", 100.0f), NULL)));
 }
 
 void FlamegorFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -515,6 +587,10 @@ void NefarianFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
     triggers.push_back(new TriggerNode(
         "shadow protection potion ready",
         NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "shadow flame dot",
+        NextAction::array(0, new NextAction("clear shadow flame dot", 100.0f), NULL)));
 }
 
 void NefarianFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

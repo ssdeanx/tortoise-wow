@@ -56,6 +56,26 @@ namespace DcEventDoorRegistry
             //     as the reason it exists — this is the entry that fixes it.
             case 18971:  // Shadowfang Keep — Arugal's Lair (opens on Nandos' death)
             case 18972:  // Shadowfang Keep — Sorcerer's Gate (voidwalker event)
+            // Blackwing Lair (map 469) encounter doors: controlled entirely by
+            // instance script and boss deaths (instance_blackwing_lair.cpp).
+            case 176964:  // GO_DOOR_RAZORGORE_ENTER
+            case 176965:  // GO_DOOR_RAZORGORE_EXIT
+            case 179364:  // GO_DOOR_VAELASTRASZ
+            case 179365:  // GO_DOOR_LASHLAYER
+            case 179115:  // GO_DOOR_CHROMAGGUS_ENTER
+            case 179116:  // GO_DOOR_CHROMAGGUS_SIDE
+            case 179117:  // GO_DOOR_CHROMAGGUS_EXIT
+            case 176966:  // GO_DOOR_NEFARIAN
+            // Scarlet Citadel (map 45) encounter doors: controlled entirely by
+            // instance script and boss deaths (instance_scarlet_citadel.cpp).
+            case 5000001:  // GO_DOOR_VENDOR_LEFT
+            case 5000002:  // GO_DOOR_VENDOR_RIGHT
+            case 5000003:  // GO_DOOR_DAELUS
+            case 5000006:  // GO_DOOR_ARDAEUS_ENTER
+            case 5000007:  // GO_DOOR_ARDAEUS_EXIT
+            case 5000008:  // GO_DOOR_MARIELLA
+            case 5000009:  // GO_DOOR_RIGHT_WING
+            case 5000010:  // GO_DOOR_ABBENDIS
                 return true;
             default:
                 return false;

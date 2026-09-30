@@ -67,6 +67,16 @@ void TempleOfAhnQirajDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>
         NextAction::array(0, new NextAction("enable cthun fight strategy", 100.0f), NULL)));
 }
 
+void TempleOfAhnQirajDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Restock the five Greater Protection Potions out of combat: fires on raid
+    // entry (empty bots get topped up) and again between pulls whenever a stack
+    // drops below the shared low watermark, so no bot ever runs dry mid-raid.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+}
+
 // ---------------------------------------------------------------------------
 // Skeram: the eye and claw tentacles that keep spawning are burned while the
 // raid fights the boss and its two images (all copies share entry 15263, so

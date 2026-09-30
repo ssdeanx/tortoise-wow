@@ -49,6 +49,16 @@ void RuinsOfAhnQirajDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>&
         NextAction::array(0, new NextAction("enable ossirian fight strategy", 100.0f), NULL)));
 }
 
+void RuinsOfAhnQirajDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Restock the five Greater Protection Potions out of combat: fires on raid
+    // entry (empty bots get topped up) and again between pulls whenever a stack
+    // drops below the shared low watermark, so no bot ever runs dry mid-raid.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+}
+
 // ---------------------------------------------------------------------------
 // Kurinnaxx: Mortal Wound (25646) stacks to 10 -> offtank taunt at 5 (Gluth
 // pattern); the Sand Trap GO (180647) is a 15 yd nature/slow/silence hazard

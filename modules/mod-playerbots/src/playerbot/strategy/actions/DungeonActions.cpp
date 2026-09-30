@@ -796,3 +796,62 @@ bool FollowChargedAllyAction::isUseful()
     Player* ally = FindChargedAlly(chargeSpellId);
     return ally && sServerFacade.GetDistance2d(bot, ally) > 6.0f;
 }
+
+bool GiveAhnQirajSuppliesAction::isUseful()
+{
+    // Only fires when the bot is actually low on a stack inside an AQ raid;
+    // shares the exact rule with AhnQirajSuppliesNeededTrigger so the action
+    // can never disagree with the trigger that queues it.
+    return AhnQirajSuppliesLow(ai);
+}
+
+bool GiveAhnQirajSuppliesAction::Execute(Event& event)
+{
+    if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported())
+        return false;
+
+    uint32 count = 0;
+    uint32 const* items = AhnQirajProtectionPotions(count);
+    uint32 const low = AhnQirajSupplyLowWatermark();
+    uint32 const target = AhnQirajSupplyTopUpTarget();
+
+    bool gaveAny = false;
+    std::ostringstream out;
+
+    for (uint32 i = 0; i < count; ++i)
+    {
+        uint32 have = bot->GetItemCount(items[i], /*inBankAlso*/ false);
+        if (have >= low)
+            continue;
+
+        uint32 give = target - have;
+
+        // Native bag-space check BEFORE creating the item, exactly like the
+        // guild-share path: never mint an item the bot cannot carry.
+        ItemPosCountVec dest;
+        InventoryResult msg = bot->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, items[i], give);
+        if (msg != EQUIP_ERR_OK)
+        {
+            bot->SendEquipError(msg, nullptr);
+            continue; // try to top up the other schools even if the bags are full
+        }
+
+        Item* item = Item::CreateItem(items[i], give, bot);
+        if (!item)
+            continue;
+
+        bot->StoreItem(dest, item, true);
+        gaveAny = true;
+
+        ItemPrototype const* proto = sObjectMgr.GetItemPrototype(items[i]);
+        out << "Received " << give << "x " << (proto ? proto->Name1 : "Greater Protection Potion") << ". ";
+    }
+
+    if (!gaveAny)
+        return false;
+
+    bot->SaveInventoryAndGoldToDB();
+
+    ai->TellPlayerNoFacing(ai->GetMaster(), out.str());
+    return true;
+}

@@ -308,8 +308,13 @@ namespace
         if (!lucifron)
             return false;  // dead -> no hold
 
-        if (bot->GetDistance(MC_LUCIFRON_HOME_X, MC_LUCIFRON_HOME_Y,
-                             MC_LUCIFRON_HOME_Z) > MC_LUCIFRON_HOLD_RANGE)
+        // Approach zone: within approach range of Pack A, Pack B, or Lucifron's home.
+        bool const inApproach =
+            bot->GetDistance(MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z) <= MC_PACK_APPROACH ||
+            bot->GetDistance(MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z) <= MC_PACK_APPROACH ||
+            bot->GetDistance(MC_LUCIFRON_HOME_X, MC_LUCIFRON_HOME_Y, MC_LUCIFRON_HOME_Z) <= 90.0f;
+
+        if (!inApproach)
             return false;
 
         std::vector<uint32> const hounds{ MC_CORE_HOUND };
@@ -328,11 +333,13 @@ namespace
             lucifron->GetDistance(MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z) >= MC_PATROL_SAFE;
         bool const windowB =
             lucifron->GetDistance(MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z) >= MC_PATROL_SAFE;
-        if (packAAlive && windowA)
-            return false;  // A can be cleared now - let its event drive
-        if (packBAlive && windowB)
-            return false;  // B can be cleared now - let its event drive
-        return true;
+
+        // Strict alternation: Pack A must be cleared before Pack B.
+        if (packAAlive)
+            return !windowA;  // If window A is open, let Pack A event drive; if closed, hold!
+
+        // Pack A is cleared; if Pack B is alive, hold until window B is open.
+        return !windowB;
     }
 
     // A rune safety net is due when its boss is DONE and the rune is not yet

@@ -138,6 +138,26 @@ bool PossibleAttackTargetsValue::HasBreakableCC(Unit* target, Player* player)
         {
             return true;
         }
+
+        if (ai->HasAura("hibernate", target) || ai->HasAura(2637, target) || ai->HasAura(8952, target) || ai->HasAura(8953, target))
+        {
+            return true;
+        }
+
+        if (ai->HasAura("sleep", target))
+        {
+            return true;
+        }
+
+        if (ai->HasAura("blind", target))
+        {
+            return true;
+        }
+
+        if (ai->HasAura("wyvern sting", target))
+        {
+            return true;
+        }
     }
 
     return false;

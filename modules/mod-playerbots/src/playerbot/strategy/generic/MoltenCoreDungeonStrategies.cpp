@@ -63,6 +63,11 @@ void MoltenCoreDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& trig
     triggers.push_back(new TriggerNode(
         "start incindis fight",
         NextAction::array(0, new NextAction("enable incindis fight strategy", 100.0f), NULL)));
+
+    // Core Hound pack (11671): balance health evenly and burn together so all 5 die within the 10s window.
+    triggers.push_back(new TriggerNode(
+        "mc core hound pack",
+        NextAction::array(0, new NextAction("attack core hound pack", 85.0f), NULL)));
 }
 
 void MoltenCoreDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

@@ -81,6 +81,23 @@ void RegisterZulGurubRoster(std::vector<BossRosterPatch>& t);
 // MoltenCoreEvents.cpp.
 void RegisterMoltenCoreEvents(std::vector<DungeonEvent>& out);
 void RegisterMoltenCoreRoster(std::vector<BossRosterPatch>& t);
+// Blackwing Lair (map 469): Razorgore egg phase defense, Suppression Room
+// gauntlet push, Broodlord Lashlayer gate, Chromaggus gate lever, and
+// Nefarian throne gossip & drakonid wave hold. See BlackwingLairEvents.cpp.
+void RegisterBlackwingLairEvents(std::vector<DungeonEvent>& out);
+void RegisterBlackwingLairRoster(std::vector<BossRosterPatch>& t);
+// Onyxia's Lair (map 249): 40-man classic raid encounter. See OnyxiasLairEvents.cpp.
+void RegisterOnyxiasLairEvents(std::vector<DungeonEvent>& out);
+void RegisterOnyxiasLairRoster(std::vector<BossRosterPatch>& t);
+// Ruins of Ahn'Qiraj (map 509) / Temple of Ahn'Qiraj (map 531): the native
+// Rajaxx officer chain, the composite Bug Trio, the spawnless Ouro Spawner
+// objective, the Twins link, C'thun's Eye phase, and Ossirian's crystals. See
+// AhnQirajEvents.cpp.
+void RegisterAhnQirajEvents(std::vector<DungeonEvent>& out);
+void RegisterAhnQirajRoster(std::vector<BossRosterPatch>& t);
+// Scarlet Citadel (map 45): custom 40-man Scarlet Crusade raid fortress. See ScarletCitadelEvents.cpp.
+void RegisterScarletCitadelEvents(std::vector<DungeonEvent>& out);
+void RegisterScarletCitadelRoster(std::vector<BossRosterPatch>& t);
 // Hellfire Ramparts (map 543) final-approach gate — see HellfireRampartsEvents.cpp
 // for the measurements. Exposed so t/TestRampartsLedgeProbe can assert against the
 // real navmesh that the zone-in platform lies outside the gate; the numbers are

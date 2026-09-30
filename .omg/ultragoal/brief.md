@@ -1,37 +1,20 @@
-# Ultragoal Brief: Playerbot Group Sizing, Raid Character Assembly & Account Limit Architecture
+# Ultragoal Brief: Comprehensive Audit of .dc on Raid Mechanics & Blackwing Lair (BWL) Automation Architecture
 
-## 1. Executive Summary & Problem Statement
-The user has inquired about three interrelated Playerbot subsystems:
-1. **Behavioral Divergence in `.bot group size=5`**:
-   - How does `.bot group size=5` work now compared to origin / commit `f776c7aa399820600275ea1012611a8ec3bcf1be`?
-   - How can we make it work like it used to, and what role does `run/aiplayerbot.conf` play?
-2. **Raids & Using Own Characters**:
-   - How raid assembly works with bots.
-   - How players can use their own characters in 10-man, 20-man, and 40-man raids.
-   - Why the old way only made 10 characters and why the player's account is now reporting "Account has max characters".
-3. **Character Limits per Account**:
-   - Feasibility, risks, and client/server constraints of increasing max characters per account beyond 10 (`CharactersPerRealm`, `SMSG_CHAR_ENUM`, `CharacterSelect.lua`).
-   - Definitive alternative solutions (Multi-Account Alt Bots via `AiPlayerbot.AllowMultiAccountAltBots`).
+## Core Objectives
+1. **Deep Architectural Audit of `mod-dungeon-clear` (.dc on)**:
+   - Audit the engine lifecycle of `.dc on`: activation, leader election, non-combat/combat trigger ladders, and status publishing.
+   - Analyze event-driven raid mechanics in Molten Core (`MoltenCoreEvents.cpp`), Karazhan Crypts / Dragonmaw (`dc_roster.txt`, `DragonmawEvents.cpp`), Zul'Gurub (`ZulGurubEvents.cpp`), and Blackrock Depths (`BlackrockDepthsEvents.cpp`).
+   - Catalog the reusable facilities in `modules/mod-dungeon-clear/src/Ai/Dungeon/DungeonClear/Util/` (`DungeonEventExecutor`, `DcPullPlanner`, `DcLeaderSignal`, `DcTargeting`, `DcHazard`, `DcDoorPolicy`, `DcSmartRest`, `DcApproachState`, etc.) and their integration with `mod-playerbots`.
+2. **Blackwing Lair (BWL) Engine Integration & Missing Components**:
+   - Audit the current state of Blackwing Lair (Map 469) across `mod-dungeon-clear` and `mod-playerbots`.
+   - Identify critical gaps (missing Broodlord Lashlayer entry 12017 in `DcBossEntries1121.h` and strategies, lack of `BlackwingLairEvents.cpp`, unhandled mechanics like Razorgore orb/eggs, Vaelastrasz tank suicide/swap, Suppression Room whelp/device push, Drake Wing taunt/LoS rotations, Chromaggus dispels/sand, Nefarian class calls).
+   - Formulate the event, trigger, and action architecture for full BWL automation.
+3. **Perfection of Blackwing Lair Combat Strategies**:
+   - Deeply audit `BlackwingLairDungeonStrategies.cpp` and `.h`, `BlackwingLairDungeonTriggers.h`, and `BlackwingLairDungeonActions.h`.
+   - Formulate precise, leak-free, fail-safe strategies for every boss and trash gauntlet.
+4. **Comprehensive Documentation**:
+   - Update repository reference manuals (`references/02_playerbot_and_raid_automation.md` and `references/06_automated_raid_and_dungeon_operations.md`).
 
-## 2. Core Technical Findings
-- **Commit `f776c7aa399820600275ea1012611a8ec3bcf1be` / Origin**:
-  - `PlayerbotHolder::HandleGroup` looped `HandleCreate(master, paramStr, security)`.
-  - `CreateBot` delegated account selection to `PlayerbotHolder::GetOrCreateAccount`, returning `master->GetSession()->GetAccountId()`.
-  - Characters were created directly on the player's account.
-  - Guardrail: `if (sAccountMgr.GetCharactersCount(accountId) >= maxCharsPerAccount)` (where `maxCharsPerAccount = 9` in `MANGOSBOT_ZERO`).
-  - Once 10 characters existed on the account (1 player + 9 bots), any further creation failed with `"Account has max characters"`, blocking raid creation beyond 10 and filling the account.
-- **Commit `77e69376` (Current HEAD)**:
-  - `HandleGroup` was rewritten to a 2-phase recruitment system:
-    - Phase 1: Hijacks active online world randombots (`sRandomPlayerbotMgr.GetPlayers()`) matching role and level criteria.
-    - Phase 2: Spawns shortfall bots via `sRandomPlayerbotMgr.HandleCreate(..., login=1 temporary=1)` into the `RNDBOT` pool (`rndbot0`..`rndbot500`), avoiding personal account pollution.
-  - However, players who expected clean, level-scaled, dedicated party bots (or alt bots) find world bots kidnapped or behavior altered with no configuration toggle in `run/aiplayerbot.conf`.
-- **Character Limit Constraints**:
-  - `World.cpp:1133` enforces `setConfigMinMax(CONFIG_UINT32_CHARACTERS_PER_REALM, "CharactersPerRealm", 10, 1, 10)`.
-  - The Vanilla 1.12 / 1.18 client character select screen contains exactly 10 button frames (`CharacterSelectCharacterButton1..10`). Sending >10 in `SMSG_CHAR_ENUM` breaks client glue UI without client mods.
-  - Native architecture solution: `AiPlayerbot.AllowMultiAccountAltBots = 1` lets players create separate alt accounts (`sam1`, `sam2`) and summon whole accounts (`.bot add <account>`) or specific alts into raids without limit.
-
-## 3. Scope of Work & Constraints
-- Adhere strictly to `RULE[/home/sam/tortoise-wow/AGENTS.md]`:
-  - Preserve core native contracts, generic behaviors, and Turtle compatibility.
-  - Do not run unauthorized server start/stop or database operations outside SOP.
-  - Provide a clean, configurable implementation allowing users to choose how `.bot group` behaves (recruit online vs generate fresh bots on rndbot pool vs alt bots).
+## Architecture Constraints & User Rules
+- **ZERO SHELL COMMANDS**: Live server processes are running and the user compiles manually. Never invoke `run_command`.
+- **Core Preservation**: Adhere to `AGENTS.md` and native engine contracts.

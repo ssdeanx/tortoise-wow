@@ -1,26 +1,26 @@
 [
   {
     "id": "goal-1",
-    "description": "Comparative Analysis of .bot group size=5 across origin, f776c7a, and 77e6937, detailing code paths and aiplayerbot.conf options",
+    "description": "Deep Architectural Audit of .dc on Lifecycle, Events, Triggers, Actions, and Util Modules Across Existing Raids (Molten Core, Karazhan Crypts, Zul'Gurub, Blackrock Depths)",
     "status": "completed",
-    "verification_criteria": "Comprehensive architectural diff identifying exact line numbers, account resolution mechanics, and behavioral discrepancies between versions."
+    "verification_criteria": "Complete audit of DungeonClearCommand, DungeonClearStrategy, DungeonEventExecutor, MoltenCoreEvents, ZulGurubEvents, and all Util systems (DcPullPlanner, DcLeaderSignal, DcTargeting, DcHazard, DcDoorPolicy, etc.)."
   },
   {
     "id": "goal-2",
-    "description": "Raid Assembly & 10-Character Account Limit Investigation (Client SMSG_CHAR_ENUM, Server CharactersPerRealm, and Multi-Account Alt Bots)",
+    "description": "Blackwing Lair (Map 469) Gap Analysis & mod-dungeon-clear Architecture Blueprint (Events, Roster Ordering, Suppression Room, Boss Sequence)",
     "status": "completed",
-    "verification_criteria": "Full diagnostic explanation of 'Account has max characters', why client/server limits exist, and how to operate 10/20/40 raids with personal characters."
+    "verification_criteria": "Identification of all missing components (missing Broodlord Lashlayer 12017, missing BlackwingLairEvents, missing routes) and complete structural blueprint for Blackwing Lair DC integration."
   },
   {
     "id": "goal-3",
-    "description": "Engine Enhancement: Configurable .bot group recruitment vs generation behavior in aiplayerbot.conf",
+    "description": "Audit & Perfection of Blackwing Lair Playerbot Combat Strategies & Action Deck Across All 8 Bosses",
     "status": "completed",
-    "verification_criteria": "Configurable engine logic in PlayerbotMgr/PlayerbotAIConfig with compile validation ensuring players can select desired group-creation semantics."
+    "verification_criteria": "Exhaustive analysis and perfection plan for Razorgore, Vaelastrasz, Suppression Room, Broodlord Lashlayer, Firemaw, Ebonroc, Flamegor, Chromaggus, and Nefarian strategies."
   },
   {
     "id": "goal-4",
-    "description": "Documentation, Build Verification & Operations Guide for Personal Raid Rosters",
+    "description": "Documentation & Reference Synthesis in Handbook (references/02_playerbot_and_raid_automation.md & 06_automated_raid_and_dungeon_operations.md)",
     "status": "completed",
-    "verification_criteria": "Clean Release build validation and verified operational commands for multi-account alt raid formation and .bot group usage."
+    "verification_criteria": "Complete, actionable reference documentation for players and administrators running BWL and .dc raid automation."
   }
 ]

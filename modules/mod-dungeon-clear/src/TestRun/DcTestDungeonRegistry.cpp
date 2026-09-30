@@ -91,6 +91,9 @@ namespace DcTestDungeonRegistry
             // expect the bosses to require the real raid. Entrance from
             // areatrigger_teleport 3928 "Zul'Gurub - Entrance".
             { "zg",              "Zul'Gurub",                      309, -11916.60f, -1243.52f,   92.53f, 4.712f, 60, "" },
+            // Turtle custom raid: Scarlet Citadel (map 45, 40-man fortress).
+            // Entrance from areatrigger_teleport target / .tele ScarletCitadel
+            { "scarlet-citadel", "Scarlet Citadel",                 45,    32.55f,    13.30f,   16.87f, 6.280f, 63, "" },
             // --- The Burning Crusade --------------------------------------
             { "ramparts",        "Hellfire Ramparts",             543, -1355.24f,  1641.12f,   68.25f, 0.669f, 62, "", 70 },
             { "blood-furnace",   "The Blood Furnace",             542,    -4.00f,    14.64f,  -44.80f, 4.887f, 63, "", 70 },

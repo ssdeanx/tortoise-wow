@@ -23,6 +23,7 @@
 #include "RuinsOfAhnQirajDungeonTriggers.h"
 #include "TempleOfAhnQirajDungeonTriggers.h"
 #include "ZulGurubDungeonTriggers.h"
+#include "ScarletCitadelDungeonTriggers.h"
 #include "GlyphTriggers.h"
 #include "WorldBuffTravelTriggers.h"
 
@@ -313,6 +314,38 @@ namespace ai
             creators["leave temple of ahnqiraj"] = [](PlayerbotAI* ai) { return new TempleOfAhnQirajLeaveDungeonTrigger(ai); };
             creators["enter blackwing lair"] = [](PlayerbotAI* ai) { return new BlackwingLairEnterDungeonTrigger(ai); };
             creators["leave blackwing lair"] = [](PlayerbotAI* ai) { return new BlackwingLairLeaveDungeonTrigger(ai); };
+            creators["enter scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelEnterDungeonTrigger(ai); };
+            creators["leave scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelLeaveDungeonTrigger(ai); };
+
+            // Scarlet Citadel Boss Triggers
+            creators["start daelus fight"] = [](PlayerbotAI* ai) { return new DaelusStartFightTrigger(ai); };
+            creators["end daelus fight"] = [](PlayerbotAI* ai) { return new DaelusEndFightTrigger(ai); };
+            creators["daelus need close tether"] = [](PlayerbotAI* ai) { return new DaelusNeedCloseTetherTrigger(ai); };
+            creators["daelus poison cloud carrier"] = [](PlayerbotAI* ai) { return new DaelusPoisonCloudCarrierTrigger(ai); };
+            creators["daelus in poison cloud"] = [](PlayerbotAI* ai) { return new DaelusInPoisonCloudTrigger(ai); };
+            creators["daelus has spirits"] = [](PlayerbotAI* ai) { return new DaelusHasSpiritsTrigger(ai); };
+            creators["daelus sunder armor high"] = [](PlayerbotAI* ai) { return new DaelusSunderArmorHighTrigger(ai); };
+
+            creators["start ardaeus fight"] = [](PlayerbotAI* ai) { return new ArdaeusStartFightTrigger(ai); };
+            creators["end ardaeus fight"] = [](PlayerbotAI* ai) { return new ArdaeusEndFightTrigger(ai); };
+            creators["ardaeus sun descending"] = [](PlayerbotAI* ai) { return new ArdaeusSunDescendingTrigger(ai); };
+            creators["ardaeus has statue add"] = [](PlayerbotAI* ai) { return new ArdaeusHasStatueAddTrigger(ai); };
+
+            creators["start mariella fight"] = [](PlayerbotAI* ai) { return new MariellaStartFightTrigger(ai); };
+            creators["end mariella fight"] = [](PlayerbotAI* ai) { return new MariellaEndFightTrigger(ai); };
+            creators["mariella in void zone"] = [](PlayerbotAI* ai) { return new MariellaInVoidZoneTrigger(ai); };
+            creators["mariella has felhounds"] = [](PlayerbotAI* ai) { return new MariellaHasFelhoundsTrigger(ai); };
+
+            creators["start eric vesper fight"] = [](PlayerbotAI* ai) { return new EricVesperStartFightTrigger(ai); };
+            creators["end eric vesper fight"] = [](PlayerbotAI* ai) { return new EricVesperEndFightTrigger(ai); };
+            creators["eric vesper energizing"] = [](PlayerbotAI* ai) { return new EricVesperEnergizingTrigger(ai); };
+
+            creators["start darkcaller rayn fight"] = [](PlayerbotAI* ai) { return new DarkcallerRaynStartFightTrigger(ai); };
+            creators["end darkcaller rayn fight"] = [](PlayerbotAI* ai) { return new DarkcallerRaynEndFightTrigger(ai); };
+
+            creators["start abbendis fight"] = [](PlayerbotAI* ai) { return new AbbendisStartFightTrigger(ai); };
+            creators["end abbendis fight"] = [](PlayerbotAI* ai) { return new AbbendisEndFightTrigger(ai); };
+            creators["abbendis need turn boss"] = [](PlayerbotAI* ai) { return new AbbendisNeedTurnBossTrigger(ai); };
 
             creators["environmental hazard nearby"] = [](PlayerbotAI* ai) { return new EnvironmentalHazardTrigger(ai); };
             creators["attackers entry"] = [](PlayerbotAI* ai) { return new AttackersEntryTrigger(ai); };
@@ -323,6 +356,7 @@ namespace ai
             creators["nature protection potion ready"] = [](PlayerbotAI* ai) { return new NatureProtectionPotionReadyTrigger(ai); };
             creators["arcane protection potion ready"] = [](PlayerbotAI* ai) { return new ArcaneProtectionPotionReadyTrigger(ai); };
             creators["frost protection potion ready"] = [](PlayerbotAI* ai) { return new FrostProtectionPotionReadyTrigger(ai); };
+            creators["ahnqiraj supplies needed"] = [](PlayerbotAI* ai) { return new AhnQirajSuppliesNeededTrigger(ai); };
 
             // Dungeon Boss Triggers
             creators["start onyxia fight"] = [](PlayerbotAI* ai) { return new OnyxiaStartFightTrigger(ai); };
@@ -330,6 +364,12 @@ namespace ai
             creators["onyxia airborne"] = [](PlayerbotAI* ai) { return new OnyxiaAirborneTrigger(ai); };
             creators["onyxia grounded"] = [](PlayerbotAI* ai) { return new OnyxiaGroundedTrigger(ai); };
             creators["onyxia deep breath"] = [](PlayerbotAI* ai) { return new OnyxiaDeepBreathTrigger(ai); };
+            creators["onyxia phase 3 landing threat"] = [](PlayerbotAI* ai) { return new OnyxiaPhase3LandingThreatTrigger(ai); };
+            creators["onyxia need tank north"] = [](PlayerbotAI* ai) { return new OnyxiaNeedTankNorthTrigger(ai); };
+            creators["onyxia has whelps"] = [](PlayerbotAI* ai) { return new OnyxiaHasWhelpsTrigger(ai); };
+            creators["onyxia has warder"] = [](PlayerbotAI* ai) { return new OnyxiaHasWarderTrigger(ai); };
+            creators["onyxia bellowing roar"] = [](PlayerbotAI* ai) { return new OnyxiaBellowingRoarTrigger(ai); };
+            creators["onyxia phase 3 dps throttle"] = [](PlayerbotAI* ai) { return new OnyxiaPhase3DpsThrottleTrigger(ai); };
 
             creators["start magmadar fight"] = [](PlayerbotAI* ai) { return new MagmadarStartFightTrigger(ai); };
             creators["end magmadar fight"] = [](PlayerbotAI* ai) { return new MagmadarEndFightTrigger(ai); };
@@ -379,6 +419,7 @@ namespace ai
             creators["mc rune in sight"] = [](PlayerbotAI* ai) { return new MCRuneInSightTrigger(ai); };
             creators["mc rune close"] = [](PlayerbotAI* ai) { return new MCRuneCloseTrigger(ai); };
             creators["mc douse item missing"] = [](PlayerbotAI* ai) { return new MCDouseItemMissingTrigger(ai); };
+            creators["mc core hound pack"] = [](PlayerbotAI* ai) { return new CoreHoundPackTrigger(ai); };
 
             creators["suppression device need stealth"] = [](PlayerbotAI* ai) { return new SuppressionDeviceNeedStealthTrigger(ai); };
             creators["suppression device in sight"] = [](PlayerbotAI* ai) { return new SuppressionDeviceInSightTrigger(ai); };
@@ -389,10 +430,19 @@ namespace ai
             creators["start razorgore fight"] = [](PlayerbotAI* ai) { return new RazorgoreStartFightTrigger(ai); };
             creators["end razorgore fight"] = [](PlayerbotAI* ai) { return new RazorgoreEndFightTrigger(ai); };
             creators["razorgore warming flames"] = [](PlayerbotAI* ai) { return new RazorgoreWarmingTrigger(ai); };
+            creators["razorgore need sleep dragonkin"] = [](PlayerbotAI* ai) { return new RazorgoreNeedSleepDragonkinTrigger(ai); };
+            creators["razorgore need move to corner"] = [](PlayerbotAI* ai) { return new RazorgoreNeedMoveToCornerTrigger(ai); };
+            creators["razorgore has corner add"] = [](PlayerbotAI* ai) { return new RazorgoreHasCornerAddTrigger(ai); };
+            creators["razorgore conflagration tank switch"] = [](PlayerbotAI* ai) { return new RazorgoreConflagrationTrigger(ai); };
 
             creators["start vael fight"] = [](PlayerbotAI* ai) { return new VaelStartFightTrigger(ai); };
             creators["end vael fight"] = [](PlayerbotAI* ai) { return new VaelEndFightTrigger(ai); };
             creators["vael burning adrenaline"] = [](PlayerbotAI* ai) { return new VaelBurningAdrenalineTrigger(ai); };
+            creators["vael tank switch"] = [](PlayerbotAI* ai) { return new VaelTankSwitchTrigger(ai); };
+
+            creators["start broodlord fight"] = [](PlayerbotAI* ai) { return new BroodlordStartFightTrigger(ai); };
+            creators["end broodlord fight"] = [](PlayerbotAI* ai) { return new BroodlordEndFightTrigger(ai); };
+            creators["broodlord tank switch"] = [](PlayerbotAI* ai) { return new BroodlordTankSwitchTrigger(ai); };
 
             creators["firemaw flame buffet stacks"] = [](PlayerbotAI* ai) { return new FiremawFlameBuffetHideTrigger(ai); };
             creators["firemaw tank switch"] = [](PlayerbotAI* ai) { return new FiremawTankSwitchTrigger(ai); };
@@ -416,6 +466,7 @@ namespace ai
 
             creators["start nefarian fight"] = [](PlayerbotAI* ai) { return new NefarianStartFightTrigger(ai); };
             creators["end nefarian fight"] = [](PlayerbotAI* ai) { return new NefarianEndFightTrigger(ai); };
+            creators["shadow flame dot"] = [](PlayerbotAI* ai) { return new ShadowFlameDotTrigger(ai); };
 
             creators["start netherspite fight"] = [](PlayerbotAI* ai) { return new NetherspiteStartFightTrigger(ai); };
             creators["end netherspite fight"] = [](PlayerbotAI* ai) { return new NetherspiteEndFightTrigger(ai); };

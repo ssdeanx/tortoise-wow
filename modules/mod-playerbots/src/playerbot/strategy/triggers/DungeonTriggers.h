@@ -336,4 +336,44 @@ namespace ai
     public:
         FrostProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "frost protection potion ready", 13456, 17544) {}
     };
+
+    // ---- AQ raid protection-potion supply (map 509 Ruins / 531 Temple) ----
+    //
+    // The five Greater Protection Potions the AQ fights actually consume. Item
+    // ids verified against tw_world.item_template; the shared supply rule keeps
+    // a bot from ever running dry mid-raid:
+    //
+    //   * LOW watermark  - when a stack drops below this, the supply action
+    //                      tops it back up (bots always hold at least LOW).
+    //   * TOP-UP target  - the action refills to this value, so every top-up
+    //                      hands the bot (TOP-UP - LOW) MORE than the amount it
+    //                      was short. With LOW=10 / TARGET=20 a bot is always
+    //                      given at least 10 more than it needs, and the
+    //                      "give 10+ than the amount needed on entry" rule the
+    //                      server owner asked for holds on every refill.
+    //
+    // Potion ids: Arcane 13461, Fire 13457, Frost 13456, Nature 13458,
+    // Shadow 13459 (all Greater * Protection Potion; see the buff-id triggers
+    // above for the matching ON_USE buffs).
+    inline uint32 AhnQirajSupplyLowWatermark() { return 10; }
+    inline uint32 AhnQirajSupplyTopUpTarget() { return 20; }
+
+    inline uint32 const* AhnQirajProtectionPotions(uint32& count)
+    {
+        static uint32 const kItems[] = { 13461, 13457, 13456, 13458, 13459 };
+        count = sizeof(kItems) / sizeof(kItems[0]);
+        return kItems;
+    }
+
+    // True when the bot is inside an AQ raid and any of the five Greater
+    // Protection Potions has dropped below the low watermark. Shared by the
+    // trigger (IsActive) and the action (isUseful) so they can never disagree.
+    bool AhnQirajSuppliesLow(PlayerbotAI* ai);
+
+    class AhnQirajSuppliesNeededTrigger : public Trigger
+    {
+    public:
+        AhnQirajSuppliesNeededTrigger(PlayerbotAI* ai) : Trigger(ai, "ahnqiraj supplies needed", 5) {}
+        bool IsActive() override;
+    };
 }

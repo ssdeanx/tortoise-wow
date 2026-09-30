@@ -35,3 +35,4 @@ AC_ADD_SCRIPT("${CMAKE_CURRENT_LIST_DIR}/src/playerbot")
 AC_ADD_SCRIPT("${CMAKE_CURRENT_LIST_DIR}/src/ahbot")
 # The Addmod_playerbotsScripts() entry point the generated loader calls.
 AC_ADD_SCRIPT("${CMAKE_CURRENT_LIST_DIR}/src/loader")
+# Includes Scarlet Citadel raid strategies, triggers, and actions under src/playerbot/strategy/

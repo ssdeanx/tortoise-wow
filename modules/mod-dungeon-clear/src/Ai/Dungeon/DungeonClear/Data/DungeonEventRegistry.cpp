@@ -429,6 +429,10 @@ namespace
             RegisterDireMaulEvents(t);
             RegisterZulGurubEvents(t);
             RegisterMoltenCoreEvents(t);
+            RegisterBlackwingLairEvents(t);
+            RegisterOnyxiasLairEvents(t);
+            RegisterAhnQirajEvents(t);
+            RegisterScarletCitadelEvents(t);
             RegisterHellfireRampartsEvents(t);
             RegisterBloodFurnaceEvents(t);
             RegisterSlavePensEvents(t);

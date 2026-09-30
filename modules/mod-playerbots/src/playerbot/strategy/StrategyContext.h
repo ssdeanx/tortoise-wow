@@ -59,6 +59,7 @@
 #include "generic/RuinsOfAhnQirajDungeonStrategies.h"
 #include "generic/TempleOfAhnQirajDungeonStrategies.h"
 #include "generic/ZulGurubDungeonStrategies.h"
+#include "generic/ScarletCitadelDungeonStrategies.h"
 
 namespace ai
 {
@@ -176,9 +177,16 @@ namespace ai
             creators["ruins of ahnqiraj"] = [](PlayerbotAI* ai) { return new RuinsOfAhnQirajDungeonStrategy(ai); };
             creators["temple of ahnqiraj"] = [](PlayerbotAI* ai) { return new TempleOfAhnQirajDungeonStrategy(ai); };
             creators["zul'gurub"] = [](PlayerbotAI* ai) { return new ZulGurubDungeonStrategy(ai); };
+            creators["scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelDungeonStrategy(ai); };
 
             // Dungeon Boss Strategies
             creators["onyxia"] = [](PlayerbotAI* ai) { return new OnyxiaFightStrategy(ai); };
+            creators["daelus"] = [](PlayerbotAI* ai) { return new DaelusFightStrategy(ai); };
+            creators["ardaeus"] = [](PlayerbotAI* ai) { return new ArdaeusFightStrategy(ai); };
+            creators["mariella"] = [](PlayerbotAI* ai) { return new MariellaFightStrategy(ai); };
+            creators["eric vesper"] = [](PlayerbotAI* ai) { return new EricVesperFightStrategy(ai); };
+            creators["darkcaller rayn"] = [](PlayerbotAI* ai) { return new DarkcallerRaynFightStrategy(ai); };
+            creators["abbendis"] = [](PlayerbotAI* ai) { return new AbbendisFightStrategy(ai); };
             creators["magmadar"] = [](PlayerbotAI* ai) { return new MagmadarFightStrategy(ai); };
             creators["suppression room"] = [](PlayerbotAI* ai) { return new SuppressionRoomStrategy(ai); };
             creators["netherspite"] = [](PlayerbotAI* ai) { return new NetherspiteFightStrategy(ai); };
@@ -233,6 +241,7 @@ namespace ai
             // Blackwing Lair boss fight strategies
             creators["razorgore"] = [](PlayerbotAI* ai) { return new RazorgoreFightStrategy(ai); };
             creators["vael"] = [](PlayerbotAI* ai) { return new VaelFightStrategy(ai); };
+            creators["broodlord"] = [](PlayerbotAI* ai) { return new BroodlordFightStrategy(ai); };
             creators["firemaw"] = [](PlayerbotAI* ai) { return new FiremawFightStrategy(ai); };
             creators["ebonroc"] = [](PlayerbotAI* ai) { return new EbonrocFightStrategy(ai); };
             creators["flamegor"] = [](PlayerbotAI* ai) { return new FlamegorFightStrategy(ai); };

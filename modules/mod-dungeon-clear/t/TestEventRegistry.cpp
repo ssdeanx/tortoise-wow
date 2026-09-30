@@ -184,6 +184,15 @@ namespace
             // Repeatable and its condition re-reads his live position, so a
             // completion with the tank far away latches nothing.
             {546, 2},
+            // Temple of Ahn'Qiraj (531) "C'thun (Eye phase)" (event 3): the Eye
+            // 15589 is the only attackable C'thun target in phase 1, so its lone
+            // KillCreatureEngage step is the encounter's real work. CthunEyeActive
+            // requires the tank within 70yd of the C'Thun body anchor AND the Eye
+            // alive, so the event can neither arm nor complete from the instance
+            // entrance. The body (15727) is non-selectable until the Eye dies, so
+            // this step is what breaks the phase-1 stall; the normal boss flow
+            // takes the body over once it is gone.
+            {531, 3},
         };
         for (Row const& r : kRows)
             if (r.mapId == mapId && r.eventId == eventId)
@@ -595,6 +604,15 @@ TEST(DungeonEventIntegrityTest, DrivesInCombatIsConfinedToVettedWaveEncounters)
         // at which point nothing ever walked the tank to a portal and no rift ever
         // closed. See DungeonEvent::drivesInCombat.
         {269, 4},
+        // Ruins of Ahn'Qiraj (509) "Ossirian crystal" (event 2). The
+        // Strength-of-Ossirian weakness windows ONLY open while the party is in
+        // combat with Ossirian and only via a crystal click (GO 180619,
+        // script_name=ossirian_crystal), so this event is inherently a
+        // mid-fight action — the out-of-combat rung would never fire it during
+        // the encounter. It is Optional + Repeatable, so each click completes
+        // and yields the tick (the raid resumes DPS) and the fresh crystal pair
+        // re-arms it; it is not a continuous wave that owns every tick.
+        {509, 2},
     };
 
     for (DungeonEvent const& ev : DungeonEventRegistry::AllEvents())
@@ -1349,4 +1367,215 @@ TEST(DungeonEventIntegrityTest, AzjolNerubAnchorsTheRouteToAnubarak)
     // first: it sits 25yd past the southern shore.
     EXPECT_LT((*route)[0].y, 470.0f)
         << "anchor 1 is back in the drop chamber's half of the lower kingdom";
+}
+
+// --- Ahn'Qiraj (509 Ruins / 531 Temple) ------------------------------------
+// Each of these rows exists because the auto-derived list alone is WRONG for
+// that encounter. The assertions lock the specific native contract each row
+// depends on, so a later edit that quietly reverts one of them (back to a
+// plain static boss, or to independent per-entry completion) fails here.
+
+TEST(DungeonEventIntegrityTest, AhnQirajRajaxxDrivesTheNativeOfficerChain)
+{
+    DungeonEvent const* ev = DungeonEventRegistry::Find(/*map*/ 509, /*id*/ 1);
+    ASSERT_NE(ev, nullptr) << "AQ20 Rajaxx officer-chain event is missing";
+    EXPECT_EQ(ev->activation, EventActivation::Anchored);
+    EXPECT_TRUE(ev->persistent)
+        << "the seven-officer chain spans many >1s combat gaps; without .Persistent() "
+           "the step list rewinds to Qeez after every wave";
+    EXPECT_TRUE(ev->required);
+
+    // The NATIVE chain order (generic_scripts 153911->...->153411). Engaged out of
+    // order the event still resolves (an already-dead officer is Done), but the
+    // authored order must match the chain or the tank fights the wrong pull.
+    uint32 const kChain[] = { 15391, 15392, 15389, 15390, 15386, 15388, 15385, 15341 };
+    ASSERT_EQ(ev->steps.size(), sizeof(kChain) / sizeof(kChain[0]))
+        << "one engage step per officer, then Rajaxx — nothing else in the chain";
+    for (size_t i = 0; i < ev->steps.size(); ++i)
+    {
+        EventStep const& s = ev->steps[i];
+        EXPECT_EQ(s.kind, EventStepKind::KillCreature);
+        EXPECT_TRUE(s.engage)
+            << "step " << i << " must ACTIVELY pull the officer; a gate-only step "
+               "would stand at the arena while the chain timer runs out";
+        EXPECT_EQ(s.creatureEntry, kChain[i])
+            << "step " << i << " breaks the native officer chain order";
+        EXPECT_GT(s.timeoutMs, 180000u)
+            << "step " << i << " must outlast the native 180s wave timer, or a slow "
+               "wave reads as a failed step";
+    }
+    // Rajaxx himself is the LAST step, and it is the only 15341 reference: the
+    // passive/invincible static spawn is reached through the chain, never first.
+    EXPECT_EQ(ev->steps.back().creatureEntry, 15341u);
+
+    // The raw passive boss must be gone from the roster, replaced by the objective.
+    bool removed = false, added = false;
+    for (BossRosterPatch const& patch : BossRosterRegistry::AllPatches())
+    {
+        if (patch.mapId != 509)
+            continue;
+        for (uint32 e : patch.remove)
+            if (e == 15341u)
+                removed = true;
+        for (DungeonBossInfo const& e : patch.add)
+            if (e.kind == DungeonAnchorKind::Objective && e.eventId == 1u)
+                added = true;
+    }
+    EXPECT_TRUE(removed)
+        << "15341 must be removed from the raw list — as a static boss it is targeted "
+           "while passive/invincible and the clear stalls on it";
+    EXPECT_TRUE(added) << "the Rajaxx chain needs its objective anchor";
+}
+
+TEST(DungeonEventIntegrityTest, AhnQirajBugTrioIsOneCompositeObjective)
+{
+    DungeonEvent const* ev = DungeonEventRegistry::Find(/*map*/ 531, /*id*/ 1);
+    ASSERT_NE(ev, nullptr) << "AQ40 Bug Trio composite event is missing";
+    EXPECT_EQ(ev->activation, EventActivation::Anchored);
+    EXPECT_TRUE(ev->persistent);
+
+    // THREE kill-gates: Kri/Yauj/Vem each heal the survivors to full on a
+    // single death, so completion can never be one participant.
+    uint32 const kBugs[] = { 15544, 15543, 15511 };
+    ASSERT_EQ(ev->steps.size(), 3u)
+        << "all three native Bug Trio deaths must gate completion; a shorter list "
+           "advances the clear while survivors are still alive and healing";
+    for (size_t i = 0; i < ev->steps.size(); ++i)
+    {
+        EXPECT_EQ(ev->steps[i].kind, EventStepKind::KillCreature);
+        EXPECT_TRUE(ev->steps[i].engage);
+        EXPECT_EQ(ev->steps[i].creatureEntry, kBugs[i]);
+    }
+
+    // The three independent raw rows are removed, and exactly one composite
+    // objective replaces them — no per-entry kill-bit survives to fire early.
+    int removedCount = 0, objectiveCount = 0;
+    for (BossRosterPatch const& patch : BossRosterRegistry::AllPatches())
+    {
+        if (patch.mapId != 531)
+            continue;
+        for (uint32 e : patch.remove)
+            if (e == 15544u || e == 15543u || e == 15511u)
+                ++removedCount;
+        for (DungeonBossInfo const& e : patch.add)
+        {
+            EXPECT_EQ(e.kind, DungeonAnchorKind::Objective)
+                << "a re-added Bug Trio member would carry a real kill-bit and "
+                   "complete the encounter on the first death";
+            if (e.kind == DungeonAnchorKind::Objective && e.eventId == 1u)
+                ++objectiveCount;
+        }
+    }
+    EXPECT_EQ(removedCount, 3) << "all three Bug Trio rows must be removed";
+    EXPECT_EQ(objectiveCount, 1) << "exactly one composite objective replaces them";
+}
+
+TEST(DungeonEventIntegrityTest, AhnQirajOuroIsReachedThroughTheSpawner)
+{
+    DungeonEvent const* ev = DungeonEventRegistry::Find(/*map*/ 531, /*id*/ 2);
+    ASSERT_NE(ev, nullptr) << "AQ40 Ouro spawner event is missing";
+    EXPECT_EQ(ev->activation, EventActivation::Anchored);
+    EXPECT_TRUE(ev->persistent);
+
+    // WaitForSpawn(15517) FIRST: Ouro has no static spawn, so the party must let
+    // the native spawner (15957) summon him. Only then is he engaged.
+    ASSERT_GE(ev->steps.size(), 2u);
+    EXPECT_EQ(ev->steps[0].kind, EventStepKind::WaitForSpawn);
+    EXPECT_EQ(ev->steps[0].creatureEntry, 15517u);
+    EXPECT_TRUE(ev->steps[0].wantAlive);
+    EXPECT_GT(ev->steps[0].timeoutMs, 60000u)
+        << "the walk to the spawner plus the summon is not instant";
+
+    EventStep const& kill = ev->steps[1];
+    EXPECT_EQ(kill.kind, EventStepKind::KillCreature);
+    EXPECT_TRUE(kill.engage);
+    EXPECT_EQ(kill.creatureEntry, 15517u);
+
+    // The objective is anchored on the REAL spawner coordinates from tw_world
+    // (15957 @ -9188.45, 2091.56, -64.17) — not on Ouro, who is not spawned yet.
+    bool found = false;
+    for (BossRosterPatch const& patch : BossRosterRegistry::AllPatches())
+    {
+        if (patch.mapId != 531)
+            continue;
+        for (DungeonBossInfo const& e : patch.add)
+        {
+            if (e.kind != DungeonAnchorKind::Objective || e.eventId != 2u)
+                continue;
+            found = true;
+            EXPECT_NEAR(e.x, -9188.45f, 2.0f);
+            EXPECT_NEAR(e.y, 2091.56f, 2.0f);
+            EXPECT_NEAR(e.z, -64.17f, 2.0f);
+        }
+    }
+    EXPECT_TRUE(found) << "the Ouro objective must be wired to event 2";
+}
+
+TEST(DungeonEventIntegrityTest, AhnQirajTwinsCollapseToASingleLinkedBoss)
+{
+    // 15275/15276 are a shared-health linked pair: the native JustDied kills the
+    // other, so ONE death completes the fight. Two order rows let the clear
+    // advance to (and re-target) a twin that is already dead.
+    bool removed = false;
+    for (BossRosterPatch const& patch : BossRosterRegistry::AllPatches())
+    {
+        if (patch.mapId != 531)
+            continue;
+        for (uint32 e : patch.remove)
+        {
+            if (e == 15276u)
+                removed = true;
+            // 15275 is NOT removed — it stays the single real boss that owns the
+            // encounter's kill-bit.
+            EXPECT_NE(e, 15275u) << "Vek'nilash must remain the tracked Twins boss";
+        }
+    }
+    EXPECT_TRUE(removed) << "Vek'lor (15276) must be removed from the Twins pair";
+}
+
+TEST(DungeonEventIntegrityTest, AhnQirajCthunEngagesTheEyeWhileTheBodyIsUnselectable)
+{
+    DungeonEvent const* ev = DungeonEventRegistry::Find(/*map*/ 531, /*id*/ 3);
+    ASSERT_NE(ev, nullptr) << "AQ40 C'thun Eye-phase event is missing";
+    EXPECT_EQ(ev->activation, EventActivation::Conditional);
+    EXPECT_TRUE(static_cast<bool>(ev->condition));
+    EXPECT_FALSE(ev->drivesInCombat)
+        << "the eye is pulled by the out-of-combat rung on entry; taking every "
+           "combat tick would starve the raid's damage for no gain";
+    EXPECT_TRUE(ev->required);
+
+    // The Eye (15589) is the ONLY attackable C'thun target in phase 1 — the body
+    // 15727 is non-selectable until the eye dies.
+    ASSERT_EQ(ev->steps.size(), 1u);
+    EXPECT_EQ(ev->steps[0].kind, EventStepKind::KillCreature);
+    EXPECT_TRUE(ev->steps[0].engage);
+    EXPECT_EQ(ev->steps[0].creatureEntry, 15589u);
+}
+
+TEST(DungeonEventIntegrityTest, AhnQirajOssirianCrystalClickIsOptionalAndMidFight)
+{
+    DungeonEvent const* ev = DungeonEventRegistry::Find(/*map*/ 509, /*id*/ 2);
+    ASSERT_NE(ev, nullptr) << "AQ20 Ossirian crystal event is missing";
+    EXPECT_EQ(ev->activation, EventActivation::Conditional);
+    EXPECT_TRUE(static_cast<bool>(ev->condition));
+    EXPECT_TRUE(ev->repeatable)
+        << "the crystals rotate; each fresh weakness pair must be clickable again";
+    EXPECT_TRUE(ev->drivesInCombat)
+        << "the weakness windows only exist mid-fight — the out-of-combat rung "
+           "would never fire it during the encounter";
+    EXPECT_FALSE(ev->required)
+        << "crystal clicking is best-effort: a bot that cannot reach a crystal "
+           "must never stall the clear";
+
+    ASSERT_EQ(ev->steps.size(), 1u);
+    EventStep const& s = ev->steps[0];
+    EXPECT_EQ(s.kind, EventStepKind::UseGameObject);
+    EXPECT_EQ(s.goEntry, 180619u) << "Ossirian Crystal (ossirian_crystal)";
+    // The search is anchored on Ossirian's own spawn, so the click finds an active
+    // crystal wherever the rotating pair currently is in the chamber.
+    EXPECT_NEAR(s.x, -9493.60f, 2.0f);
+    EXPECT_NEAR(s.y, 2030.27f, 2.0f);
+    EXPECT_NEAR(s.z, 105.48f, 2.0f);
+    EXPECT_GT(s.radius, 50.0f)
+        << "the crystals sit around the chamber; a tight radius misses the pair";
 }

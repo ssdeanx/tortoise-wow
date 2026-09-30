@@ -386,6 +386,40 @@ bool ItemBuffReadyTrigger::IsActive()
     return false;
 }
 
+// Shared AQ supply rule (declared in DungeonTriggers.h). True when the bot is
+// inside an AQ raid and at least one of the five Greater Protection Potions has
+// dropped below the low watermark. Counts bags only (inBankAlso=false): the
+// supply action can only top up what the bot can carry, so a bank stack must
+// not mask an empty bag mid-raid.
+bool ai::AhnQirajSuppliesLow(PlayerbotAI* ai)
+{
+    if (!ai)
+        return false;
+
+    Player* bot = ai->GetBot();
+    if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported())
+        return false;
+
+    uint32 mapId = bot->GetMapId();
+    if (mapId != 509 && mapId != 531) // Ruins of Ahn'Qiraj / Temple of Ahn'Qiraj
+        return false;
+
+    uint32 count = 0;
+    uint32 const* items = AhnQirajProtectionPotions(count);
+    for (uint32 i = 0; i < count; ++i)
+    {
+        if (bot->GetItemCount(items[i], /*inBankAlso*/ false) < AhnQirajSupplyLowWatermark())
+            return true;
+    }
+
+    return false;
+}
+
+bool AhnQirajSuppliesNeededTrigger::IsActive()
+{
+    return AhnQirajSuppliesLow(ai);
+}
+
 Unit* ai::GetRaidTargetByEntry(PlayerbotAI* ai, uint32 entryId)
 {
     Player* bot = ai->GetBot();

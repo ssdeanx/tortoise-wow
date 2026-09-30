@@ -17,7 +17,13 @@ AC_ADD_SCRIPT("${CMAKE_CURRENT_LIST_DIR}/src")
 
 AC_ADD_CONFIG_FILE("${CMAKE_CURRENT_LIST_DIR}/conf/mod_dungeon_clear.conf.dist")
 
-# New files added: Value/DungeonClearGroundHazardsValue.{h,cpp} (live
+# New files added: Data/Events/AhnQirajEvents.cpp (Ruins 509 + Temple 531 of
+#   Ahn'Qiraj: native Rajaxx officer chain, composite Bug Trio, spawnless Ouro
+#   Spawner objective, Twins link, C'thun Eye phase, Ossirian crystals),
+#   Data/Events/ScarletCitadelEvents.cpp (Scarlet Citadel map 45 events & roster),
+#   Data/Events/OnyxiasLairEvents.cpp (Onyxia's Lair map 249 events & roster),
+#   Data/Events/BlackwingLairEvents.cpp (Blackwing Lair map 469 events & roster),
+#   Value/DungeonClearGroundHazardsValue.{h,cpp} (live
 #   persistent-area-aura ground pools — DynamicObjects, not creatures — near the
 #   bot; the DcHazard half that covers Scholomance's Cloud of Disease),
 # Value/DungeonClearTrapHazardsValue.{h,cpp} (live GAMEOBJECT_TYPE_TRAP hazards

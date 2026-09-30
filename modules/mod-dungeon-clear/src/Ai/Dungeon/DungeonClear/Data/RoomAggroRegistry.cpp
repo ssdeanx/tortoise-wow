@@ -214,6 +214,72 @@ namespace
         // pullOutRadius 14, not the skirt).
         { 554, 19221, 70.0f, {}, false, 0.0f, 0.0f, /*pullOutRadius*/ 14.0f,
           /*skirtRadius*/ 40.0f },
+
+        // Scarlet Citadel (45) — Sacred Fist Daelus. The courtyard trash
+        // (Valiant 2000034, Footman 2000035, Jordan 2000011) must be cleared
+        // prior to engaging Daelus, otherwise pulling him with active courtyard mobs
+        // triggers chain adds during the proximity tether mechanics.
+        { 45, 2000000, 60.0f, { 2000034, 2000035, 2000011 } },
+
+        // Scarlet Citadel (45) — High Inquisitor Mariella. The inquisition chamber
+        // trash (Citadel Inquisitor 2000033 and Darkcaller Rayn 2000037) must be pre-cleared
+        // before fighting Mariella to avoid fighting them inside Void Zones.
+        { 45, 2000002, 45.0f, { 2000033, 2000037 } },
+
+        // Scarlet Citadel (45) — Brother Eric Vesper. The cloister trash
+        // (Citadel Interrogator 2000036, Chaplain 2000005, Sister 2000006) must be cleared
+        // so the raid can burst Eric Vesper before Energize (25685) wipes the raid.
+        { 45, 2000004, 50.0f, { 2000036, 2000005, 2000006 } },
+
+        // Temple of Ahn'Qiraj (531) — The Prophet Skeram. His chamber is guarded by
+        // EIGHT Anubisath Sentinels (15264) in TWO isolated clusters of four, and
+        // the sentinels must be dealt with BEFORE he is pulled — a boss pull taken
+        // with the room still up fights trash and boss together, which is the
+        // worst possible version of this encounter.
+        //
+        // The self-gather is what makes the room un-decomposable. On aggro a
+        // sentinel runs AddSentinelsNear() ->
+        // GetCreatureListWithEntryInGrid(..., NPC_SENTINEL, 90.0f) and then
+        // CallBuddiesToAttack(), which AttackStarts every sentinel in that
+        // 90yd sphere. Measured 3D geometry from the live tw_world spawns around
+        // Skeram (-8343.20, 2083.07, 125.65):
+        //
+        //   near cluster  43.5 / 45.9 / 58.3 / 59.5 yd   (guid 87566/87565/87567/87564)
+        //   far  cluster 163.9 / 181.9 / 192.5 / 195.9 yd (guid 87568-87571)
+        //
+        // Intra-cluster spacing is 18.5yd (near) / 19.2yd (far) but the SMALLEST
+        // cross-cluster gap is 120.8yd — comfortably past the script's own 90yd
+        // gather radius. So one pull always collects exactly one cluster of four
+        // and the room falls as two natural four-packs, never as one eight-pull.
+        // The pre-clear therefore walks the room, not the bosses.
+        //
+        // The whitelist (Anubisath Sentinel 15264 + Obsidian Eradicator 15262) is
+        // what makes the generous radius safe: those are the ONLY spawns of those
+        // two entries anywhere on 531, so a 210yd sphere around Skeram cannot pick
+        // up a single unrelated mob, and it is sized to cover the farthest sentinel
+        // (195.9yd) with margin. Both sentinel clusters and all three eradicators
+        // (40.6 / 71.5 / 151.1yd) are inside it. Eradicators join on their own
+        // EventAI aggro (creature_ai_events 1527602 raises their aggro radius to
+        // 40yd) and are ordinary hostile trash besides.
+        //
+        // pullOutRadius 20 is the load-bearing field. Skeram's OWN engage is
+        // 28yd (boss_skeram.cpp MoveInLineOfSight) and his DB detection_range is
+        // 20, so the computed exclusion sphere lands in the high-30s/low-40s —
+        // exactly where the near cluster sits (42.9yd at its closest). Left to the
+        // computed value, the near four would intermittently fall INSIDE the
+        // exclusion and be reclassified as "comes with the boss", which is the
+        // exact failure this row exists to prevent, and it would flicker run to
+        // run with the path-padding setting. 20yd pins the exclusion well below
+        // the nearest sentinel so all eight are unambiguously clearable trash.
+        // As RoomAggroBoss::pullOutRadius documents, a non-zero value also forces
+        // the advanced pull-to-camp maneuver, so the tank drags each cluster out
+        // and fights it clear of Skeram instead of meleeing it in his wake —
+        // which is the "do not fight the trash and the boss at the same time"
+        // requirement made mechanical. No skirtRadius: 28yd is Skeram's true
+        // engage range and AggroReach already covers it, so the default computed
+        // standoff is the honest number here.
+        { 531, 15263, 210.0f, { 15264, 15262 }, false, 0.0f, 0.0f,
+          /*pullOutRadius*/ 20.0f, /*skirtRadius*/ 0.0f }, // Skeram — sentinel room
     };
 }
 

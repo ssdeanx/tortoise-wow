@@ -132,6 +132,78 @@ TEST(RoomAggroRegistryTest, DeadminesGilnidPreClearsTheFoundry)
     EXPECT_EQ(RoomAggroRegistry::Find(36, 622), nullptr);   // Goblin Engineer
 }
 
+// The Prophet Skeram (Temple of Ahn'Qiraj, 531) is a room-aggro boss: his chamber
+// is guarded by eight Anubisath Sentinels that must be dealt with BEFORE he is
+// pulled, because a boss pull taken with the room still up fights trash and boss
+// together — the worst possible version of the encounter.
+//
+// The sentinels self-gather (mob_anubisath_sentinel::GetOtherSentinels gathers
+// every NPC_SENTINEL within 90yd and AttackStarts them), so the room falls as two
+// natural four-packs, never one eight-pull. The measured 3D distances from Skeram
+// (-8343.20, 2083.07, 125.65) in the live tw_world spawns put the two clusters at
+// 43.5-59.5yd and 163.9-195.9yd, with a smallest cross-cluster gap of 120.8yd —
+// past the script's own 90yd gather radius, which is why the clusters stay
+// independent.
+//
+// The two fields this row leans on, and why each is load-bearing:
+//   * radius 210 — must exceed the FARTHEST sentinel (195.9yd) or the far cluster
+//     is never pre-cleared and comes back up on the boss pull. The whitelist makes
+//     the generous sphere safe: 15264/15262 are the only spawns of those entries
+//     anywhere on 531, so no unrelated mob can be swept in.
+//   * pullOutRadius 20 — Skeram's own engage is 28yd (boss_skeram.cpp
+//     MoveInLineOfSight) and his DB detection_range is 20, so the computed
+//     exclusion sphere lands in the high-30s/low-40s, exactly where the near
+//     cluster sits (42.9yd at its closest). Without an explicit shrink the near
+//     four would intermittently fall INSIDE the exclusion, be reclassified as
+//     "comes with the boss", and flicker with the path-padding setting. A
+//     non-zero value also forces the advanced pull-to-camp, so each cluster is
+//     dragged out and fought clear of Skeram.
+TEST(RoomAggroRegistryTest, TempleOfAhnQirajSkeramPreClearsTheSentinelRoom)
+{
+    RoomAggroBoss const* skeram = RoomAggroRegistry::Find(531, 15263);
+    ASSERT_NE(skeram, nullptr);
+    EXPECT_EQ(skeram->bossEntry, 15263u);
+
+    // Anubisath Sentinel + Obsidian Eradicator, and nothing else. The room's
+    // mobs are NOT bosses and must never be findable as one.
+    EXPECT_EQ(skeram->memberEntries, (std::vector<uint32>{15264, 15262}));
+    EXPECT_EQ(RoomAggroRegistry::Find(531, 15264), nullptr);  // sentinel is room, not boss
+    EXPECT_EQ(RoomAggroRegistry::Find(531, 15262), nullptr);  // eradicators likewise
+
+    EXPECT_FALSE(skeram->hasYBand);  // the gather is a radius sphere, not a corridor
+
+    // Covers the farthest sentinel (195.9yd) with margin; both sentinel clusters
+    // and all three eradicators (40.6 / 71.5 / 151.1yd) fall inside.
+    EXPECT_GE(skeram->radius, 195.9f);
+    EXPECT_LE(skeram->radius, 210.0f);
+
+    // Below the nearest sentinel (42.9yd) so the near cluster is unambiguously
+    // clearable trash rather than boss adds — see the comment above.
+    EXPECT_GT(skeram->pullOutRadius, 0.0f);
+    EXPECT_LT(skeram->pullOutRadius, 42.9f);
+
+    // No skirt: 28yd is Skeram's true engage range, so the computed standoff is
+    // already the honest number and there is nothing to widen.
+    EXPECT_FLOAT_EQ(skeram->skirtRadius, 0.0f);
+    EXPECT_FLOAT_EQ(RoomAggroRegistry::SkirtOverride(531, 15263), 0.0f);
+
+    // Membership + the pinned exclusion together classify every measured sentinel
+    // as room trash, and still refuse anything off the whitelist.
+    for (float dist : {43.5f, 45.9f, 58.3f, 59.5f, 163.9f, 181.9f, 192.5f, 195.9f})
+        EXPECT_TRUE(RoomAggroRegistry::IsRoomTrash(*skeram, 15264, dist, skeram->pullOutRadius))
+            << "sentinel at " << dist << "yd must be pre-cleared, not boss adds";
+    for (float dist : {40.6f, 71.5f, 151.1f})
+        EXPECT_TRUE(RoomAggroRegistry::IsRoomTrash(*skeram, 15262, dist, skeram->pullOutRadius))
+            << "eradicator at " << dist << "yd must be pre-cleared";
+
+    // A mob welded to Skeram himself still comes with the boss, and an unrelated
+    // entry is never room trash even inside the generous radius.
+    EXPECT_FALSE(RoomAggroRegistry::IsRoomTrash(*skeram, 15264, 10.0f, skeram->pullOutRadius));
+    EXPECT_FALSE(RoomAggroRegistry::IsRoomTrash(*skeram, 15537, 60.0f, skeram->pullOutRadius));
+    // And nothing past the radius counts.
+    EXPECT_FALSE(RoomAggroRegistry::IsRoomTrash(*skeram, 15264, 230.0f, skeram->pullOutRadius));
+}
+
 // Nethermancer Sepethrea (Mechanar, 554) IS a room-aggro boss: her chamber holds
 // three elite trash groups pre-cleared and dragged back toward the entrance before
 // the pull. radius 70 covers the farthest (Pack A ~67yd); pullOutRadius 14 shrinks

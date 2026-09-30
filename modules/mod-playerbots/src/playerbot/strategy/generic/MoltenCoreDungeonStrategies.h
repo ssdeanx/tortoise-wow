@@ -63,10 +63,32 @@ namespace ai
     class LucifronFightStrategy : public MoltenCoreFightStrategy
     {
     public:
-        LucifronFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai) {}
+        LucifronFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai), hadCure_(false) {}
         std::string getName() override { return "lucifron"; }
 
+        void OnStrategyAdded(BotState state) override
+        {
+            MoltenCoreFightStrategy::OnStrategyAdded(state);
+            if (state == BotState::BOT_STATE_COMBAT)
+            {
+                hadCure_ = ai->HasStrategy("cure", BotState::BOT_STATE_COMBAT);
+                if (!hadCure_)
+                    ai->ChangeStrategy("+cure", BotState::BOT_STATE_COMBAT);
+            }
+        }
+
+        void OnStrategyRemoved(BotState state) override
+        {
+            MoltenCoreFightStrategy::OnStrategyRemoved(state);
+            if (state == BotState::BOT_STATE_COMBAT)
+            {
+                if (!hadCure_)
+                    ai->ChangeStrategy("-cure", BotState::BOT_STATE_COMBAT);
+            }
+        }
+
     private:
+        bool hadCure_;
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
@@ -75,10 +97,32 @@ namespace ai
     class GehennasFightStrategy : public MoltenCoreFightStrategy
     {
     public:
-        GehennasFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai) {}
+        GehennasFightStrategy(PlayerbotAI* ai) : MoltenCoreFightStrategy(ai), hadCure_(false) {}
         std::string getName() override { return "gehennas"; }
 
+        void OnStrategyAdded(BotState state) override
+        {
+            MoltenCoreFightStrategy::OnStrategyAdded(state);
+            if (state == BotState::BOT_STATE_COMBAT)
+            {
+                hadCure_ = ai->HasStrategy("cure", BotState::BOT_STATE_COMBAT);
+                if (!hadCure_)
+                    ai->ChangeStrategy("+cure", BotState::BOT_STATE_COMBAT);
+            }
+        }
+
+        void OnStrategyRemoved(BotState state) override
+        {
+            MoltenCoreFightStrategy::OnStrategyRemoved(state);
+            if (state == BotState::BOT_STATE_COMBAT)
+            {
+                if (!hadCure_)
+                    ai->ChangeStrategy("-cure", BotState::BOT_STATE_COMBAT);
+            }
+        }
+
     private:
+        bool hadCure_;
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
         void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;

@@ -47,6 +47,11 @@ namespace
     DcNeverTargetRow const kRows[] =
     {
         { 576, 26793 },  // The Nexus — Crystalline Frayer (seed pod; unkillable until Ormorok dies)
+
+        // Scarlet Citadel (45):
+        {  45, 2000019 }, // The Sun (Ardaeus encounter celestial emitter; unattackable / pushes on damage)
+        {  45, 2000031 }, // ARDAEUS_STATUE_NPC (statue base pedestal)
+        {  45, 2000032 }, // ANTI_EXPLOIT_TELEPORTER (scripted anti-exploit trigger)
     };
 }
 

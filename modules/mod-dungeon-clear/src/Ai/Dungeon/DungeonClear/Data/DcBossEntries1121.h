@@ -24,7 +24,7 @@
 // order block when a dungeon misroutes.
 
 inline constexpr uint32 DC_BOSS_ENTRIES_1121[] = {
-639,646,647,1663,1666,1696,1716,1717,1853,2748,3653,3654,3669,3670,3671,3673,3674,3886,3887,3914,3927,3974,3975,4274,4275,4278,4279,4421,4424,4543,4829,4830,4831,4832,4842,4854,4887,5709,5710,5712,5715,5719,5720,5721,5722,5775,6228,6229,6235,6243,6487,6488,6910,7023,7206,7228,7267,7271,7291,7355,7356,7357,7358,7604,7800,8127,8443,8580,8983,9016,9017,9024,9030,9033,9156,9196,9218,9236,9237,9568,9816,9938,10184,10220,10264,10339,10363,10429,10430,10432,10433,10435,10437,10440,10504,10507,10508,10516,10558,10584,10596,10811,10812,10813,10901,10997,11143,11488,11489,11490,11492,11496,11502,11517,11518,11519,11520,11622,11982,12018,12056,12057,12098,12118,12119,12129,12201,12203,12236,12237,12258,12259,12264,13280,13282,13601,14321,14323,14325,14326,14327,14354,40068,61961,61963,61965,61968,61969,2000092,63129,63130,63131,63132,63133,62037,62038,62056,62057,62067,62069,62070,62071,62072,62530,60747,60748
+639,646,647,1663,1666,1696,1716,1717,1853,2748,3653,3654,3669,3670,3671,3673,3674,3886,3887,3914,3927,3974,3975,4274,4275,4278,4279,4421,4424,4543,4829,4830,4831,4832,4842,4854,4887,5709,5710,5712,5715,5719,5720,5721,5722,5775,6228,6229,6235,6243,6487,6488,6910,7023,7206,7228,7267,7271,7291,7355,7356,7357,7358,7604,7800,8127,8443,8580,8983,9016,9017,9024,9030,9033,9156,9196,9218,9236,9237,9568,9816,9938,10184,10220,10264,10339,10363,10429,10430,10432,10433,10435,10437,10440,10504,10507,10508,10516,10558,10584,10596,10811,10812,10813,10901,10997,11143,11488,11489,11490,11492,11496,11502,11517,11518,11519,11520,11622,11982,12018,12056,12057,12098,12118,12119,12129,12201,12203,12236,12237,12258,12259,12264,13280,13282,13601,14321,14323,14325,14326,14327,14354,40068,61961,61963,61965,61968,61969,2000092,63129,63130,63131,63132,63133,62037,62038,62056,62057,62067,62069,62070,62071,62072,62530,60747,60748,2000000,2000001,2000002,2000003
 };
 
 // Per-dungeon encounter order, plus the door bosses the curated kith_boss
@@ -204,17 +204,18 @@ inline constexpr DcBossOrderRow DC_BOSS_ORDER_1121[] = {
     // keys 13/14 = Majordomo / Ragnaros objectives (code-side)
 
     // Blackwing Lair (map 469): full clear order. The fallback here would put
-    // Nefarian (11583) first. Razorgore -> Vaelastrasz -> the drake wing
-    // (Firemaw -> Ebonroc -> Flamegor, their rooms are sequential) ->
+    // Nefarian (11583) first. Razorgore -> Vaelastrasz -> Broodlord Lashlayer ->
+    // the drake wing (Firemaw -> Ebonroc -> Flamegor, their rooms are sequential) ->
     // Chromaggus -> Nefarian. Turtle entries verified in tw_world: Firemaw is
     // 11983 and Flamegor 11981 - not the other way round.
     { 469, 12435, 1 }, // Razorgore the Untamed
     { 469, 13020, 2 }, // Vaelastrasz the Corrupt
-    { 469, 11983, 3 }, // Firemaw
-    { 469, 14601, 4 }, // Ebonroc
-    { 469, 11981, 5 }, // Flamegor
-    { 469, 14020, 6 }, // Chromaggus
-    { 469, 11583, 7 }, // Nefarian
+    { 469, 12017, 3 }, // Broodlord Lashlayer
+    { 469, 11983, 4 }, // Firemaw
+    { 469, 14601, 5 }, // Ebonroc
+    { 469, 11981, 6 }, // Flamegor
+    { 469, 14020, 7 }, // Chromaggus
+    { 469, 11583, 8 }, // Nefarian
 
     // Ruins of Ahn'Qiraj (map 509): full clear order, following the instance
     // encounter enum (TYPE_KURINNAXX -> TYPE_OSSIRIAN). The fallback would sort
@@ -304,5 +305,15 @@ inline constexpr DcBossOrderRow DC_BOSS_ORDER_1121[] = {
     // Emerald Sanctum (map 807).
     { 807, 60747, 1 }, // Erennius
     { 807, 60748, 2 }, // Solnius (end boss)
+
+    // Onyxia's Lair (map 249): single encounter raid.
+    { 249, 10184, 1 }, // Onyxia (end boss)
+
+    // Scarlet Citadel (map 45): full clear order.
+    // Daelus -> Ardaeus -> Mariella -> Abbendis.
+    { 45, 2000000, 1 }, // Sacred Fist Daelus
+    { 45, 2000001, 2 }, // Grand Sorcerer Ardaeus
+    { 45, 2000002, 3 }, // High Inquisitor Mariella
+    { 45, 2000003, 4 }, // High General Abbendis (end boss)
 };
 #endif

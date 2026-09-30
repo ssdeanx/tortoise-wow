@@ -2,6 +2,7 @@
 #include "MovementActions.h"
 #include "AttackAction.h"
 #include "playerbot/strategy/values/HazardsValue.h"
+#include "playerbot/strategy/triggers/DungeonTriggers.h"
 #include "Spells/SpellAuraDefines.h"
 
 namespace ai
@@ -197,6 +198,24 @@ namespace ai
 
         uint32 positiveSpellId;
         uint32 negativeSpellId;
+    };
+
+    // AQ raid protection-potion supply. When the bot is inside Ruins (509) or
+    // Temple (531) of Ahn'Qiraj and any of the five Greater Protection Potions
+    // has dropped below the shared low watermark, this tops every low stack back
+    // up to the shared target (see AhnQirajSuppliesLow / the watermark + item
+    // list in DungeonTriggers.h). Each refill hands the bot at least
+    // (target - watermark) MORE than it was short, which is the server owner's
+    // "give 10+ more than the amount needed on raid entry" rule; the supply
+    // therefore both fills an empty bot on entry and keeps it stocked for the
+    // whole raid without a human.
+    class GiveAhnQirajSuppliesAction : public Action
+    {
+    public:
+        GiveAhnQirajSuppliesAction(PlayerbotAI* ai) : Action(ai, "give ahnqiraj supplies") {}
+
+        bool Execute(Event& event) override;
+        bool isUseful() override;
     };
 }
 

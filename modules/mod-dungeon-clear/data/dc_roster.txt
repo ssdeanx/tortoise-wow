@@ -388,3 +388,13 @@ order 230 9019 20     # Emperor Dagran Thaurissan    lvl 59   1380,-832,-88 (end
 # BRD rares (rank 2) are credited in the compiled list and would otherwise be
 # numbered past the authored block (Loregrain showed up at key 19): drop them.
 drop 9024 9025 9041 10264 8923   # Pyromancer Loregrain, Lord Roccor, Warder Stilgiss, Verek, Panzor
+
+# --- Blackwing Lair (map 469) ------------------------------------------------
+order 469 12435 1     # Razorgore the Untamed
+order 469 13020 2     # Vaelastrasz the Corrupt
+order 469 12017 3     # Broodlord Lashlayer
+order 469 11983 4     # Firemaw
+order 469 14601 5     # Ebonroc
+order 469 11981 6     # Flamegor
+order 469 14020 7     # Chromaggus
+order 469 11583 8     # Nefarian (end boss)

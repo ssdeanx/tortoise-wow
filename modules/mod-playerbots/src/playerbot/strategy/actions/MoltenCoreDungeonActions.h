@@ -228,19 +228,8 @@ namespace ai
     {
     public:
         AddMCDouseItemAction(PlayerbotAI* ai) : Action(ai, "add mc douse item") {}
-
-        bool Execute(Event& event) override
-        {
-            if (bot->HasItemCount(17333, 1) || bot->HasItemCount(22754, 1))
-                return false;
-
-            return ChatHandler(bot).ParseCommands(".additem 17333 1") != 0;
-        }
-
-        bool isUseful() override
-        {
-            return bot->GetMapId() == 409 && !bot->HasItemCount(17333, 1) && !bot->HasItemCount(22754, 1);
-        }
+        bool Execute(Event& event) override;
+        bool isUseful() override;
     };
 
     class MoveToMCRuneAction : public MoveToAction
@@ -259,5 +248,19 @@ namespace ai
     {
     public:
         DouseMCRuneActionEternal(PlayerbotAI* ai) : UseItemIdAction(ai, "douse mc rune eternal") { qualifier = "{22754,entry filter::{gos close,mc douseable runes}}"; }
+    };
+
+    // Core Hound Pack (11671): 5 hounds per pack must die within 10 seconds of each other.
+    // DPS bots target the living Core Hound with HIGHEST health percentage to balance pack health,
+    // ensuring all 5 die together and cannot resurrect each other.
+    class AttackCoreHoundPackAction : public AttackAction
+    {
+    public:
+        AttackCoreHoundPackAction(PlayerbotAI* ai) : AttackAction(ai, "attack core hound pack") {}
+        bool Execute(Event& event) override;
+        bool isUseful() override;
+
+    private:
+        Unit* FindHighestHpCoreHound();
     };
 }

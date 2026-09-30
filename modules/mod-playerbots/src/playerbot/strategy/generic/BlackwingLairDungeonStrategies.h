@@ -89,6 +89,20 @@ namespace ai
         void InitReactionTriggers(std::list<TriggerNode*>& triggers) override;
     };
 
+    // Broodlord Lashlayer (12017): Knock Away 18670 threat wipe tank switch;
+    // Mortal Strike 24573 healing focus.
+    class BroodlordFightStrategy : public BlackwingLairFightStrategy
+    {
+    public:
+        BroodlordFightStrategy(PlayerbotAI* ai) : BlackwingLairFightStrategy(ai) {}
+        std::string getName() override { return "broodlord"; }
+
+    private:
+        void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitDeadTriggers(std::list<TriggerNode*>& triggers) override;
+    };
+
     // Firemaw: Flame Buffet 23341 (fire, whole raid every ~2 s) + Shadow Flame
     // cone (22539); Wing Buffet resets the tank rotation. Fire resist duty +
     // fire pot.

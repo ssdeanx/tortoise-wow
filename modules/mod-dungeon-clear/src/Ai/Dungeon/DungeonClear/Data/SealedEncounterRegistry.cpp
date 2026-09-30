@@ -58,6 +58,21 @@ namespace
         // mapId  boss   minX    maxX    minY    maxY   approach  muster
         {   585, 24723, 216.0f, 260.0f, -45.0f, 45.0f,    45.0f,  10.0f },
         {   601, 29120, 526.0f, 574.0f, 234.0f, 278.0f,   45.0f,  10.0f },
+
+        // Scarlet Citadel (45) encounters with doors that lock on pull:
+        // Daelus (2000000) - SC_DAELUS_DOOR (5000003) at (115.0, 28.9)
+        {    45, 2000000,  10.0f, 115.0f, -20.0f, 50.0f,   55.0f,  10.0f },
+        // Ardaeus (2000001) - SC_ARDAEUS_ENTRANCE_DOOR (5000006) at (250.2, -116.9)
+        {    45, 2000001, 250.0f, 310.0f, -145.0f, -85.0f, 45.0f,  10.0f },
+        // Mariella (2000002) - SC_MARIELLA_DOOR (5000008) at (220.0, 48.5)
+        {    45, 2000002, 165.0f, 220.0f,  25.0f, 75.0f,   45.0f,  10.0f },
+        // Abbendis (2000003) - SC_ABBENDIS_ENTRANCE_DOOR (5000010) at (421.2, -9.0)
+        {    45, 2000003, 390.0f, 450.0f, -140.0f, -8.0f,  45.0f,  10.0f },
+
+        // Onyxia's Lair (249) — Onyxia (10184). Ensures all raid members are inside
+        // the chamber (X > -92.0f) before engaging, preventing any trailing bots from
+        // triggering LeashIfOutOfCombatArea evades (X < -95) or SummonPlayerIfOutOfReach (X < -105).
+        {   249,   10184, -92.0f,  40.0f, -270.0f, -160.0f, 80.0f,  12.0f },
     };
 }
 

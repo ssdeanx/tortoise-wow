@@ -302,4 +302,24 @@ namespace ai
     public:
         MCRuneCloseTrigger(PlayerbotAI* ai) : ValueTrigger(ai, "mc rune close", 1) { qualifier = "has object::go usable filter::entry filter::{gos close,mc douseable runes}"; }
     };
+
+    // Core Hound Pack (11671): 5 hounds per pack. When one reaches 0 HP, it smolders (feign death)
+    // for 10 seconds. If any other hound in combat is alive after 10s, it resurrects to 100% HP.
+    // Trigger is active when any living Core Hound with health > 0 is in combat.
+    class CoreHoundPackTrigger : public Trigger
+    {
+    public:
+        CoreHoundPackTrigger(PlayerbotAI* ai) : Trigger(ai, "mc core hound pack", 1) {}
+
+        bool IsActive() override
+        {
+            for (const ObjectGuid& guid : AI_VALUE(std::list<ObjectGuid>, "possible attack targets"))
+            {
+                Creature* c = ai->GetCreature(guid);
+                if (c && c->IsAlive() && c->GetHealth() > 0 && c->GetEntry() == 11671 && !c->HasFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD))
+                    return true;
+            }
+            return false;
+        }
+    };
 }

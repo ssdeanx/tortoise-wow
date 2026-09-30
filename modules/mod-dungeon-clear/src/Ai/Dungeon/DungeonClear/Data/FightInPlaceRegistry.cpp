@@ -58,6 +58,27 @@ namespace
 
         { 585, 216.0f, 260.0f, -45.0f, 45.0f },  // Magisters' Terrace — Selin Fireheart's room
         { 601, 470.0f, 640.0f, 480.0f, 625.0f }, // Azjol-Nerub — Hadronox's shaft
+
+        // Scarlet Citadel (45) — Sacred Fist Daelus' courtyard. Daelus has a tight
+        // 2.5yd proximity tether: dragging him back outside through door 5000003
+        // breaks the tether and triggers raidwide Life Drain (21157), wiping the raid.
+        { 45, 10.0f, 115.0f, -20.0f, 50.0f },
+
+        // Scarlet Citadel (45) — Grand Sorcerer Ardaeus' solar sanctum. The Sun
+        // (2000019) hangs in this chamber; pulling Ardaeus out through door 5000006
+        // descends the Sun and unleashes lethal solar flares.
+        { 45, 250.0f, 310.0f, -145.0f, -85.0f },
+
+        // Scarlet Citadel (45) — High Inquisitor Mariella's library chamber. An
+        // anti-exploit zone (nsAntiExploit / 2000032) monitors this room: players
+        // standing >20yd outside the threshold while engaged are teleported and stunned.
+        { 45, 165.0f, 220.0f, 25.0f, 75.0f },
+
+        // Onyxia's Lair (249) — Onyxia's chamber. Leash boundary checks in
+        // boss_onyxia.cpp trigger EnterEvadeMode() if Onyxia's X < -95.0f, and
+        // summon players to the center (-12.87, -216.63, -88.06) if victim's X < -105.0f
+        // or distance > 90yd. Never drag Onyxia or trash toward the tunnel entrance.
+        { 249, -95.0f, 40.0f, -270.0f, -160.0f },
     };
 }
 
