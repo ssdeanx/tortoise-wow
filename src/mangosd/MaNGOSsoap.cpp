@@ -7,8 +7,47 @@
 #include <any>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <thread>
+
+namespace
+{
+    int (*s_defaultParse)(struct soap*) = nullptr;
+
+    // 0 on success with the account id stored in soap->user; else the HTTP
+    // status to answer with. soap_copy() carries user, fparse and the limits
+    // from the listening soap to every per-connection copy.
+    int Authenticate(struct soap* soap)
+    {
+        soap->user = nullptr;
+
+        if (!soap->userid || !soap->passwd)
+            return 401;
+
+        uint32 const accountId = sAccountMgr.GetId(soap->userid);
+        if (!accountId)
+            return 401;
+
+        if (!sAccountMgr.CheckPassword(accountId, soap->passwd))
+            return 401;
+
+        if (sAccountMgr.IsAccountBannedInDatabase(accountId))
+        {
+            sLog.outBasic("SOAP: banned account '%s' from %s refused", soap->userid, soap->host);
+            return 403;
+        }
+
+        // The rank cache is filled at startup and by .account set gmlevel; an account
+        // inserted or promoted by SQL while the world runs is not in it. Read the row.
+        if (sAccountMgr.GetSecurityFromDatabase(accountId) < SOAPThread::MinLevel)
+            return 403;
+
+        soap->user = reinterpret_cast<void*>(static_cast<uintptr_t>(accountId));
+        return SOAP_OK;
+    }
+}
 
 SOAPThread::SOAPThread(const std::string& host, int port)
     : m_host(host), m_port(port), m_workerThread(&SOAPThread::Work, this)
@@ -23,6 +62,33 @@ SOAPThread::~SOAPThread()
         m_workerThread.join();
 }
 
+int SOAPThread::ParseAndAuthenticate(struct soap* soap)
+{
+    if (int const error = s_defaultParse(soap))
+        return error;                                       // gsoap's own verdict (405 for GET, SOAP_STOP, ...)
+
+    if (World::IsStopped())
+        return soap->error = 503;                           // shutting down: no database work, no command
+
+    soap->authrealm = "MaNGOS";                             // http_parse clears it per request; read when a 401 is built
+
+    int status = Authenticate(soap);
+
+    // A declared length over the cap is refused as 413 here; recv_maxlength
+    // cuts off a caller that lies about it or sends chunked (that one gets a
+    // closed connection, not a status).
+    if (status == SOAP_OK && soap->length > MaxRequestBytes)
+        status = 413;
+
+    // An HTTP status returned from fparse on a POST travels soap_begin_recv ->
+    // soap_begin_serve -> soap_send_fault: the same fault-with-status response
+    // the handler's own 401/403 produce, and the socket is closed with the
+    // body unread. Do NOT answer here and return SOAP_STOP instead: gsoap only
+    // honours SOAP_STOP from fparse for GET/PUT/DELETE, on a POST it carries on
+    // reading from the closed socket, which falls back to stdin.
+    return soap->error = status;
+}
+
 void SOAPThread::Work()
 {
     struct soap soap;
@@ -33,6 +99,14 @@ void SOAPThread::Work()
     soap.accept_timeout = AcceptTimeout;
     soap.recv_timeout   = DataTimeout;
     soap.send_timeout   = DataTimeout;
+    soap.transfer_timeout = DataTimeout;                    // whole message; recv/send timeouts are per call, a trickling client resets them
+    soap.recv_maxlength = MaxRequestBytes;                  // 0 would let a caller stream any size into memory
+
+    // gsoap's default HTTP parser reads the headers (Basic auth included) and
+    // returns before the body; authenticate there, so an anonymous or banned
+    // caller is refused before a single byte of the envelope is read.
+    s_defaultParse = soap.fparse;
+    soap.fparse    = &SOAPThread::ParseAndAuthenticate;
 
     if (soap_bind(&soap, m_host.c_str(), m_port, BackLogSize) < 0)
     {
@@ -68,24 +142,26 @@ namespace
 {
     // Per-request state carried to the world thread through CliCommandHolder's
     // std::any callback argument. The world thread fills output/finished; the
-    // SOAP worker thread waits on finished.
+    // SOAP worker thread waits on finished. Shared, not a raw pointer: the
+    // handler may stop waiting at shutdown while the holder still exists.
     struct SoapCommandState
     {
         std::string output;
         std::atomic<bool> finished{false};
         bool success = false;
     };
+    using SoapCommandStatePtr = std::shared_ptr<SoapCommandState>;
 
     void SoapPrint(std::any arg, const char* text)
     {
-        auto* const state = std::any_cast<SoapCommandState*>(arg);
+        auto const state = std::any_cast<SoapCommandStatePtr>(arg);
         if (state && text)
             state->output += text;
     }
 
     void SoapCommandFinished(std::any arg, bool success)
     {
-        auto* const state = std::any_cast<SoapCommandState*>(arg);
+        auto const state = std::any_cast<SoapCommandStatePtr>(arg);
         if (state)
         {
             state->success = success;
@@ -96,37 +172,40 @@ namespace
 
 /*
  * Generated from: int ns1__executeCommand(char* command, char** result);
- * HTTP Basic auth carries the GM account; the command runs on the world thread.
+ * HTTP Basic auth carries the GM account (checked before the body is read, see
+ * ParseAndAuthenticate); the command runs on the world thread.
  */
 int ns1__executeCommand(struct soap* soap, char* command, char** result)
 {
-    if (!soap->userid || !soap->passwd)
-        return 401;
-
-    uint32 const accountId = sAccountMgr.GetId(soap->userid);
+    // Authenticated in ParseAndAuthenticate before the body was read; a request
+    // that reaches here without an id did not pass through it.
+    uint32 const accountId = static_cast<uint32>(reinterpret_cast<uintptr_t>(soap->user));
     if (!accountId)
         return 401;
-
-    if (!sAccountMgr.CheckPassword(accountId, soap->passwd))
-        return 401;
-
-    if (sAccountMgr.GetSecurity(accountId) < SOAPThread::MinLevel)
-        return 403;
 
     if (!command || !*command)
         return soap_sender_fault(soap, "Command must not be empty", "The supplied command was an empty string");
 
-    SoapCommandState state;
+    auto const state = std::make_shared<SoapCommandState>();
 
-    // Commands execute on the world thread; block until it signals completion.
-    sWorld.QueueCliCommand(new CliCommandHolder(accountId, SEC_CONSOLE, &state, command, &SoapPrint, &SoapCommandFinished));
+    // Commands execute on the world thread; wait until it signals completion.
+    // Once the world is stopped nothing processes the queue any more
+    // (World::InternalShutdown deletes what is left without calling back), so
+    // stop waiting. A command the world thread was already running when the
+    // stop flag flipped does complete; we cannot tell that case apart here.
+    sWorld.QueueCliCommand(new CliCommandHolder(accountId, SEC_CONSOLE, state, command, &SoapPrint, &SoapCommandFinished));
 
-    while (!state.finished.load(std::memory_order_acquire))
+    while (!state->finished.load(std::memory_order_acquire))
+    {
+        if (World::IsStopped())
+            return soap_receiver_fault(soap, "Server is shutting down", "The command may not have been executed");
+
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
 
-    char* const out = soap_strdup(soap, state.output.c_str());
+    char* const out = soap_strdup(soap, state->output.c_str());
 
-    if (!state.success)
+    if (!state->success)
         return soap_sender_fault(soap, out, out);
 
     *result = out;

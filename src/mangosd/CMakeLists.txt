@@ -94,9 +94,12 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/dep/include/gsoap
   ${CMAKE_BINARY_DIR}/src/shared
   ${CMAKE_BINARY_DIR}
+  # First: whatever points at a vcpkg tree (ACE_ROOT here; TBB_ROOT too, in src/game and
+  # modules) also carries vcpkg's own OpenSSL 3.x headers - regardless of whether that came
+  # from -D or the matching environment variable, so this can't just be "before ACE_INCLUDE_DIR".
+  ${OPENSSL_INCLUDE_DIR}
   ${ACE_INCLUDE_DIR}
   ${MYSQL_INCLUDE_DIR}
-  ${OPENSSL_INCLUDE_DIR}
 )
 
 if(WIN32)
@@ -158,15 +161,6 @@ target_link_libraries(${EXECUTABLE_NAME}
     libdeflate
 )
 
-# SOAP remote-command interface: vendored gsoap C++ runtime (2.8.135).
-# Linux-only (vendored static lib); guard behind ENABLE_SOAP so Windows can build.
-if(ENABLE_SOAP)
-  target_compile_definitions(${EXECUTABLE_NAME} PRIVATE ENABLE_SOAP)
-  target_link_libraries(${EXECUTABLE_NAME}
-      ${CMAKE_SOURCE_DIR}/dep/lib/gsoap/libgsoap++.a
-  )
-endif()
-
 # Boost lib search path for playerbots' transitive boost references.
 # Boost's prebuilt Windows binaries live under lib64-msvc-<toolset> (or
 # BOOST_LIBRARYDIR if the user set it explicitly).
@@ -190,6 +184,13 @@ if(WIN32 AND BUILD_PLAYERBOTS)
     endif()
 endif()
 
+# SOAP remote-command interface: the gsoap runtime target from dep/src/gsoap.
+if(ENABLE_SOAP)
+  target_compile_definitions(${EXECUTABLE_NAME} PRIVATE ENABLE_SOAP)
+  target_link_libraries(${EXECUTABLE_NAME}
+      gsoap
+  )
+endif()
 
 if(WIN32)
   target_link_libraries(${EXECUTABLE_NAME}

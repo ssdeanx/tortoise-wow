@@ -705,6 +705,12 @@ int Master::Run()
     if (progress_thread.joinable())
         progress_thread.join();
 
+#ifdef ENABLE_SOAP
+    ///- Stop SOAP before anything below touches the databases: joins the accept
+    ///  loop and any request in flight (bounded, see ns1__executeCommand)
+    soapThread.reset();
+#endif
+
     ///- Stop freeze protection before shutdown tasks
     if (freeze_thread)
     {
