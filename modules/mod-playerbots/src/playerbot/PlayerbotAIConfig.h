@@ -127,6 +127,22 @@ public:
     bool allowGuildBots;
     bool allowMultiAccountAltBots;
     uint32 pathFailureRetryMs = 3000;
+    // How many characters one account may hold before bot creation refuses with
+    // "Account has max characters". This was a hardcoded literal (9, or 10 under
+    // MANGOSBOT_TWO) repeated at several sites; the default here preserves the
+    // original behaviour exactly, so an existing config file is unaffected.
+    //
+    // This is a BOT-side limit only, deliberately independent of the core's
+    // CharactersPerRealm, which stays clamped to 10 and governs the human
+    // character-select path. CreateBot calls Player::Create + SaveToDB directly
+    // and never goes through CharacterCreation::CreateCharacter, so no bot
+    // character is ever subject to the core limit.
+    //
+    // Raising it past 10 is safe for bots. It is NOT safe to expect the extra
+    // characters to be visible in a human's character-select list: that query is
+    // "ORDER BY guid LIMIT 0,10" (CharacterHandler.cpp:170), so a human sees only
+    // the ten lowest-guid characters on the account.
+    uint32 maxCharactersPerAccount = 9;
     uint32 failedActionRetryBase = 250, failedActionRetryMax = 2000;
     uint32 failedActionCacheTtl = 30000, failedActionCacheMaxEntries = 64;
     uint32 globalCoolDown, reactDelay, maxWaitForMove, expireActionTime, dispelAuraDuration, passiveDelay, repeatDelay,

@@ -2,8 +2,41 @@
 
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework
 > **Coverage**: 100% Complete 9-Class Directory (Warrior, Paladin, Shaman, Druid, Rogue, Hunter, Mage, Warlock, Priest)
-> **Source Verification**: Server Database `tw_world_item_template.sql`, DBC spell tables, verified 1.18.1 talent trees
+> **Source Verification**: live `tw_world` database (read-only SELECTs; `item_template` = 26,543 rows), DBC spell tables, verified 1.18.1 talent trees. ⚠️ `sql/base/*.sql` is a pre-migration snapshot **3,465 `item_template` rows behind** the live realm and disagrees on some names — it is **not** a valid verification source for this realm.
 > **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📜 Volume 01: GM Handbook](./01_game_master_handbook.md) • [🤖 Volume 02: Bot Automation](./02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md)
+
+---
+
+## Verification Tiers — Read This Before Trusting Any Claim Below
+
+Every factual claim in this document carries one of three tiers. The tier is stated inline wherever it matters, and anything unmarked is **unverified** and should be treated as a hypothesis to check, not a fact to copy.
+
+| Tier | Meaning | How it was established |
+| :--- | :--- | :--- |
+| **VERIFIED** | Confirmed against **this repository's own database snapshot** (`sql/base/tw_world_spell_template.sql`, `sql/base/tw_world_item_template.sql`, `sql/base/tw_world_gameobject_template.sql`) or the C++ source. Spell IDs and column values are cited inline. | Direct column-aware parse of the committed SQL dump, MySQL-escape-safe. |
+| **OFFICIAL 1.18.1** | Confirmed against **Turtle-WoW's own published 1.18.1 talent-tree data / patch changelog**, but **NOT present in, or not reflected by, this repository's DB snapshot**. Flagged as a possible **server-version gap**. | Official 1.18.1 talent-tree collection (talent-builder.dev) + the official "Patch 1.17.2 & Beyond" class changelog. |
+| **COMMUNITY / UNVERIFIED** | Meta rankings, consensus reports, "BiS" opinions, balance intent. **Attributed to the community** — not to Turtle-WoW, not to this codebase. | Community consensus; no canonical Turtle-WoW source publishes it. |
+
+> ### WARNING — DB Version Caveat: `sql/base/*.sql` is a PRE-MIGRATION SNAPSHOT
+>
+> `sql/base/tw_world_spell_template.sql` reflects the **base** dump only. Later migrations in `sql/database_updates/world/` **override** it, and any DB check must apply migrations **in timestamp order** or it will read stale rows. Concretely:
+>
+> - **`20260512224739_world.sql`** — `REPLACE INTO spell_template` for **13 Crusader Strike / Holy Strike rows** (Crusader Strike `2537`/`8823`/`8824`/`10336`/`10337`; Holy Strike `678`/`679`/`680`/`1866`/`2495`/`5569`/`10332`/`10333`). It rewrites **`attributesEx` 67109376 → 512** and **zeroes `effectTriggerSpell2`** (Holy Strike's triggers `51301`/`51755`/`51756`/`51757`/`51871`/`51872`/`51873`/`51874` → 0), adding `effect2`. The base dump alone therefore shows a materially different Crusader/Holy Strike than a migrated server. (VERIFIED — both sides parsed.)
+> - **`20260504214035_world.sql`** — `REPLACE INTO spell_affect` rows for **Improved Stones `51712`/`51713`** (`(51712,0,…)`, `(51712,1,…)`, `(51713,0,…)`, `(51713,1,…)`). **Without these rows `51712`/`51713` are inert.**
+> - **`20260504194945_world.sql`** — `REPLACE INTO npc_trainer`: **Steady Shot Rank 1** trainer requirement `reqlevel 36 → 20` (and `spellcost 14000 → 2200`), annotated as sourced from `1.18.1_cleaned.txt`. Ranks 2–4 in the same migration come from `1.17.2_cleaned.txt` (R2 42→30, R3 48→40, R4 54→50). So the "Steady Shot learned at 20" claim further down **is correct for a migrated server**; the base dump still says 36. (VERIFIED.)
+>
+> **VERIFIED consequence for reachability checks:** in this fork the base dump contains **no** `npc_trainer` / `skill_line_ability_spell_ranks` row for *any* of the spells discussed below — Carve `51575` → 0 rows, Hand of Reckoning `51302` → 0, Improved Stones `51712`/`51713` → 0 — because Turtle-WoW's spell-teaching data ships from external `*_cleaned.txt` extracts rather than from these tables. **Absence of an `npc_trainer` row in `sql/base/` is therefore NOT evidence that a spell is unreachable or dead.**
+
+---
+
+## Patch Attribution: 1.17.2 vs 1.18.1 (read before any "new in 1.18.1" claim)
+
+Earlier revisions of this document repeatedly implied that **1.18.1 reworked the talent trees. It did not.**
+
+- The **full 9-class talent tree rewrite shipped in 1.17.2 (November 2024)** — Warrior, Paladin, Shaman, Druid, Rogue, Hunter, Mage, Warlock and Priest trees were all rebuilt in that patch.
+- **1.18.1 ("Nightmares of Ursol", 2026-03-20)** is an **incremental revision layered on top** of 1.17.2: Hunter kit changes, Druid Eclipse/Balance, Priest Blackout/Lightwell, Warlock Searing Pain / Ritual of Doom, Shaman Enhancement & Elemental, Warrior Ravager / Precision Cut / Defiance, Paladin Consecration / Holy Strike / Daybreak **nerfs**, Mage Ice Barrier, and Rogue trims.
+- **Corollary:** any talent described here as a "1.18.1 talent rework" that is really a *tree-structure* change belongs to **1.17.2**. Claims that genuinely are 1.18.1 are marked OFFICIAL 1.18.1 and are comparatively few.
+- The repository corroborates the split directly (VERIFIED): migration `20260504194945_world.sql` annotates Steady Shot **R1** from `1.18.1_cleaned.txt` but Steady Shot **R2–R4** from `1.17.2_cleaned.txt` — one patch, two source extracts.
 
 ---
 
@@ -13,8 +46,8 @@
 | :---: | :--- | :--- | :---: |
 | **01** | **[Game Master & World Administration](./01_game_master_handbook.md)** | **100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.** | [Open Volume 01](./01_game_master_handbook.md) |
 | **02** | **[Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)** | **Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.** | [Open Volume 02](./02_playerbot_and_raid_automation.md) |
-| **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements.** | [Open Volume 03](./03_turtle_world_and_teleports.md) |
-| **04** | **Class Specs & Endgame Gear Directory** | **1-Click BiS gear loadouts, Tier 1/2/3 set IDs, weapons, trinkets, enchants & verified 1.18.1 talent builds across all 9 classes.** | **Current File** |
+| **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge Quarry, Caverns of Time, Karazhan Crypt, Stormwind Vault, Lower Karazhan Halls, Emerald Sanctum, Tower of Karazhan, **Scarlet Citadel** map 45 / `.tele ScarletCitadel`, Scarlet Enclave), keys & attunements.** | [Open Volume 03](./03_turtle_world_and_teleports.md) |
+| **04** | **Class Specs & Endgame Gear Directory** | **All 9 Classes**: per-class talent skeletons, 30 one-click gear loadout examples, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations (spell IDs + talent rows). Turtle-WoW publishes **no canonical builds**, so every claim here is tagged by verification tier rather than asserting optimal spreads. | **Current File** |
 | **05** | **[Eluna Scripting & Core Development Engine](./05_developer_eluna_and_engine.md)** | **Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.** | [Open Volume 05](./05_developer_eluna_and_engine.md) |
 
 ---
@@ -24,53 +57,63 @@
 1. [Unified 5-Volume Master Reference Architecture](#unified-5-volume-master-reference-architecture)
 2. [Official Turtle-WoW Interactive Talent Calculator Directory](#official-turtle-wow-interactive-talent-calculator-directory)
 3. [Part I: 9-Class Talent Specializations & Rotation Playbooks](#part-i-9-class-talent-specializations--rotation-playbooks)
-   - [Warrior (DW Fury/Prot, Deep Prot, Fury DPS, Arms)](#1-warrior-talent-specs)
-   - [Paladin (Holy Healer, Retribution, Prot Tank)](#2-paladin-talent-specs)
-   - [Hunter (Marksmanship, Beast Mastery, Melee Survival)](#3-hunter-talent-specs)
-   - [Rogue (Combat Swords, Combat Daggers, Subtlety/Hemo)](#4-rogue-talent-specs)
-   - [Priest (Holy/Disc, Shadow, Holy Smite)](#5-priest-talent-specs)
-   - [Shaman (Restoration, Elemental, Enhancement, Tankhance)](#6-shaman-talent-specs)
-   - [Mage (Ignite Fire, Frost Control, Arcane Mind)](#7-mage-talent-specs)
-   - [Warlock (DS/Ruin, SM/Ruin, Demonology Firestone)](#8-warlock-talent-specs)
-   - [Druid (Feral Cat, Feral Bear, Restoration, Moonkin)](#9-druid-talent-specs)
-4. [Part II: 1-Click BiS Class Loadouts (Complete 16–17 Slot Sets)](#part-ii-1-click-bis-class-loadouts-complete-1617-slot-sets)
-   - [1. Protection Warrior (Deep Prot Tank)](#1-protection-warrior-deep-protection-mitigation-tank-bis)
-   - [2. Dual-Wield Fury/Prot Warrior (Max Threat Tank)](#2-dual-wield-furyprot-warrior-max-raid-threat-bis)
-   - [3. Dual-Wield Fury Warrior (#1 Physical DPS)](#3-dual-wield-fury-warrior-1-physical-melee-dps-bis)
-   - [4. 2-Handed Arms Warrior (Physical Slam DPS)](#4-2-handed-arms--slam-warrior-two-handed-physical-dps-bis)
-   - [5. Holy Paladin (Raid & Tank Healer)](#5-holy-paladin-raid--tank-healer-bis)
-   - [6. Retribution Paladin (Holy Melee DPS)](#6-retribution-paladin-two-handed-holy-melee-dps-bis)
-   - [7. Protection Paladin (AoE & Threat Tank)](#7-protection-paladin-aoe--threat-tank-bis)
-   - [8. Marksmanship Hunter (Ranged Physical DPS)](#8-marksmanship-hunter-ranged-physical-dps-bis)
-   - [9. Beast Mastery Hunter (Pet & Ranged Synergy)](#9-beast-mastery-hunter-pet--ranged-synergy-bis)
-   - [10. Melee Survival Hunter (Turtle 1.18.1 Carve/Lacerate)](#10-melee-survival-hunter-turtle-1181-carve--lacerate-bis)
-   - [11. Combat Swords Rogue (Sustained Physical DPS)](#11-combat-swords-rogue-sustained-physical-dps-bis)
-   - [12. Combat Daggers Rogue (High Burst Physical DPS)](#12-combat-daggers-rogue-high-burst-physical-dps-bis)
-   - [13. Subtlety / Hemorrhage Rogue (PvP & Armor Debuff)](#13-subtlety--hemorrhage-rogue-pvp--raid-armor-debuff-bis)
-   - [14. Holy Priest (Raid & Tank Healer)](#14-holy-priest-raid--tank-healer-bis)
-   - [15. Shadow Priest (Shadow DPS & Mana Battery)](#15-shadow-priest-shadow-dps--mana-battery-bis)
-   - [16. Discipline / Holy Smite Priest (Holy Caster DPS)](#16-discipline--holy-smite-priest-holy-caster-dps-bis)
-   - [17. Restoration Shaman (Chain Healer & Totems)](#17-restoration-shaman-chain-healer--totem-support-bis)
-   - [18. Elemental Shaman (Burst Caster DPS)](#18-elemental-shaman-burst-caster-dps-bis)
-   - [19. Enhancement Shaman (Windfury Melee DPS)](#19-enhancement-shaman-two-handed-windfury-melee-dps-bis)
-   - [20. Shaman Tank 'Tankhance' (Signature Shield Tank)](#20-shaman-tank-tankhance-turtle-1181-signature-shield-tank-bis)
-   - [21. Fire Mage (Ignite Caster Burst DPS)](#21-fire-mage-ignite-caster-burst-dps-bis)
-   - [22. Frost Mage (Caster Control / AoE & AP Frost)](#22-frost-mage-caster-control--aoe--ap-frost-bis)
-   - [23. Arcane Mind Mage (Arcane Power Burst DPS)](#23-arcane-mind-mage-arcane-power-burst-dps-bis)
-   - [24. DS/Ruin Warlock (Demonic Sacrifice Shadow Bolt DPS)](#24-dsruin-warlock-demonic-sacrifice-shadow-bolt-dps-bis)
-   - [25. SM/Ruin Warlock (Shadow Mastery Multi-DoT)](#25-smruin-warlock-shadow-mastery-multi-dot--nightfall-bis)
-   - [26. Demonology Master Conjurer Warlock (Firestone DPS)](#26-demonology-master-conjurer-warlock-turtle-1181-firestone-bis)
-   - [27. Feral Cat Druid (Powershifting Melee DPS)](#27-feral-cat-druid-powershifting-melee-dps-bis)
-   - [28. Feral Bear Druid (High Health & Armor Tank)](#28-feral-bear-druid-high-health--armor-tank-bis)
-   - [29. Restoration Druid (HoT Raid Healer & Swiftmend)](#29-restoration-druid-hot-raid-healer--swiftmend-bis)
-   - [30. Balance Druid 'Boomkin' (Nature / Arcane Caster DPS)](#30-balance-druid-boomkin-nature--arcane-caster-dps-bis)
-5. [Part III: Complete Endgame Item Directory & Set Index](#part-iii-complete-endgame-item-directory--set-index)
-   - [Tier 1 Dungeon & Raid Armor Sets](#tier-1-raid-sets-molten-core)
-   - [Tier 2 Raid Armor Sets](#tier-2-raid-sets-blackwing-lair)
-   - [Tier 3 Naxxramas Raid Armor Sets](#tier-3-raid-sets-naxxramas)
-   - [Signature Endgame Weapons Directory](#signature-endgame-weapons-directory)
-   - [BiS Trinkets Directory](#bis-trinkets-directory)
-   - [Weapon & Armor Permanent Enchantment Directory](#weapon--armor-permanent-enchantment-directory)
+   - [1. Warrior (DW Fury/Prot, Deep Prot, Fury DPS, Arms)](#1-warrior-talent-specs) — Specs 1–3 have trees; **Arms Warrior is a [STUB, no build published](#spec-3b-arms-warrior-31200--physical-dps-stub--no-build-published)**
+   - [2. Rogue (Combat Swords, Combat Daggers, Subtlety/Hemo)](#2-rogue-talent-specs)
+   - [3. Mage (Ignite Fire, Frost Control, Arcane Mind)](#3-mage-talent-specs)
+   - [4. Warlock (DS/Ruin, SM/Ruin, Demonology Improved Stones)](#4-warlock-talent-specs)
+   - [5. Hunter (Marksmanship, Beast Mastery, Melee Survival)](#5-hunter-talent-specs)
+   - [6. Priest (Holy/Disc, Shadow, Holy Smite)](#6-priest-talent-specs)
+   - [7. Paladin (Holy Healer, Retribution, Prot Tank)](#7-paladin-talent-specs) — Specs 14–15 have trees; **Protection Paladin is a [STUB, no build published](#spec-14b-protection-paladin-03120--aoe--threat-tank-stub--no-build-published)**
+   - [8. Shaman (Restoration, Elemental, Enhancement, Tankhance)](#8-shaman-talent-specs)
+   - [9. Druid (Feral Cat, Feral Bear, Restoration, Moonkin)](#9-druid-talent-specs) — Specs 18–19 have trees; **Moonglow Restoration is a [STUB, no build published](#spec-19b-moonglow-restoration-druid-24027--raid-healer-stub--no-build-published)**
+4. [Part II: Complete 1-Click BiS Class Gear Loadouts (Slots 01–17 Explicitly Represented)](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented)
+   - [1. Protection Warrior (Deep Prot Tank)](#-protection-warrior-deep-protection-mitigation-tank-bis)
+   - [2. Dual-Wield Fury/Prot Warrior (Max Threat Tank)](#-dual-wield-furyprot-warrior-max-raid-threat-bis)
+   - [3. Dual-Wield Fury Warrior (#1 Physical DPS)](#-dual-wield-fury-warrior-1-physical-melee-dps-bis)
+   - [4. 2-Handed Arms Warrior (Physical Slam DPS)](#-2-handed-arms--slam-warrior-two-handed-physical-dps-bis)
+   - [5. Holy Paladin (Raid & Tank Healer)](#-holy-paladin-raid--tank-healer-bis)
+   - [6. Retribution Paladin (Holy Melee DPS)](#-retribution-paladin-two-handed-holy-melee-dps-bis)
+   - [7. Protection Paladin (AoE & Threat Tank)](#-protection-paladin-aoe--threat-tank-bis)
+   - [8. Marksmanship Hunter (Ranged Physical DPS)](#-marksmanship-hunter-ranged-physical-dps-bis)
+   - [9. Beast Mastery Hunter (Pet & Ranged Synergy)](#-beast-mastery-hunter-pet--ranged-synergy-bis)
+   - [10. Melee Survival Hunter (Turtle 1.18.1 Carve/Lacerate)](#-melee-survival-hunter-turtle-1181-carve--lacerate-bis)
+   - [11. Combat Swords Rogue (Sustained Physical DPS)](#-combat-swords-rogue-sustained-physical-dps-bis)
+   - [12. Combat Daggers Rogue (High Burst Physical DPS)](#-combat-daggers-rogue-high-burst-physical-dps-bis)
+   - [13. Subtlety / Hemorrhage Rogue (PvP & Armor Debuff)](#-subtlety--hemorrhage-rogue-pvp--raid-armor-debuff-bis)
+   - [14. Holy Priest (Raid & Tank Healer)](#-holy-priest-raid--tank-healer-bis)
+   - [15. Shadow Priest (Shadow DPS & Mana Battery)](#-shadow-priest-shadow-dps--mana-battery-bis)
+   - [16. Discipline / Holy Smite Priest (Holy Caster DPS)](#-discipline--holy-smite-priest-holy-caster-dps-bis)
+   - [17. Restoration Shaman (Chain Healer & Totems)](#-restoration-shaman-chain-healer--totem-support-bis)
+   - [18. Elemental Shaman (Burst Caster DPS)](#-elemental-shaman-burst-caster-dps-bis)
+   - [19. Enhancement Shaman (Windfury Melee DPS)](#-enhancement-shaman-two-handed-windfury-melee-dps-bis)
+   - [20. Shaman Tank 'Tankhance' (Signature Shield Tank)](#-shaman-tank-tankhance-turtle-1181-signature-shield-tank-bis)
+   - [21. Fire Mage (Ignite Caster Burst DPS)](#-fire-mage-ignite-caster-burst-dps-bis)
+   - [22. Frost Mage (Caster Control / AoE & AP Frost)](#-frost-mage-caster-control--aoe--ap-frost-bis)
+   - [23. Arcane Mind Mage (Arcane Power Burst DPS)](#-arcane-mind-mage-arcane-power-burst-dps-bis)
+   - [24. DS/Ruin Warlock (Demonic Sacrifice Shadow Bolt DPS)](#-dsruin-warlock-demonic-sacrifice-shadow-bolt-dps-bis)
+   - [25. SM/Ruin Warlock (Shadow Mastery Multi-DoT)](#-smruin-warlock-shadow-mastery-multi-dot--nightfall-bis)
+   - [26. Demonology Improved Stones Warlock (Stone DPS)](#-demonology-improved-stones-warlock-stone-dps)
+   - [27. Feral Cat Druid (Melee DPS)](#-feral-cat-druid-melee-dps)
+   - [28. Feral Bear Druid (High Health & Armor Tank)](#-feral-bear-druid-high-health--armor-tank-bis)
+   - [29. Restoration Druid (HoT Raid Healer & Swiftmend)](#-restoration-druid-hot-raid-healer--swiftmend-bis)
+   - [30. Balance Druid 'Boomkin' (Nature / Arcane Caster DPS)](#-balance-druid-boomkin-nature--arcane-caster-dps-bis)
+5. [Part III: Tier Armor Sets Directory](#part-iii-tier-armor-sets-directory)
+   - [1. Complete Naxxramas Tier 3 Armor Sets (9 Pieces)](#1-complete-naxxramas-tier-3-armor-sets-9-pieces)
+   - [2. Temple of Ahn'Qiraj Tier 2.5 Armor Sets (5 Pieces)](#2-temple-of-ahnqiraj-tier-25-armor-sets-5-pieces)
+   - [3. Blackwing Lair & Molten Core Tier 2 Armor Sets (8 Pieces)](#3-blackwing-lair--molten-core-tier-2-armor-sets-8-pieces)
+   - [4. Molten Core Tier 1 Armor Sets (8 Pieces)](#4-molten-core-tier-1-armor-sets-8-pieces)
+   - [5. Zul'Gurub 5-Piece Class Sets](#5-zulgurub-5-piece-class-sets)
+   - [6. Ruins of Ahn'Qiraj (AQ20) 3-Piece Class Sets](#6-ruins-of-ahnqiraj-aq20-3-piece-class-sets)
+   - [7. Dungeon Sets 1 & 2 (Tier 0 & Tier 0.5 Upgrades)](#7-dungeon-sets-1--2-tier-0--tier-05-upgrades)
+   - [8. PvP Grand Marshal & High Warlord Equipment (Rank 14)](#8-pvp-grand-marshal--high-warlord-equipment-rank-14)
+   - [9. World Boss Epic Drops (Azuregos, Kazzak, Nightmare Dragons)](#9-world-boss-epic-drops-azuregos-kazzak-nightmare-dragons)
+6. [Part IV: Legendary & Artifact Weapons Directory](#part-iv-legendary--artifact-weapons-directory)
+7. [Part V: BiS Weapons Directory (Organized by Weapon Type)](#part-v-bis-weapons-directory-organized-by-weapon-type)
+8. [Part VI: BiS Endgame Trinkets Directory](#part-vi-bis-endgame-trinkets-directory)
+9. [Part VII: BiS Rings, Amulets & Off-Set Equipment](#part-vii-bis-rings-amulets--off-set-equipment)
+10. [Part VIII: Consumables, Flasks, Potions & World Buff Items Directory](#part-viii-consumables-flasks-potions--world-buff-items-directory)
+11. [Part IX: Permanent Weapon & Armor Enchantments Directory](#part-ix-permanent-weapon--armor-enchantments-directory)
+12. [Part X: How to Optimize & Deploy BiS Gear for Turtle-WoW Latest Content](#part-x-how-to-optimize--deploy-bis-gear-for-turtle-wow-latest-content)
 
 ---
 
@@ -78,27 +121,42 @@
 
 Use these official interactive calculators to preview talent tree node prerequisites, ranks, and point allocations live:
 
+> ⚠️ **The `A/B/C` splits in the right-hand column are COMMUNITY claims, not measurements, and not official Turtle-WoW data.** They are retained for continuity with earlier revisions. Every tree published in Part I carries a **real measured point total that is lower than the split implies** — see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks). Three of the listed specs (**Arms Warrior**, **Protection Paladin**, **Moonglow Restoration Druid**) have **no build here at all** and are marked *(stub)*; they point to the spec table rather than to an invented tree.
+
 | Class | Official Live Calculator Link | Signature 1.18.1 Meta Specializations |
 | :--- | :--- | :--- |
-| **Warrior** | [🎮 Turtle WoW Warrior Calculator](https://talents.turtle-wow.org/warrior) | DW Fury/Prot (0/31/20) • Deep Prot (11/5/35) • Fury DPS (17/34/0) • Arms (31/20/0) |
+| **Warrior** | [🎮 Turtle WoW Warrior Calculator](https://talents.turtle-wow.org/warrior) | DW Fury/Prot (0/31/20) • Deep Prot (11/5/35) • Fury DPS (17/34/0) • Arms (31/20/0) *(stub — no build)* |
 | **Rogue** | [🎮 Turtle WoW Rogue Calculator](https://talents.turtle-wow.org/rogue) | Combat Swords (19/32/0) • Combat Daggers (15/31/5) • Subtlety/Hemo (21/3/27) |
 | **Mage** | [🎮 Turtle WoW Mage Calculator](https://talents.turtle-wow.org/mage) | Ignite Fire (17/31/3) • AP Frost (28/0/23) • Arcane Mind (31/0/20) |
-| **Warlock** | [🎮 Turtle WoW Warlock Calculator](https://talents.turtle-wow.org/warlock) | DS/Ruin (7/21/23) • SM/Ruin (30/0/21) • Master Conjurer Firestone (0/31/20) |
+| **Warlock** | [🎮 Turtle WoW Warlock Calculator](https://talents.turtle-wow.org/warlock) | DS/Ruin (7/21/23) • SM/Ruin (30/0/21) • **Improved Stones** (0/31/20) — *community splits, unverified; see Spec 8* |
 | **Hunter** | [🎮 Turtle WoW Hunter Calculator](https://talents.turtle-wow.org/hunter) | Marksmanship (20/31/0) • Beast Mastery (31/20/0) • Melee Survival (0/21/30 Carve/Lacerate) |
 | **Priest** | [🎮 Turtle WoW Priest Calculator](https://talents.turtle-wow.org/priest) | Holy/Disc (21/30/0) • Holy Smite DPS (31/20/0) • Shadow Mana Battery (13/0/38) |
-| **Paladin** | [🎮 Turtle WoW Paladin Calculator](https://talents.turtle-wow.org/paladin) | Holy Healer (31/20/0) • Retribution Burst (11/0/40) • Prot Tank (0/31/20) |
+| **Paladin** | [🎮 Turtle WoW Paladin Calculator](https://talents.turtle-wow.org/paladin) | Holy Healer (31/20/0) • Retribution Burst (11/0/40) • Prot Tank (0/31/20) *(stub — no build)* |
 | **Shaman** | [🎮 Turtle WoW Shaman Calculator](https://talents.turtle-wow.org/shaman) | Resto Chain Heal (0/12/39) • Shaman Tank "Tankhance" (19/32/0) • Elemental (30/0/21) • Enhancement (19/32/0) |
-| **Druid** | [🎮 Turtle WoW Druid Calculator](https://talents.turtle-wow.org/druid) | Feral Cat (14/32/5) • Feral Bear (14/32/5) • Balance Moonkin (31/0/20) • Moonglow Resto (24/0/27) |
+| **Druid** | [🎮 Turtle WoW Druid Calculator](https://talents.turtle-wow.org/druid) | Feral Cat (14/32/5) • Feral Bear (14/32/5) • Balance Moonkin (31/0/20) • Moonglow Resto (24/0/27) *(stub — no build)* |
 
 ---
 
 ## Part I: 9-Class Talent Specializations & Rotation Playbooks
 
+> ### READ THIS FIRST — the trees below are SKELETONS, not canonical builds
+>
+> Four things are true about every talent tree in this Part, and all four matter:
+>
+> 1. **Turtle-WoW publishes NO canonical per-spec talent spreads.** There is no official Turtle-WoW build list. `turtlelootline.com/builds` is login-gated and returns **HTTP 401**; the official talent calculator exposes *trees* (nodes, ranks, prerequisites) but *not builds*; and the official wiki `PreBISGuide` states plainly: **"You don't need dungeon Pre-BIS on Turtle WoW."** Nothing below is an official spread.
+> 2. **The point totals as originally written did not sum to their own headers.** Every spec header in this document used to advertise a full 51-point tree (implied by its `A/B/C` split), but the itemised `- x/y Talent` lines summed to between **29 and 48**. An earlier revision therefore **overstated every one of the 19 trees by between 3 and 22 points.** Each header below now states the **real summed total** and the shortfall. The `A/B/C` splits in the headers are the original, still-unverified splits and are retained for continuity — they are **claims, not measurements.**
+> 3. **These trees have NOT been padded to 51 points, deliberately.** Closing the gap would require inventing talent picks, and **inventing picks is precisely the failure mode this document is being corrected for.** The shortfalls are stated instead.
+> 4. **Missing baseline/filler talents are called out per spec** where the skeleton visibly stops short. Where a spec has a large gap, the honest reading is "the remaining points go into baseline and filler ranks of the listed nodes, plus whatever the tree requires to reach the listed deep nodes" — **not** "this is the optimal spread."
+>
+> **How to use this Part:** treat each tree as a **starting skeleton** — the priority talents a role needs, roughly in the order it needs them. Open the official calculator, drop the listed points, and spend the remainder yourself. Do not treat any point total, rank count, or `A/B/C` split here as authoritative.
+
 ### 1. Warrior Talent Specs
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/warrior](https://talents.turtle-wow.org/warrior)
 
-### Spec 1: Dual-Wield Fury/Prot Tank (0/31/20) - Max Raid Threat BiS
+### Spec 1: Dual-Wield Fury/Prot Tank — Max Raid Threat (claimed 0/31/20)
+
+> **48 points as written — 3 short of a full 51-point tree.** See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 The definitive high-end raid tanking spec in Turtle-WoW. Dual-wields fast weapons in Defensive Stance to generate enormous Rage and Threat Per Second (TPS), allowing DPS to go all-out without threat throttling.
 
@@ -129,13 +187,19 @@ Protection (20 points):
 
 - **Stat Priority**: Hit Cap (6% with 305+ Weapon Skill, 9% without) > Weapon Skill (305+) > Crit > Strength > Agility > Stamina > Armor.
 - **Rotation**: Stay in **Defensive Stance**. Bloodthirst on CD > Revenge on proc > Heroic Strike queue on main hand swing > Devastate / Sunder Armor (maintain 5 stacks). Pop *Death Wish* + *Diamond Flask* at the start of boss encounters for immediate snap aggro.
-- **Turtle WoW 1.18.1 Additions**:
+- **Turtle-WoW Warrior changes (1.17.2 tree rebuild, 1.18.1 incremental)**:
   - **Thunder Clap in Defensive Stance**: Usable directly in Defensive Stance, giving tanks reliable multi-target AoE threat.
-  - **Defensive Tactics**: Stance dance rage retention allows swapping to Berserker Stance for Berserker Rage/Pummel and returning without losing rage.
+  - **Defensive Tactics** — ❌ **It does NOT give rage retention.** The rage-retention version is a *community proposal*, not live content.
+    - **VERIFIED** — the live talent is the *threat* version, `spell_template` entries **`51606` / `51607` / `51608`** (Protection row 22, `spellLevel 30`, `stances 327680`): *"While wearing a shield, you retain 60/120/180% of the increased threat generation from Defensive Stance in other stances."* (`effectApplyAuraName1 = 4`, `effectBasePoints1 = 59/119/179` → 60/120/180).
+    - **VERIFIED** — a *second*, rage-retention "Defensive Tactics" set **does** exist in our DB at **`29559` / `29588` / `29589`** (*"You retain up to $s1% of your rage when you change from Defensive Stance to any other stance."*, `effectBasePoints1 = 32/65/99` → 33/66/100%). **Its numbers are inert:** all three ranks carry `effectMiscValue1 = 831`, which **collides with Tactical Mastery Rank 1** (`12295`, also aura `112` / miscValue `831`; R2–R5 `12676`/`12677`/`12678`/`12679` use 832/833/834/835). The collision means the shared handler runs Tactical Master's path with the wrong base points.
+    - **VERIFIED** — the rage retention that *does* work is **Tactical Mastery** itself: a fixed rage cap of **5 / 10 / 15 / 20 / 25 rage** (encoded as `50/100/150/200/250` in the `miscValue`), handled at `src/game/Spells/SpellAuras.cpp:2456-2490`.
+    - 📕 **Earlier revision said** "Defensive Tactics allows swapping to Berserker Stance for Berserker Rage/Pummel and returning without losing rage." That is the wording of the **inert** `29559`/`29588`/`29589` set above. If you want that behaviour, take **Tactical Mastery** — a different talent in a different tree.
 
 ---
 
-### Spec 2: Deep Protection Mitigation Tank (11/5/35) - Progression & Hardcore
+### Spec 2: Deep Protection Mitigation Tank — Progression & Hardcore (claimed 11/5/35)
+
+> **42 points as written — 9 short of a full 51-point tree.** Arms holds only 11 (Deflection / Tactical Mastery / Anger Management) and Fury only 5 (Cruelty), so Protection is left at 26 of its 35 with none of its own baseline rows itemised. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Maximum physical and magical mitigation with high block value scaling. Uses 1H Weapon + Shield with Shield Slam for snap threat and Concussion Blow for dungeon control.
 
@@ -145,7 +209,7 @@ Maximum physical and magical mitigation with high block value scaling. Uses 1H W
 Arms (11 points):
 - 5/5 Deflection (+5% Parry)
 - 5/5 Tactical Mastery (Retain up to 25 Rage when switching stances)
-- 1/1 Anger Management (Generates 1 rage every 3 seconds)
+- 1/1 Anger Management — **VERIFIED** `spell_template` `12296`: *"Increases the time required for your rage to decay while out of combat by 30% and generate 1 rage per 3 seconds while in combat."* **The encoded effect is `SPELL_AURA_MOD_POWER_REGEN` (`effectApplyAuraName1 = 85`) with `effectMiscValue1 = 1` (rage) and `effectBasePoints1 = 14` → +15 rage regeneration.** The "1 rage per 3 seconds" figure appears **only in the tooltip `description` text**; the server does not enforce it as a tick. 📕 Earlier revision stated the tooltip claim as if it were the mechanic.
 
 Fury (5 points):
 - 5/5 Cruelty (+5% Melee Critical Strike)
@@ -168,7 +232,9 @@ Protection (35 points):
 
 ---
 
-### Spec 3: Dual-Wield Fury DPS (17/34/0) - #1 Physical DPS Spec
+### Spec 3: Dual-Wield Fury DPS — Physical DPS (claimed 17/34/0)
+
+> **44 points as written — 7 short of a full 51-point tree.** See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 The highest sustained physical melee damage spec. Combines Deep Wounds bleeding and Impale critical multiplier from Arms with Bloodthirst and Flurry attack speed in Fury.
 
@@ -181,7 +247,7 @@ Arms (17 points):
 - 2/2 Impale (+20% Critical Strike Damage bonus)
 - 2/2 Overpower (+50% Crit chance on Overpower against dodging targets)
 - 5/5 Tactical Mastery (Retain rage when stance dancing for Overpower)
-- 1/1 Anger Management
+- 1/1 Anger Management (VERIFIED `12296` — encoded as +15 rage regen via `MOD_POWER_REGEN`; see Spec 2 for the tooltip-vs-effect distinction)
 
 Fury (34 points):
 - 5/5 Cruelty (+5% Crit)
@@ -199,11 +265,23 @@ Fury (34 points):
 
 ---
 
+### Spec 3b: Arms Warrior (31/20/0) — Physical DPS *(STUB — no build published)*
+
+> **No talent tree is published for this spec, deliberately.** Turtle-WoW publishes no canonical per-spec spreads (see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks)), and this document will **not** invent one. The `(31/20/0)` split is a **community claim**, not a measurement.
+>
+> **What is reliable:** the Arms *nodes* that a 2H physical DPS spec reaches for are Blood Frenzy, Rend/Deep Wounds, Impale/Overpower-style crit multipliers, and Tactical Mastery for Overpower rage — but **which ranks, and in what order, is unverified here.** Part II carries a matching loadout: [2-Handed Arms / Slam Warrior](#-2-handed-arms--slam-warrior-two-handed-physical-dps-bis) (Might of Menethil + Lionheart Helm + Titanic Leggings + Kiss of the Spider).
+>
+> **To build it:** open the official [Warrior calculator](https://talents.turtle-wow.org/warrior), spend 31 in Arms, and verify every node you pick against our `spell_template` before trusting it.
+
+---
+
 ### 2. Rogue Talent Specs
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/rogue](https://talents.turtle-wow.org/rogue)
 
-### Spec 4: Combat Swords Rogue (19/32/0) - Sustained Raiding BiS
+### Spec 4: Combat Swords Rogue — Sustained Physical DPS (claimed 19/32/0)
+
+> **43 points as written — 8 short of a full 51-point tree.** The listed ranks do not even reach the claimed 19/32 split: Assassination lists 19, Combat lists 26. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Maximum sustained physical DPS using fast off-hand and slow high-damage main-hand swords.
 
@@ -230,13 +308,15 @@ Combat (32 points):
 
 - **Stat Priority**: Hit Cap (9% yellow, 14%+ dual-wield white) > Agility > Attack Power > Crit.
 - **Rotation**: Sinister Strike to build 5 Combo Points > Slice and Dice (100% uptime mandatory!) > Eviscerate / Rupture (if SnD has >10s remaining).
-- **Turtle WoW 1.18.1 Features**:
+- **Turtle-WoW Rogue changes (1.17.2 tree rebuild, 1.18.1 trims)**:
   - **Combo Point Persistence**: Combo points are preserved when switching targets.
   - **Rogue Tanking**: Access to *Flourish* (parry finisher) and *Agitating Poison* (high threat generation).
 
 ---
 
-### Spec 5: Combat Daggers Rogue (15/31/5) - High Burst Boss DPS
+### Spec 5: Combat Daggers Rogue — High Burst Boss DPS (claimed 15/31/5)
+
+> **44 points as written — 7 short of a full 51-point tree.** The listed ranks do not reach the claimed 15/31/5 split: Combat lists 24, not 31. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Position-dependent high-burst spec requiring Backstab from behind the boss.
 
@@ -272,7 +352,9 @@ Subtlety (5 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/mage](https://talents.turtle-wow.org/mage)
 
-### Spec 6: Ignite Fire Mage (17/31/3) - AQ40 & Naxxramas #1 Caster DPS
+### Spec 6: Ignite Fire Mage — Caster Burst DPS (claimed 17/31/3)
+
+> **43 points as written — 8 short of a full 51-point tree.** Fire lists 24 of its claimed 31. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 High rolling Ignite damage. When multiple Fire Mages crit, they stack a single massive rolling Ignite DoT on the boss that ticks for tens of thousands of damage.
 
@@ -302,12 +384,16 @@ Frost (3 points):
 ```
 
 - **Stat Priority**: Spell Hit (16% cap, 10% from gear with 3/3 Elemental Precision) > Spell Damage > Spell Crit > Intellect.
-- **Rotation**: Fireball spam > Scorch (apply and maintain 5 stacks of Improved Scorch for +15% Fire vulnerability) > Pyroblast on Combustion pull > Fire Blast on movement.
-- **Turtle WoW 1.18.1 Tuning**: Ignite operates on a 4-second rolling window with full stack preservation.
+- **Rotation**: Fireball spam > Scorch (Scorch and Fire Blast have a chance to apply the **Fire Vulnerability** debuff) > Pyroblast on Combustion pull > Fire Blast on movement.
+  - **VERIFIED — "Improved Scorch" is not a real spell name.** 📕 **Earlier revision said** *"maintain 5 stacks of Improved Scorch for +15% Fire vulnerability."* The real talent is **Fire Vulnerability**, `spell_template` **`11095` / `12872` / `12873`**, whose description reads *"Your Scorch and Fire Blast spells have a $s1% chance to cause your target to be vulnerable to Fire damage. This vulnerability increases the Fire damage dealt to your target by $22959s1% and lasts $22959d. Stacks up to $22959u times."* The **debuff** is **`22959`** (`stackAmount = 5`, `effectApplyAuraName1 = 87`, `effectBasePoints1 = 2` → **+3% Fire vulnerability per stack**, `effectMiscValue1 = 4` = Fire school, `durationIndex 9`). **5 × 3% = +15%** — so the "+15%" figure survives, but it is a **talent-triggered debuff** applied by Scorch/Fire Blast, **not** something the player "maintains" by casting, and the talent is not called "Improved Scorch".
+  - ⚠️ **DB DISCREPANCY — do not pick a winner.** Our DB *also* contains an orphaned spell **`41831` "Scorch"** with `stackAmount = 5` and a **+75%** Fire vulnerability (`effectApplyAuraName2 = 14`, `effectBasePoints2 = 74` → 75, `effectMiscValue2 = 4` = Fire), `spellLevel 58`, 200 mana. It has **0 rows in `npc_trainer`**, `spell_chain` or `skill_line_ability_spell_ranks` in this snapshot, so it appears unreachable — **but see the reachability caveat in the DB Version Warning above: absence of those rows is not proof of unreachability in this fork.** Both readings are recorded here; which one your client actually ranks up is **unresolved**.
+- **Turtle WoW tuning**: Ignite operates on a 4-second rolling window with full stack preservation. *(OFFICIAL 1.18.1 / Turtle-side; not a talent-tree rewrite — see the patch-attribution note near the top.)*
 
 ---
 
-### Spec 7: Arcane Power Frost Mage (28/0/23) - MC & BWL Progression
+### Spec 7: Arcane Power Frost Mage — Burst Frost (claimed 28/0/23)
+
+> **40 points as written — 11 short of a full 51-point tree.** Arcane lists 17 of its claimed 28 and Frost 19 of its claimed 23. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Maximum burst frost damage for Molten Core and Blackwing Lair where mobs have 100% Fire Immunity.
 
@@ -341,7 +427,9 @@ Frost (23 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/warlock](https://talents.turtle-wow.org/warlock)
 
-### Spec 8: DS/Ruin Warlock (7/21/23) - Top Raiding Shadow DPS
+### Spec 8: DS/Ruin Warlock — Shadow Bolt DPS (claimed 7/21/23)
+
+> **35 points as written — 16 short of a full 51-point tree.** Demonology lists only 11 of its claimed 21, Destruction only 17 of its claimed 23. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Sacrifices the Succubus minion via *Demonic Sacrifice* to gain a permanent +15% Shadow Damage multiplier, combined with *Ruin* for +100% critical strike bonus.
 
@@ -354,7 +442,7 @@ Affliction (7 points):
 
 Demonology (21 points):
 - 5/5 Demonic Embrace (+15% Total Stamina)
-- 2/2 Master Conjurer (+20% Healthstone heal, +30% Firestone damage & Spellstone crit)
+- 2/2 Improved Stones (VERIFIED `51712`/`51713`: +25%/+50% stone effectiveness, +50%/+100% stone crit bonus — see note below)
 - 3/3 Fel Intellect / Fel Stamina
 - 1/1 Demonic Sacrifice (Sacrifice Succubus: +15% Shadow Damage bonus)
 
@@ -368,13 +456,23 @@ Destruction (23 points):
 
 - **Stat Priority**: Spell Hit (16% cap) > Shadow Spell Damage > Spell Crit > Stamina.
 - **Rotation**: Curse of Shadows / Curse of Elements (assigned by raid lead) > Shadow Bolt spam > Life Tap to manage mana.
-- **Turtle WoW 1.18.1 Rework**:
-  - **Master Conjurer**: Combined talent merging Improved Healthstone, Firestone, and Spellstone into a single 2-point talent in Row 2 Demonology.
-  - **Firestone / Spellstone**: Firestone grants flat +Fire Spell Damage; Spellstone grants +Spell Crit.
+- **Demonology stone talents (1.17.2 → 1.18.1)**:
+  - **Master Conjurer — NOT PRESENT IN THIS DATABASE. Do not look for it in the talent tree, and do not call the name fabricated.** 📕 **Earlier revisions got this wrong twice, in both directions.** One claimed the Turtle talent *"merges Firestone/Spellstone/Healthstone into a single 2-point Row 2 Demonology talent"*; a later revision declared the name **fabricated**. Neither is right.
+    - ❌ **The Turtle 1.18.1 Demonology talent described above does not exist in this DB.** No spell in `tw_world.spell_template` implements a stone-merging talent of that shape.
+    - ⚠️ **But a spell named "Master Conjuror" does exist here — a differently-purposed vanilla one.** `spell_template` **`18757`** / **`18758`**: *"Reduces the Mana cost and casting time of your Stone creation spells by $s1%"* (`spellFamilyName 5`, `durationIndex 21`, `effectApplyAuraName1 = 108`, `effectBasePoints1 = -21` / `-41`). This is the **vanilla WotLK Demonology talent** — a passive Stone mana-cost/cast-time reduction, **not** a stone-merging talent and **not** a Turtle 1.18.1 addition.
+    - 🚫 **It is unreachable, so it is in no tree and no rotation.** Live `tw_world.skill_line_ability` has **0 rows** for `18757`/`18758`, and `npc_trainer` has **0 rows**. Neither is talent-grantable nor trainer-taught, so no player can benefit from it.
+    - **Bottom line:** the *name* is real, the *Turtle talent* is absent, and this database grants *neither* to any player.*
+  - ✅ **The real 2-rank Demonology talent is `Improved Stones`** — `spell_template` **`51712`** (R1) / **`51713`** (R2). VERIFIED description: *"Increases the effectiveness of your Felstone, Wrathstone, Voidstone, and Spellstone by $s1%, and increases the critical strike chance bonus of your…"* — encoded as two `effectApplyAuraName = 108` effects at `effectBasePoints1 = 24/49` → **25/50%** stone effectiveness and `effectBasePoints2 = 49/99` → **50/100%** stone crit bonus, both `effectMiscValue = 8`.
+  - ⚠️ **There is NO Healthstone component** to this talent. Do not expect a Healthstone heal buff from it.
+  - 📕 **Voidstone, not Firestone.** The live tree (and the live spell description) names the fourth stone **Voidstone**. "Firestone" is the older name.
+  - ⚠️ **Dependency:** `51712`/`51713` need the `spell_affect` rows added by migration `20260504214035_world.sql`; without them they are **inert**. See the DB Version Warning near the top.
+  - 📕 **Earlier revision also said** *"Firestone grants flat +Fire Spell Damage; Spellstone grants +Spell Crit."* **Neither claim survives.** The live talent description covers **Felstone, Wrathstone, Voidstone and Spellstone** as a group and says nothing about fire damage; there is no "Firestone" in the live tree.
 
 ---
 
-### Spec 9: SM/Ruin Affliction Warlock (30/0/21) - Utility & Multi-DoT
+### Spec 9: SM/Ruin Affliction Warlock — Multi-DoT & Utility (claimed 30/0/21)
+
+> **35 points as written — 16 short of a full 51-point tree.** Affliction lists only 18 of its claimed 30. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Provides *Nightfall* instant Shadow Bolt procs and *Shadow Mastery* (+10% Shadow damage) without needing to sacrifice your demon pet.
 
@@ -402,7 +500,9 @@ Destruction (21 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/hunter](https://talents.turtle-wow.org/hunter)
 
-### Spec 10: Marksmanship PvE Hunter (20/31/0) - Raid Ranged DPS
+### Spec 10: Marksmanship PvE Hunter — Raid Ranged DPS (claimed 20/31/0)
+
+> **41 points as written — 10 short of a full 51-point tree.** Beast Mastery lists 20; Marksmanship lists 21 of its claimed 31. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Maximum ranged physical damage using Aimed Shot and Multi-Shot weave between auto-shots.
 
@@ -426,12 +526,14 @@ Marksmanship (31 points):
 
 - **Stat Priority**: Hit Cap (9%) > Agility > Ranged Attack Power > Crit.
 - **Rotation**: Auto-Shot > Aimed Shot > Auto-Shot > Multi-Shot > Auto-Shot. Never clip auto-shot cast timer!
-- **Turtle WoW 1.18.1 Baseline QoL**:
-  - *Aimed Shot*, *Trueshot Aura*, and *Steady Shot* learned baseline at level 20 via trainers, freeing talent points.
+- **Baseline QoL — trainer levels are patch-versioned, and this is a live example**:
+  - *Aimed Shot*, *Trueshot Aura*, and *Steady Shot* are learned from trainers, freeing talent points. ✅ **VERIFIED, and the level depends on which patch's data is loaded:** migration `20260504194945_world.sql` sets **Steady Shot R1 to `reqlevel 20`** (from `36`, sourced from `1.18.1_cleaned.txt`), and R2/R3/R4 to **30 / 40 / 50** (sourced from `1.17.2_cleaned.txt`). The `sql/base/` dump still shows **R1 at 36**. So "Steady Shot at 20" is correct **for a migrated server** only — do not read it straight out of the base dump.
 
 ---
 
-### Spec 11: Melee Survival Hunter (0/21/30) - Turtle-WoW Signature Melee Spec
+### Spec 11: Melee Survival Hunter — Turtle-WoW melee spec (claimed 0/21/30)
+
+> **37 points as written — 14 short of a full 51-point tree.** Marksmanship lists 16 of its claimed 21, Survival 21 of its claimed 30. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 A fully viable close-quarters melee combat spec fighting alongside your pet with massive 2H weapon scaling.
 
@@ -448,15 +550,19 @@ Survival (30 points):
 - 5/5 Deflection (+5% Parry)
 - 3/3 Savage Strikes (+20% Crit on Raptor Strike and Mongoose Bite)
 - 2/2 Survivalist (+10% Total Health)
-- 1/1 Carve (Instant 2H melee swing hitting up to 3 nearby enemies)
+- 1/1 Carve — **VERIFIED** `spell_template` **`51575`** (R1, `spellLevel 20`) / **`52415`** (R2, 38) / **`52416`** (R3, 56). 📕 **Earlier revision said** *"Instant 2H melee swing hitting up to 3 nearby enemies."* **Wrong on both counts.** Carve is **not a 2H swing** and **not limited to 3 enemies**. The encoded description is *"A sweeping attack that strikes up to 5 enemies in a 10 yard cone in front of you, dealing $s1% weapon damage"*, and **`maxAffectedTargets = 5` on all three ranks** — it is a **forward cone AoE**, not a single-target swing. Damage is **60% / 65% / 70% weapon damage** (`effectBasePoints1 = 59/64/69` → 60/65/70, `effect1 = 31`). **Carve also shares a cooldown with Multi-Shot** (shared SpellCategory; cf. `spell_template` `52602` Multi-Shot), so the two cannot be stacked on cooldown.
 - 3/3 Surefooted (+3% Hit chance, +15% Movement Impairing resist)
 - 5/5 Killer Instinct (+3% Crit)
 - 1/1 Counterattack (Instant melee strike after parrying)
-- 1/1 Trapping in Combat (Capstone: Traps can be laid during active combat encounters)
+- 1/1 **Untamed Trapper** (Survival 7th-row capstone, `51586`) — 📕 **Earlier revision said** "Trapping in Combat (Capstone: Traps can be laid during active combat encounters)." **The talent's real name is Untamed Trapper.** OFFICIAL 1.18.1 talent wording: *"all traps can be placed while in combat."*
+  - ⚠️ **VERSION-GAP WARNING** — `spell_template` entry **`51586` IS present** in our snapshot (name `Untamed Trapper`, `spellLevel 0`, `effectApplyAuraName1 = 112` / `effectApplyAuraName2 = 108`, `effectBasePoints2 = -21` → 20%), **but its `description` field still carries the older, pre-rework text**: *"Reduces the mana cost of your Immolation Trap and Explosive Trap effects by $s2% and increases their damage based on your melee Attack Power. In addition…"*. The "traps can be placed while in combat" behaviour is therefore **OFFICIAL 1.18.1 text that our DB snapshot does not reflect** — treat it as a **possible server-version gap** and do **not** present it as working here without testing on a live character.
+  - 📕 *Corrected note:* an earlier correction pass wrongly recorded this spell as **absent from `spell_template` entirely**. That was incorrect — the row exists (`51586`); what is missing is the *reworked description/effect text*, not the spell.
 ```
 
 - **Stat Priority**: Hit Cap (9%) > Agility > Strength > Attack Power > Crit.
 - **Rotation**: Raptor Strike on swing > Carve on CD > Mongoose Bite on CD > Lacerate (maintain bleed) > Lay Explosive/Immolation Trap in combat.
+  - **VERIFIED — Lacerate lasts 21 seconds here, not vanilla's 9.** Our `spell_template` holds **fifteen** `Lacerate` rows spanning **four distinct `durationIndex` values and five distinct encodings**, and the bleed rows overwhelmingly use **`durationIndex 86`** (21 s per `SpellDuration.dbc`) with `effectAmplitude1 = 3000` (3 s ticks). Outliers: `45656` (`durationIndex 0`, no aura, and its description contains a typo — *"Deal damage equal to on $s1% of melee attack power"*), `48049`/`48050` (`durationIndex 31`, *"Deepens the target's open wound…"*), and `49041` (`durationIndex 2`, `effectBasePoints1 = 499` → 500). Two bleed sets also encode an **attack-power coefficient** rather than flat damage: `45653`/`45654`/`45655` read *"bleed for 21% / 35% / 49% of your melee attack power"*, and `20907`/`20908` carry `spellLevel 99` (a max-rank row merged into the rank-2/3 entries). ⚠️ **Assume 21 s, but be aware which Lacerate your client actually ranks up** — the five encodings do not agree with each other.
+  - *(The 21 s figure is derived from `SpellDuration.dbc` index 86. That DBC is client data and is **not** contained in `sql/base/`, so the millisecond mapping itself is not repository-verifiable; the `durationIndex 86` value **is**.)*
 
 ---
 
@@ -464,7 +570,9 @@ Survival (30 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/priest](https://talents.turtle-wow.org/priest)
 
-### Spec 12: Holy / Discipline Raid Healer (21/30/0) - The Gold Standard
+### Spec 12: Holy / Discipline Raid Healer (claimed 21/30/0)
+
+> **40 points as written — 11 short of a full 51-point tree.** Discipline lists only 13 of its claimed 21, Holy 27 of its claimed 30. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Provides *Meditation* (+15% mana regen while casting), *Inner Focus* (free instant cast with +25% crit), and *Divine Spirit* alongside massive Holy healing bonuses.
 
@@ -490,13 +598,17 @@ Holy (30 points):
 
 - **Stat Priority**: +Healing > Spirit > MP5 > Intellect > Spell Crit.
 - **Rotation**: Flash Heal (for emergency triage) > Greater Heal (Rank 1 or 4 for efficient tank healing) > Renew (on taking damage) > Prayer of Healing (for party AOE damage).
-- **Turtle WoW 1.18.1 Rework**:
-  - **Lightwell**: Reworked to not break upon taking damage, scaling fully with +healing power.
-  - **Inner Fire**: Grants **Spell Damage** instead of Attack Power, boosting caster scaling.
+- **Lightwell**: 📕 **Earlier revision said** *"Reworked to not break upon taking damage, scaling fully with +healing power."* **The "does not break on damage" part is UNSUPPORTED and has been removed** — see the verification note below.
+  - ⚠️ **VERIFIED negative** — our `gameobject_template` row **`181102`** (the Lightwell object summoned by spell `724`) has **no health field at all**: the `gameobject_template` schema in this fork contains **no column named `health` and no "unstable" flag**. There is also **no break-on-damage mechanic anywhere** — not in `spell_template`, not in `src/game`. Nothing in this codebase can destroy a Lightwell by damaging it. **Do not state or rely on this behaviour.**
+  - ✅ **What the DB *does* show** (recorded so the negative result above is not mistaken for "Lightwell is unreworked"): spell **`724`** summons GO `181102`; the later ranks **`27870` / `27871` / `51458`** are literally named **`[Deprecated] Lightwell`**, share SpellCategory `1145` with a **`categoryRecoveryTime` of 600000 ms (10 minutes)**, spawn GOs `181105` / `181106` / `181107`, and their descriptions read *"Lightwell lasts for $d or 5 charges."* Ranks **`47326`** and **`51460`** are **empty rows** (no effects, no description, `spellLevel 0`). The talent **`51798` "Improved Lightwell"** grants `+4` radius and `+5` charges.
+  - **OFFICIAL 1.18.1** (per the changelog, **not** reflected in our snapshot): Lightwell was fully reworked to **1 rank**, a **5-minute cooldown**, and **10 charges / 1 minute**. Flagged as a possible version gap — the 10-minute `categoryRecoveryTime` and 5-charge text still on the `[Deprecated]` rows do **not** match it.
+- **Inner Fire**: Grants **Spell Damage** instead of Attack Power, boosting caster scaling.
 
 ---
 
-### Spec 13: Shadow Priest (13/0/38) - Raid Debuffer & Mana Battery
+### Spec 13: Shadow Priest — Raid Debuffer & Mana Battery (claimed 13/0/38)
+
+> **35 points as written — 16 short of a full 51-point tree.** Shadow lists only 22 of its claimed 38 — the largest single-tree undercount in this Part. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Applies *Shadow Weaving* (+15% Shadow damage taken by boss for all Warlocks in raid) and *Vampiric Embrace* (heals party for 25% and restores 2% mana of shadow damage dealt).
 
@@ -528,7 +640,9 @@ Shadow (38 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/paladin](https://talents.turtle-wow.org/paladin)
 
-### Spec 14: Holy PvE Raid Healer (31/20/0) - Infinite Mana Tank Healer
+### Spec 14: Holy PvE Raid Healer (31/20/0) — Tank Healer
+
+> **38 points as written — 13 short of a full 51-point tree.** Holy lists 20 of its claimed 31. ⚠️ **This is one point lower than the pre-correction measurement of 39, because the non-talent `1/1 Blessing of Kings` line was removed from the Protection block below** (see the correction note under that tree) — the tree as it now stands sums to exactly 38. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 *Illumination* refunds 100% of the mana cost whenever Flash of Light or Holy Light critically strikes, granting Holy Paladins near infinite mana pools on raid bosses.
 
@@ -546,20 +660,26 @@ Holy (31 points):
 Protection (20 points):
 - 5/5 Redoubt (+30% Block chance after being hit by a critical strike)
 - 5/5 Toughness (+10% Armor)
-- 1/1 Blessing of Kings (+10% All Stats to target)
 - 3/3 Improved Righteous Fury (+50% Threat on Holy spells)
 - 5/5 Shield Specialization (+30% Block Value)
 ```
+- 📕 **Earlier revision listed `1/1 Blessing of Kings (+10% All Stats to target)` here as a Protection talent. It is not.** Blessing of Kings (`20217`, +10% all stats) is a **Blessing taught by Paladin trainers**, not a Protection tree node. See the verified note in the section below the tree.
 
 - **Stat Priority**: Spell Crit (to trigger Illumination mana refunds) > +Healing > Intellect > MP5.
 - **Rotation**: Flash of Light spam on assigned tank > Holy Light with Divine Favor during high burst damage > Keep *Blessing of Kings / Light / Salvation* active.
-- **Turtle WoW 1.18.1 Features**:
+- **Turtle-WoW Paladin changes**:
   - **Hand Spells**: Freedom, Protection, and Sacrifice are converted to "Hand" spells, allowing them to be cast without removing class Greater Blessings.
   - **Extended Blessings**: Greater Blessings have longer duration to reduce rebuffing overhead.
+  - **Hand of Reckoning** — ✅ **VERIFIED real**, `spell_template` **`51302`**, `spellLevel 10`, `spellFamilyName 10`, *"Taunts the target to attack you, but has no effect if the target is already attacking you."* The **10-second cooldown is encoded as `categoryRecoveryTime = 10000` under SpellCategory `82`** (not in `recoveryTime`, which is `0`) — i.e. it is a *category* cooldown. The 2-rank talent **Improved Hand of Reckoning** is **`51334` / `51335`** (+4% / +8% hit, `effectApplyAuraName1 = 107`, `effectMiscValue1 = 16`).
+    - 📕 **Earlier revision said** *"Righteous Defense / Hand of Reckoning: baseline taunt ability for tanking viability"* and implied vanilla baseline. **Hand of Reckoning is a Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.**
+    - ⚠️ **Do not cite `45806`.** A **duplicate** `Hand of Reckoning` row also exists at **`45806`**, and the two are otherwise near-identical (`durationIndex 27`, category `82`, `categoryRecoveryTime 10000`, `spellLevel 10`). The discriminator is **`spellFamilyName`**: `51302` is family **10** (the Paladin-side row, matching the talent-linked `51334`/`51335`), while `45806` is family **4** (the Warrior-family duplicate). Cite **`51302`**. *(Reachability of `45806` is not determinable from this snapshot — see the reachability caveat in the DB Version Warning.)*
+- **Blessing of Kings** — ✅ **VERIFIED** `spell_template` **`20217`**: *"Places a Blessing on the friendly target, increasing total stats by $s1% for $d."* (`effectApplyAuraName1 = 137` = `MOD_TOTAL_STAT_PERCENTAGE`, `effectBasePoints1 = 9` → **+10% all stats**; `effectMiscValue1 = -1` = all stats). ⚠️ **But it is NOT a Protection talent and has been removed from the talent listing below** — it is a **Blessing taught by trainers**, not a tree node.
 
 ---
 
-### Spec 15: Retribution Paladin (11/0/40) - 2H Melee Burst DPS
+### Spec 15: Retribution Paladin (11/0/40) — 2H Melee Burst DPS
+
+> **29 points as written — 22 short of a full 51-point tree. This is by far the largest shortfall in the document**, and the tree is plainly incomplete: Retribution lists 23 of its claimed 40, Holy only 6 of its claimed 11, with no baseline rows itemised in either. The listed picks are a priority *shopping list*, not a spendable tree. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Uses 2H Weapon with *Crusader Strike*, *Holy Strike*, *Seal of Command* procs, and *Consecration* for holy melee damage.
 
@@ -581,9 +701,9 @@ Retribution (40 points):
 - 1/1 Repentance (6-second humanoid incapacitate)
 ```
 
-- **Turtle WoW 1.18.1 Additions**:
-  - **Crusader Strike & Holy Strike**: Integrated as core rotational strikes sharing a 6s cooldown. Crusader Strike provides offensive holy damage and refreshes Judgements; Holy Strike provides holy burst with healing/mana sustain.
-  - **Righteous Defense / Hand of Reckoning**: Baseline taunt ability for tanking viability.
+- **Turtle-WoW Paladin changes (1.17.2 tree rebuild, 1.18.1 Consecration / Holy Strike / Daybreak NERFS)**:
+  - **Crusader Strike & Holy Strike**: Integrated as core rotational strikes. Crusader Strike provides offensive holy damage and refreshes Judgements; Holy Strike provides holy burst with healing/mana sustain. 📕 **Earlier revision claimed they "share a 6s cooldown." That is not what the base dump shows** — the 13 Crusader/Holy Strike rows carry `recoveryTime = 0`. ⚠️ **Check your migrated server**: `20260512224739_world.sql` `REPLACE`s all 13 rows, rewriting `attributesEx` **67109376 → 512** and **zeroing Holy Strike's `effectTriggerSpell2`** (triggers `51301`/`51755`/`51756`/`51757`/`51871`/`51872`/`51873`/`51874` → 0). The cooldown, if any, is therefore a *category* cooldown on a migrated server, and is **not** verifiable from `sql/base/`.
+  - 📕 **Earlier revision said** *"Righteous Defense / Hand of Reckoning: baseline taunt ability for tanking viability"* and implied vanilla baseline. **Hand of Reckoning is a Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.** Full verified detail (spell `51302`, 10 s category cooldown, `Improved Hand of Reckoning` `51334`/`51335`, and the `45806` duplicate to avoid) is in **Spec 14** below.
 
 ---
 
@@ -591,7 +711,9 @@ Retribution (40 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/shaman](https://talents.turtle-wow.org/shaman)
 
-### Spec 16: Restoration Raid Healer (0/12/39) - Chain Heal Master
+### Spec 16: Restoration Raid Healer (0/12/39) — Chain Heal
+
+> **32 points as written — 19 short of a full 51-point tree.** Restoration lists 26 of its claimed 39, Enhancement only 6 of its claimed 12. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 The ultimate raid healing spec. *Chain Heal* bounces between injured allies while *Mana Tide Totem* restores massive mana to your caster group.
 
@@ -617,7 +739,9 @@ Restoration (39 points):
 
 ---
 
-### Spec 17: Shaman Tank "Tankhance" (19/32/0) - Turtle-WoW Custom Tank
+### Spec 17: Shaman Tank "Tankhance" (19/32/0) — Shield Tank
+
+> **38 points as written — 13 short of a full 51-point tree.** Elemental lists 16 of its claimed 19, Enhancement 22 of its claimed 32. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 A fully realized mail/shield tank utilizing high threat nature damage, shield mitigation stacks, and short-cast fire spells.
 
@@ -648,7 +772,9 @@ Enhancement (32 points):
 
 🔗 **Interactive Calculator**: [https://talents.turtle-wow.org/druid](https://talents.turtle-wow.org/druid)
 
-### Spec 18: Feral Tank & Cat DPS (14/32/5) - Heart of the Wild Hybrid
+### Spec 18: Feral Tank & Cat DPS (14/32/5) — Heart of the Wild Hybrid
+
+> **37 points as written — 14 short of a full 51-point tree.** Feral lists 30 of its claimed 32, Balance only 7 of its claimed 14. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 Combines massive health and armor in Dire Bear Form with high physical DPS in Cat Form using *Heart of the Wild* (+20% Stamina in Bear, +20% Strength in Cat).
 
@@ -679,14 +805,19 @@ Restoration (5 points):
 - **Stat Priority (Bear Tank)**: Armor (to 75% hard cap) > Stamina > Agility (for Dodge) > Hit (9%) > Defense.
 - **Stat Priority (Cat DPS)**: Hit (9%) > Strength > Agility > Attack Power > Crit.
 - **Rotation (Bear Tank)**: Maul on every swing > Swipe for multi-target threat > Faerie Fire (Feral) on pull.
-- **Rotation (Cat DPS)**: Shred from behind > Rake (maintain buffed bleed) > Ferocious Bite at 5 Combo Points.
-- **Turtle WoW 1.18.1 Enhancements**:
-  - **Windfury Compatibility**: Windfury functions as an aura, allowing Feral Druids in Cat and Bear forms to benefit from extra attacks.
-  - **Bleed Scaling**: Rake buffed to make bleed playstyles competitive without total reliance on Wolfshead Helm powershifting.
+- **Rotation (Cat DPS)**: Shred from behind > Rake (maintain the bleed) > Ferocious Bite at 5 Combo Points.
+- **Druid notes**:
+  - ✅ **VERIFIED — Rake is a periodic bleed DoT, and that part of the old text was right.** Rake's effect 2 is `SPELL_AURA_PERIODIC_DAMAGE` (aura `3`) on the main rank rows (`1822` / `1823` / `1824` / `9904`, all `durationIndex 105`, `effectAmplitude1 = 3000` = 3 s ticks, `effectBasePoints2 = 12/18/24/33` → 13/19/25/34 per tick).
+  - 📕 **Earlier revision said** *"Rake buffed to make bleed playstyles competitive."* **That claim is removed** — no balance intent is encoded anywhere in the tree data, the changelog, or this codebase. Nothing here can support a "buffed to make X competitive" statement.
+  - ⚠️ **Four-plus Rake implementations coexist, and two are outliers.** Besides the four main ranks there are `24331`/`24332` (level 20, `durationIndex 105`, 16/32 direct + 12/24 per tick) and the outliers **`27556` / `27638`**: `durationIndex 8`, **`stackAmount 100`**, `effectBasePoints1 = 199` → 200 direct and `effectBasePoints2 = 99` → **100 bleed per tick**. Do not assume the main-rank numbers apply to whatever your client ranks up. (`22639` "Eskhandar's Rake" is a separate item proc, not the druid ability.)
+  - ❌ **Wolfshead Helm "powershifting" — DELETED as fabricated.** 📕 **Earlier revision said** *"Rake buffed to make bleed playstyles competitive without total reliance on Wolfshead Helm powershifting."* **There is no Wolfshead Helm powershifting mechanic on Turtle-WoW.** It appears in **no** official talent-tree entry, **no** changelog entry, **no** wiki page and **no** forum post. It was invented. The item `8345` Wolfshead Helm exists in our `item_template`; the *mechanic* does not. (The Feral Cat loadout in Part II no longer presents it as mandatory either.)
+  - ❌ **Windfury as a Druid aura — DELETED as wrong.** 📕 **Earlier revision said** *"Windfury functions as an aura, allowing Feral Druids in Cat and Bear forms to benefit from extra attacks."* **No Windfury exists in any Druid tree.** The aura version is the **Shaman's Windfury Totem**. ✅ **VERIFIED on our side:** `spell_template` Windfury Weapon (`8233` / `8236` / `10484` / `16361`) *is* a genuine passive aura — `attributes = 1` (passive), `effect1 = 6` + `effectApplyAuraName1 = 99`, `effect2 = 19` = `SPELL_EFFECT_ADD_EXTRA_ATTACKS`, `effectBasePoints1 = 45/118/248/332`, levels 30/40/50/60. **But `stances = 0` on all four — no shapeshift form restriction is encoded.** So on DB evidence alone you **cannot** claim Feral Druids in Cat/Bear benefit from it, and this document does not claim it.
 
 ---
 
-### Spec 19: Balance Moonkin (31/0/20) - Reworked Caster DPS
+### Spec 19: Balance Moonkin (31/0/20) — Caster DPS
+
+> **45 points as written — 6 short of a full 51-point tree.** The smallest shortfall here. Balance lists 26 of its claimed 31, Restoration 19 of its claimed 20. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 High burst Arcane and Nature damage providing spell critical aura and sustained mana returns to the caster group.
 
@@ -720,12 +851,81 @@ Restoration (20 points):
 
 ---
 
+### Spec 14b: Protection Paladin (0/31/20) — AoE / Threat Tank *(STUB — no build published)*
+
+> **No talent tree is published for this spec, deliberately.** Turtle-WoW publishes no canonical per-spec spreads (see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks)), and this document will **not** invent one. The `(0/31/20)` split is a **community claim**, not a measurement.
+>
+> **What is reliable:** the Protection *nodes* a threat/AoE tank spec reaches for are Righteous Fury, Redoubt, Shield Specialization, Toughness and Precision/Toughness — and **Defensive Tactics is a Protection talent** (`51606`/`51607`/`51608`, VERIFIED: *"While wearing a shield, you retain 60/120/180% of the increased threat generation from Defensive Stance in other stances."*). ⚠️ It is **not** a rage-retention talent — see **Spec 1** for the full correction and the inert `29559`/`29588`/`29589` duplicate.
+>
+> **Also note:** Blessing of Kings is **not** a Protection talent. It is a trainer-taught Blessing (`20217`, +10% all stats, VERIFIED). It was wrongly listed as a Protection node in an earlier revision of this document and has been removed.
+>
+> **Matching loadout:** [Protection Paladin](#-protection-paladin-aoe--threat-tank-bis) (9-piece Redemption + The Face of Death + Thunderfury + Libram of Hope). **To build the tree:** open the official [Paladin calculator](https://talents.turtle-wow.org/paladin) and verify each node against our `spell_template`.
+
+---
+
+### Spec 19b: Moonglow Restoration Druid (24/0/27) — Raid Healer *(STUB — no build published)*
+
+> **No talent tree is published for this spec, deliberately.** Turtle-WoW publishes no canonical per-spec spreads (see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks)), and this document will **not** invent one. The `(24/0/27)` split is a **community claim**, not a measurement.
+>
+> **What is reliable:** the Restoration *nodes* a raid healer spec reaches for are improved Healing Touch / Regrowth, the mana-sustainability line, and **Improved Mark of the Wild** for the raid buff — the same Improved Mark of the Wild node that appears in the **Balance Moonkin** tree (**Spec 19**) above. The `Moonkin Form` aura and `Nature's Grace` interaction described in Spec 19 also apply to the caster-frame side of the class.
+>
+> ⚠️ **Do not assume the classic "turtle" healer kit applies.** `Furor` and `Omen of Clarity` are listed in the Feral/Balance trees here, but **which ranks a 0-damage moonglow healer should take is unverified**.
+>
+> **Matching loadout:** [Restoration Druid](#-restoration-druid-hot-raid-healer--swiftmend-bis) (9-piece Dreamwalker + Atiesh (Druid) + Idol of Rejuvenation). **To build the tree:** open the official [Druid calculator](https://talents.turtle-wow.org/druid) and verify each node against our `spell_template`.
+
+---
+
 ## Part II: Complete 1-Click BiS Class Gear Loadouts (Every Single Slot 01–17 Explicitly Represented)
 
-> **Enterprise Equipment Architecture Guarantee**:
-> Every single class loadout below features **100% complete equipment slot coverage** (all 16–17 combat equipment slots: Head, Neck, Shoulders, Back, Chest, Wrists, Hands, Waist, Legs, Feet, Ring 1, Ring 2, Trinket 1, Trinket 2, Main Hand, Off Hand / Shield, and Ranged / Relic). Every item ID is verified live against the server database (`tw_world_item_template.sql`).
+> ### "BiS" here means "dungeon upgrades you pick up on the way in" — NOT a curated progression checklist
 >
-> Copy and paste these macros directly into your World of Warcraft **Macro UI** (`/m`) or chat console to instantly equip or populate your inventory with the definitive Best-in-Slot endgame gear setup.
+> 📕 **Earlier revision of this document presented these loadouts as authoritative curated BiS lists** — "1-Click BiS gear loadouts", "the definitive Best-in-Slot endgame gear setup", "Every item ID is verified **live against the server database**". **Turtle-WoW deliberately does not work that way**, and the official sources say so directly:
+>
+> - **Official wiki `PreBISGuide`**: ***"You don't need dungeon Pre-BIS on Turtle WoW."***
+> - **Official Mage FAQ**: ***"There are currently no up to date pre-raid BiS lists for any mage specs… you can just jump right into ZG, AQ20, Onyxia, MC, BWL, AQ40 and ES… it is not recommended to go out of your way to farm pre-raid BiS gear."***
+> - `turtlelootline.com/builds` — the one place curated presets would live — is **login-gated and returns HTTP 401**. There is no publicly readable curated build set.
+>
+> **So read the loadouts as:** a list of the strongest items per slot from Naxxramas / AQ40 / BWL and Turtle-WoW's custom instances — i.e. *dungeon upgrades you pick up on the way in* — **not** a mandatory pre-raid farming checklist and **not** an endorsement of any meta ranking. The stat priorities in Part I are **COMMUNITY / UNVERIFIED** consensus, not Turtle-WoW or codebase output.
+>
+> ### ✅ CORRECTED — how item stats are actually stored in this fork (`stat_type` is **NOT** vestigial)
+>
+> 📕 **An earlier revision of this document claimed these columns were dead.** It stated that a full parse of every row of `sql/base/tw_world_item_template.sql` (**23,078 rows** at the time — the dump is stale; live is **26,543**) found *"ZERO items with any non-zero `stat_type1..10` / `stat_value1..10` pair"*, and therefore that item stats had to be read from the `spellid_*` aura instead. **That claim was wrong, and it came from a column-index bug.** The corrected result is below.
+>
+> **Why the earlier audit was wrong:** it read `stat_value1..10` at indices **36–45**, which is where the `ObjectMgr` `SELECT` would put them *if the columns were grouped*. But the table stores them **interleaved** — `stat_type1`(26), `stat_value1`(**27**), `stat_type2`(28), `stat_value2`(**29**) … `stat_type10`(44), `stat_value10`(**45**). Index 36 is actually `stat_value5`, so every lookup landed on zero columns and reported "all zero".
+>
+> **Corrected audit — live `tw_world.item_template`, all 26,543 rows** (VERIFIED):
+> - **9,372 items** carry at least one non-zero `stat_type` / `stat_value` pair — **20,137** non-zero pairs in total.
+> - **11,599 items** carry a non-zero `spellid_1..5`; of those, **6,539** also set a non-zero `spelltrigger`, i.e. a real on-equip / on-use / proc effect rather than a stray id.
+>
+> 📕 **These are LIVE figures.** The dump-derived numbers this section previously quoted — 7,545 / 15,736 / 9,370 / 4,854 — were all taken from the stale `sql/base/` snapshot and are **too low** for this realm.
+>
+> **So Turtle-WoW uses the normal vanilla model, and an item's stats come from BOTH places:**
+>
+> | Portion | Source | Worked example |
+> | :--- | :--- | :--- |
+> | **Flat stats** (Strength, Agility, Stamina, Intellect, Spirit, Health, Mana) | `stat_type1..10` / `stat_value1..10` | `22798` Might of Menethil → `+46 Stamina, +20 Strength` |
+> | **Percent / proc / derived** (Spell Damage, Healing, Attack Power, Armor, Block Value, Weapon Skill, % Crit, % Hit, % Dodge, on-use procs) | the `spellid_1..5` aura resolved in `spell_template` | `22799` Soulseeker → `spellid_1 28792` |
+> | **Armor / Block / damage / resistances** | the `armor`, `block`, `dmg_min1..5` / `dmg_max1..5` / `dmg_type1..5`, `holy_res`…`arcane_res` columns | `23043` The Face of Death → `armor 3494`, `block 66` |
+>
+> ✅ **Column order** — take it from the `SELECT` in `src/game/ObjectMgr.cpp:2277-2282`, which matches the table exactly (the *loader* was always correct; only the earlier audit was wrong): `entry` 0, `class` 1, `subclass` 2, `name` 3, `item_level` 14, `required_level` 15, `stat_type1` 26, `stat_value1` **27**, `stat_type10` 44, `stat_value10` **45**, `delay` 46, `block` 64, `armor` 65, `spellid_1` 72, `spelltrigger_1` 73. Stat type codes are declared at `src/game/Objects/ItemPrototype.h:29-38` (0 Mana, 1 Health, 3 Agility, 4 Strength, 5 Intellect, 6 Spirit, 7 Stamina; `MAX_ITEM_MOD` = 8) and applied at `src/game/Objects/Player.cpp:8568-8596`.
+>
+> ### ⚠️ What this means for the stat lines in Parts III–IX
+>
+> **The stat lines are a mix of correct and incorrect, and have NOT been systematically re-derived.** A spot check of ten items across Parts II, V, VI and VII:
+>
+> - ✅ **Correct:** `22798` Might of Menethil — doc *"+20 Strength, +46 Stamina"* vs DB `+46 Stamina, +20 Strength` (exact). `23577` The Hungering Cold — doc *"+140 Armor, +14 Stamina"* vs DB `armor 140`, `+14 Stamina` (exact). `23043` The Face of Death — the Part V table's `3494` armor / `66` block match the DB exactly.
+> - ❌ **Wrong:** `55100` Checkmate — doc *"+32 Strength, +28 Stamina, +2% Crit, +1% Hit"* vs DB **`+40 Agility, +25 Stamina`** (a Warrior 2H Mace, so the stat is Agility, not Strength). `22799` Soulseeker — doc *"+24 Int, +24 Sta"* vs DB **`+31 Intellect, +30 Stamina`**. `23043` The Face of Death — doc *"+14 Strength, +24 Stamina, +7 Defense, +1% Block, +19 Block Value"* vs DB **`+21 Stamina` only** (its `spellid_1` is `21475` = "Improved Mark of the Wild", which looks like a bad item row). `19379` Neltharion's Tear and `19406` Drake Fang Talisman have **no** `stat_type` pairs at all, so their whole stat line must come from the `spellid` aura.
+>
+> **So treat every `+N` line in Parts III–IX as UNVERIFIED until individually re-checked** — but re-check it against **`stat_type`/`stat_value` *and* the `spellid_*` aura**, not against `stat_type` alone. That per-line re-derivation is a separate large task and has not been done. **Item IDs, names, slots, weapon speeds, armor/block values and boss attributions are *not* implicated.**
+>
+
+> ### 📦 What IS verified about these loadouts
+>
+> Every **item ID** below was checked for existence against the **LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** ⚠️ But existence is the **only** thing that check establishes — 📕 an earlier revision also claimed the ids' **names and slots** were verified, and that was false (18 Tier-2 id/name pairs and 21 starter-set id/slot assignments were wrong). The set tables have been re-derived from live `name` / `inventory_type` / `set_id`; the loadout stat lines are **still the unverified part**, per the warning above.
+>
+> **Slot-coverage guarantee**: every loadout below fills **all 17 combat equipment slots** — Head, Neck, Shoulders, Back, Chest, Wrists, Hands, Waist, Legs, Feet, Ring 1, Ring 2, Trinket 1, Trinket 2, Main Hand, Off Hand / Shield, and Ranged / Relic — with one deliberate exception: the two-handed loadouts leave slot 16 empty (`-- 16. Off Hand: [Occupied by Two-Handed Weapon]`) because the two-hander already occupies the main hand, so those macros populate 16 of the 17 slots. Slot 17 is never left empty — it carries a bow or crossbow for hunters, tanks and rogues, a wand for casters, a libram for paladins, and a totem or idol for shamans and druids.
+>
+> Copy and paste these macros directly into your World of Warcraft **Macro UI** (`/m`) or chat console to instantly populate your inventory.
 
 ---
 
@@ -796,7 +996,7 @@ Restoration (20 points):
 .additem 19394 1   -- 03. Shoulders: Drake Talon Pauldrons (Drake Talon Pauldrons)
 .additem 23045 1   -- 04. Back: Shroud of Dominion (Shroud of Dominion)
 .additem 21814 1   -- 05. Chest: Breastplate of Annihilation (Breastplate of Annihilation)
-.additem 19146 1   -- 06. Wrists: Wristguards of Stability (Wristguards of True Flight)
+.additem 19146 1   -- 06. Wrists: Wristguards of Stability
 .additem 21581 1   -- 07. Hands: Gauntlets of Annihilation (Gauntlets of Annihilation)
 .additem 23219 1   -- 08. Waist: Girdle of the Mentor (Girdle of the Mentor)
 .additem 22385 1   -- 09. Legs: Titanic Leggings (Titanic Leggings)
@@ -1429,10 +1629,12 @@ Restoration (20 points):
 
 ---
 
-### 🔥 Demonology Master Conjurer Warlock (Turtle 1.18.1 Firestone BiS)
+### 🔥 Demonology Improved Stones Warlock (Stone DPS)
 
-> **Role**: `Turtle-WoW Signature Fire Caster DPS`
-> **Loadout Summary**: Full Plagueheart, Midnight Haze, Sapphiron's Left Eye (Firestone slot), Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necropolis, and Doomfinger.
+> **Role**: `Turtle-WoW Fire/Shadow Caster DPS`
+> **Loadout Summary**: Full Plagueheart, Midnight Haze, Sapphiron's Left Eye, Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necropolis, and Doomfinger.
+>
+> 📕 **Renamed.** This loadout was previously headed *"Demonology **Master Conjurer** Warlock (Turtle 1.18.1 **Firestone** BiS)"*. **Master Conjurer was removed in 1.18.1** and **Firestone is now Voidstone** — the talent this loadout is built around is **Improved Stones** (`51712`/`51713`). See the verified note in **Spec 8**. The `Sapphiron's Left Eye` in slot 16 is an **off-hand**, not a "Firestone slot" — the previous wording implied a mechanic that does not exist.
 
 ```lua
 .additem 22506 1   -- 01. Head: Plagueheart Circlet (T3 Plagueheart Circlet)
@@ -1457,13 +1659,15 @@ Restoration (20 points):
 
 ---
 
-### 🐾 Feral Cat Druid (Powershifting Melee DPS BiS)
+### 🐾 Feral Cat Druid (Melee DPS)
 
-> **Role**: `High-Ceiling Physical Melee DPS`
-> **Loadout Summary**: Wolfshead Helm (MANDATORY: +20 Energy on Cat Shift), Atiesh Greatstaff of the Guardian (Druid: +420 Feral AP), Malfurion's Blessed Bulwark, Leggings of Apocalypse, Kiss of the Spider, Drake Fang Talisman, Shroud of Dominion, and Idol of Ferocity.
+> **Role**: `Physical Melee DPS`
+> **Loadout Summary**: Wolfshead Helm, Atiesh Greatstaff of the Guardian (Druid), Malfurion's Blessed Bulwark, Leggings of Apocalypse, Kiss of the Spider, Drake Fang Talisman, Shroud of Dominion, and Idol of Ferocity.
+>
+> 📕 **Two corrections.** (1) This loadout was previously *"**Powershifting** Melee DPS"* and listed Wolfshead Helm as **"MANDATORY: +20 Energy on Cat Shift"**. **There is no Wolfshead Helm powershifting mechanic on Turtle-WoW** — it is fabricated, appearing in no official tree entry, no changelog, no wiki page and no forum post. Wolfshead Helm (`8345`) is kept in slot 1 only because it is a real item in `item_template`; **no claim is made about what it does.** (2) The Atiesh (Druid) line previously read *"+420 Feral AP"* — that figure is part of the same unverified `stat_type`-derived stat problem described in the Part II warning above, so it has been dropped rather than restated.
 
 ```lua
-.additem 8345  1   -- 01. Head: Wolfshead Helm (Wolfshead Helm (Furor Powershift))
+.additem 8345  1   -- 01. Head: Wolfshead Helm
 .additem 19377 1   -- 02. Neck: Prestor's Talisman of Connivery (Prestor's Talisman of Connivery)
 .additem 21665 1   -- 03. Shoulders: Mantle of Wicked Revenge (Mantle of Wicked Revenge)
 .additem 23045 1   -- 04. Back: Shroud of Dominion (Shroud of Dominion)
@@ -1568,26 +1772,22 @@ Restoration (20 points):
 ```
 
 ---
-
-## Part IV: Legendary & Artifact Weapons Directory
-
-| Item ID | Item Name | Slot | Quality | Unique Effects & Description |
-| :---: | :--- | :---: | :---: | :--- |
-| **`19019`** | **Thunderfury, Blessed Blade of the Windseeker** | 1H Sword | Legendary | Chance on hit: 300 Nature blast + chain lightning debuff (-25 Nature resist, -20% attack speed). Highest threat weapon in the game. |
-| **`17182`** | **Sulfuras, Hand of Ragnaros** | 2H Mace | Legendary | Chance on hit: 273–333 Fireball + 5 Fire damage shield. 223–372 Physical damage (80.4 DPS, 3.70 speed). |
-| **`22589`** | **Atiesh, Greatstaff of the Guardian (Mage)** | 2H Staff | Legendary | +28 Spell Power to group, +2% Spell Crit to group, Karazhan teleport portal on 1-min cooldown. |
-| **`22630`** | **Atiesh, Greatstaff of the Guardian (Warlock)** | 2H Staff | Legendary | +33 Spell Damage & Healing to group, +2% Spell Hit to group, Karazhan teleport portal. |
-| **`22631`** | **Atiesh, Greatstaff of the Guardian (Priest)** | 2H Staff | Legendary | +62 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
-| **`22632`** | **Atiesh, Greatstaff of the Guardian (Druid)** | 2H Staff | Legendary | +11 Feral Attack Power to group, +44 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
-| **`22691`** | **Corrupted Ashbringer** | 2H Sword | Epic | 259–389 Damage (90.0 DPS, 3.60 speed), +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event. |
-| **`13262`** | **Ashbringer (Purified Blade)** | 2H Sword | Legendary | 201–247 Damage (74.7 DPS, 3.00 speed), Holy burst damage proc. Legendary blade of Highlord Alexandros Mograine. |
-| **`17782`** | **Talisman of Binding Shard** | Neck | Legendary | +10 Fire Resist, +10 Nature Resist, +10 Frost Resist, +10 Shadow Resist, +10 Arcane Resist. Rare legendary necklace. |
-| **`82001`** | **Cape of Alexandros** | Cloak | Rare | Tattered cloak that once covered the back of the Ashbringer (Turtle-WoW exclusive). |
-| **`82002`** | **Tabard of the Ashbringer** | Tabard | Epic | Filled with holy radiant light (Turtle-WoW exclusive). |
-
----
-
 ## Part III: Tier Armor Sets Directory
+
+> ⚠️ **Item IDs below were verified for EXISTENCE against the LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** 📕 **An earlier revision claimed "Set IDs and item names below are VERIFIED against `sql/base/tw_world_item_template.sql` (23,078 rows)". That claim was FALSE** — 18 of the 19 id/name entries audited were wrong (and 18 of those were wrong in the dump too), and 23 slot values across the six starter-set rows were wrong. All of those are now corrected against the live table.
+>
+> ⚠️ **`sql/base/` is NOT a valid verification source for this realm.** The live `tw_world.item_template` has **26,543 rows vs 23,078 in the committed dump** — it is **3,465 rows ahead**. It also **disagrees on names** for some existing ids (e.g. the dump calls `16899` "Stormrage Handguards"; live calls it "Stormrage Gloves"). Always check live, not the dump.
+>
+> ⚠️ **Any stat or set-bonus number is UNVERIFIED** — `stat_type` / `stat_value` are **populated** in this fork (**9,372** items carry a non-zero pair), so a stat line must be assembled from `stat_type`/`stat_value` **plus** the item's `spellid_*` aura **plus** the `armor`/`block`/`dmg_*` columns. No systematic re-derivation has been done. Full corrected audit and column indices: the [Part II stat correction](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented) in the Part II header.
+>
+> ### 📦 SET BONUS VALUES ARE NOT DB-VERIFIABLE — read this before citing any set bonus
+>
+> **Set MEMBERSHIP is verifiable** from `item_template.set_id` (live: **356 distinct non-zero `set_id` values across 2,213 items**), so the set tables below can state **which items belong to a set**.
+>
+> **Set BONUS VALUES are NOT verifiable from SQL in this fork.** The `itemset` table exists in `tw_world` but is **completely empty (0 rows)**, and there is **no `ItemSetDefinition` loader anywhere in `src/game/`**. `ItemPrototype::ItemSet` is populated from the **client `ItemSet.dbc`** (`src/game/Database/DBCStores.cpp:232`), and `src/game/ObjectMgr.cpp:2605-2608` **validates every `item_template.set_id` against that DBC and silently zeroes it** if the id is absent. Consequences:
+> - This document states **set membership and item ids only**. Any specific bonus number attributed to a set in the prose is **UNVERIFIED** and needs the client DBC, not this repository.
+> - A `set_id` that is non-zero in the DB can still be **inert at runtime** if `ItemSet.dbc` does not contain it. Membership in a set does not by itself guarantee the bonus fires.
+
 
 ### 1. Complete Naxxramas Tier 3 Armor Sets (9 Pieces)
 
@@ -1817,21 +2017,21 @@ Restoration (20 points):
 - **`16908`** : Bloodfang Hood (Head - Onyxia)
 - **`16832`** : Bloodfang Spaulders (Shoulders)
 - **`16905`** : Bloodfang Chestpiece (Chest - Nefarian)
-- **`16911`** : Bloodfang Belt (Waist)
+- **`16911`** : Bloodfang Bracers (Wrists)
 - **`16907`** : Bloodfang Gloves (Hands)
-- **`16906`** : Bloodfang Boots (Feet)
+- **`16910`** : Bloodfang Belt (Waist)
 - **`16909`** : Bloodfang Pants (Legs - Ragnaros)
-- **`16910`** : Bloodfang Bracers (Wrists)
+- **`16906`** : Bloodfang Boots (Feet)
 
 ### ✝️ Priest: Vestments of Transcendence
 
-- **`16922`** : Halo of Transcendence (Head - Onyxia)
+- **`16921`** : Halo of Transcendence (Head - Onyxia)
 - **`16924`** : Pauldrons of Transcendence (Shoulders)
 - **`16923`** : Robes of Transcendence (Chest - Nefarian)
 - **`16926`** : Bindings of Transcendence (Wrists)
 - **`16920`** : Handguards of Transcendence (Hands)
 - **`16925`** : Belt of Transcendence (Waist)
-- **`16921`** : Leggings of Transcendence (Legs - Ragnaros)
+- **`16922`** : Leggings of Transcendence (Legs - Ragnaros)
 - **`16919`** : Boots of Transcendence (Feet)
 
 ### ⚡ Shaman: The Ten Storms
@@ -1847,36 +2047,40 @@ Restoration (20 points):
 
 ### 🔥 Mage: Netherwind Regalia
 
-- **`16914`** : Netherwind Pants (Legs - Ragnaros)
-- **`16915`** : Netherwind Robes (Chest - Nefarian)
-- **`16916`** : Netherwind Mantle (Shoulders)
-- **`16917`** : Netherwind Gloves (Hands)
-- **`16918`** : Netherwind Boots (Feet)
+- **`16914`** : Netherwind Crown (Head - Onyxia)
+- **`16917`** : Netherwind Mantle (Shoulders)
+- **`16916`** : Netherwind Robes (Chest - Nefarian — `inventory_type 20`, robe)
+- **`16918`** : Netherwind Bindings (Wrists)
+- **`16913`** : Netherwind Gloves (Hands)
 - **`16818`** : Netherwind Belt (Waist)
-- **`16912`** : Netherwind Bindings (Wrists)
-- **`16913`** : Netherwind Crown (Head - Onyxia)
+- **`16915`** : Netherwind Pants (Legs - Ragnaros)
+- **`16912`** : Netherwind Boots (Feet)
 
 ### 💀 Warlock: Nemesis Raiment
 
-- **`16930`** : Nemesis Skullcap (Head - Onyxia)
+- **`16929`** : Nemesis Skullcap (Head - Onyxia)
 - **`16932`** : Nemesis Spaulders (Shoulders)
-- **`16931`** : Nemesis Robes (Chest - Nefarian)
+- **`16931`** : Nemesis Robes (Chest - Nefarian — `inventory_type 20`, robe)
 - **`16934`** : Nemesis Bracers (Wrists)
 - **`16928`** : Nemesis Gloves (Hands)
 - **`16933`** : Nemesis Belt (Waist)
-- **`16929`** : Nemesis Leggings (Legs - Ragnaros)
-- **`16927`** : Nemesis Boots (Feet)
+- **`16930`** : Nemesis Pants (Legs - Ragnaros)
+- **`16927`** : Nemesis Slippers (Feet)
+
+> ⚠️ **Do not substitute the other "Nemesis" items.** `47291` *Nemesis Boots* (`inventory_type 8`) and `47290` *Nemesis Leggings* (`inventory_type 7`) carry **`set_id 678`**, and `70760` *Nemesis Leggings* carries **`set_id 0`**. None of them is a **set 212** piece, so equipping them **breaks the Nemesis Raiment set bonus**. The only set-212 legs and feet are `16930` and `16927` above.
 
 ### 🐾 Druid: Stormrage Raiment
 
 - **`16900`** : Stormrage Cover (Head - Onyxia)
 - **`16902`** : Stormrage Pauldrons (Shoulders)
-- **`16903`** : Stormrage Chestguard (Chest - Nefarian)
-- **`16897`** : Stormrage Bracers (Wrists)
-- **`16899`** : Stormrage Handguards (Hands)
-- **`16904`** : Stormrage Belt (Waist)
+- **`16897`** : Stormrage Chestguard (Chest - Nefarian)
+- **`16904`** : Stormrage Bracers (Wrists)
+- **`16899`** : Stormrage Gloves (Hands)
+- **`16903`** : Stormrage Belt (Waist)
 - **`16901`** : Stormrage Legguards (Legs - Ragnaros)
 - **`16898`** : Stormrage Boots (Feet)
+
+> ⚠️ **`16899` naming discrepancy — the committed dump and the live DB disagree.** `sql/base/tw_world_item_template.sql` calls `16899` *"Stormrage Handguards"*; the **live `tw_world.item_template` calls it "Stormrage Gloves"** (`inventory_type 10`). The live name is used here because the live table is authoritative for this realm (it is 3,465 rows ahead of the dump). A dump-based spot check will therefore report a false mismatch on this one item.
 
 ---
 
@@ -1896,19 +2100,25 @@ Restoration (20 points):
 
 ---
 
-### 5. Zul'Gurub 5-Piece Class Sets
+### 5. Zul'Gurub 5-Piece Class Sets (1 Weapon + 3 Armour + 1 Class Trinket)
 
-| Class & Set Name | Chest | Shoulders | Wrists | Belt | Class Trinket |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Warrior (Vindicator's Battlegear)** | `19822` | `19823` | `19824` | `19823` | `19951` (Gri'lek's Might) |
-| **Paladin (Freethinker's Armor)** | `19825` | `19826` | `19827` | `19826` | `19952` (Gri'lek's Valor) |
-| **Hunter (Predator's Armor)** | `19831` | `19831` | `19833` | `19832` | `19953` (Renataki's Beasts) |
-| **Rogue (Madcap's Outfit)** | `19834` | `19835` | `19836` | `19835` | `19954` (Renataki's Trickery) |
-| **Priest (Confessor's Raiment)** | `19841` | `19841` | `19843` | `19842` | `19957` (Hazza'rah's Destruction) |
-| **Shaman (Augur's Regalia)** | `19828` | `19829` | `19830` | `19829` | `19955` (Wushoolay's Nature) |
-| **Mage (Illusionist's Attire)** | `20034` | `19845` | `19846` | `19845` | `19959` (Hazza'rah's Magic) |
-| **Warlock (Demoniac's Threads)** | `20033` | `19849` | `19848` | `19849` | `19958` (Hazza'rah's Healing/Shadow) |
-| **Druid (Haruspex's Garb)** | `19838` | `19839` | `19840` | `19839` | `19956` (Wushoolay's Spirits) |
+✅ **Structure verified against live `tw_world.item_template`:** every ZG class set (`set_id` `474`–`482`) has exactly **five** members — **1 weapon** (`inventory_type 2`), **3 armour pieces** and **1 class trinket** (`inventory_type 12`). 📕 **An earlier revision of this table had a "Shoulders" column that it filled by duplicating the Belt or Chest id — that column did not correspond to any real item.**
+
+⚠️ **None of the nine sets contains a Shoulders piece.** Every set is missing exactly **one** armour slot out of the four a full armour set would normally cover, and for four of the nine (Warrior, Paladin, Shaman, Druid) that missing slot **is** Shoulders. See the "Missing armour slot" column.
+
+| Class & Set Name (`set_id`) | Weapon | Armour piece 1 | Armour piece 2 | Armour piece 3 | Missing armour slot | Class Trinket |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Warrior (Vindicator's Battlegear)** `474` | `19577` Rage of Mugamba | `19822` Breastplate | `19823` Belt | `19824` Armguards | Shoulders | `19951` Gri'lek's Charm of Might |
+| **Paladin (Freethinker's Armor)** `475` | `19588` Hero's Brand | `19825` Breastplate | `19826` Belt | `19827` Armguards | Shoulders | `19952` Gri'lek's Charm of Valor |
+| **Hunter (Predator's Armor)** `477` | `19621` Maelstrom's Wrath | `19831` Mantle | `19832` Belt | `19833` Bracers | Chest | `19953` Renataki's Charm of Beasts |
+| **Rogue (Madcap's Outfit)** `478` | `19617` Zandalarian Shadow Mastery Talisman | `19834` Tunic | `19835` Mantle | `19836` Bracers | Belt | `19954` Renataki's Charm of Trickery |
+| **Priest (Confessor's Raiment)** `480` | `19594` The All-Seeing Eye of Zuldazar | `19841` Mantle | `19842` Bindings *(waist)* | `19843` Wraps | Chest | `19958` Hazza'rah's Charm of **Healing** |
+| **Shaman (Augur's Regalia)** `476` | `19609` Unmarred Vision of Voodress | `19828` Hauberk | `19829` Belt | `19830` Bracers | Shoulders | `19956` Wushoolay's Charm of **Spirits** |
+| **Mage (Illusionist's Attire)** `482` | `19601` Jewel of Kajaro | `20034` Robe *(inv 20)* | `19845` Mantle | `19846` Wraps | Belt | `19959` Hazza'rah's Charm of Magic |
+| **Warlock (Demoniac's Threads)** `481` | `19605` Kezan's Unstoppable Taint | `20033` Robe *(inv 20)* | `19849` Mantle | `19848` Wraps | Belt | `19957` Hazza'rah's Charm of **Destruction** |
+| **Druid (Haruspex's Garb)** `479` | `19613` Pristine Enchanted South Seas Kelp | `19838` Tunic | `19839` Belt | `19840` Bracers | Shoulders | `19955` Wushoolay's Charm of **Nature** |
+
+📕 **The class trinkets were previously crossed in two pairs** and have been corrected: **Priest** `19957 → 19958` (Destruction → **Healing**), **Warlock** `19958 → 19957` (Healing → **Destruction**), **Shaman** `19955 → 19956` (Nature → **Spirits**), **Druid** `19956 → 19955` (Spirits → **Nature**). The live DB settles each one independently: the trinket's own `set_id` matches its class's armour set (`19955`/`19956` → `479`/`476`, `19957`/`19958` → `481`/`480`).
 
 ---
 
@@ -1977,14 +2187,15 @@ Restoration (20 points):
 
 ### 🛡️ Rank 12–13 Field Marshal / Warlord Epic Armor
 
-- **Warrior Plate Set**: Helm `16542`, Shoulders `16544`, Chest `16541`, Gloves `16543`, Legs `16545`, Boots `16548`
-- **Paladin Plate Set**: Helm `16474`, Shoulders `16476`, Chest `16471`, Gloves `16472`, Legs `16475`, Boots `16473`
-- **Hunter Mail Set**: Helm `16565`, Shoulders `16567`, Chest `16566`, Gloves `16568`, Legs `16571`, Boots `16569`
-- **Rogue Leather Set**: Helm `16561`, Shoulders `16563`, Chest `16562`, Gloves `16560`, Legs `16558`, Boots `16559`
-- **Priest Cloth Set**: Helm `16533`, Shoulders `16536`, Chest `16535`, Gloves `16539`, Legs `16534`, Boots `16540`
-- **Mage Cloth Set**: Helm `16533`, Shoulders `16536`, Chest `16535`, Gloves `16539`, Legs `16534`, Boots `16540`
-- **Warlock Cloth Set**: Helm `16533`, Shoulders `16536`, Chest `16535`, Gloves `16539`, Legs `16534`, Boots `16540`
-- **Druid Leather Set**: Helm `16549`, Shoulders `16552`, Chest `16551`, Gloves `16550`, Legs `16554`, Boots `16555`
+- **Warrior Plate Set** (`set_id 383`): Helm `16542`, Shoulders `16544`, Chest `16541`, Gloves `16548`, Legs `16543`, Boots `16545`
+- **Paladin Lamellar Set** (`set_id 402`): Helm `16474`, Shoulders `16476`, Chest `16473`, Gloves `16471`, Legs `16475`, Boots `16472`
+- **Hunter Chain Set** (`set_id 396`): Helm `16566`, Shoulders `16568`, Chest `16565`, Gloves `16571`, Legs `16567`, Boots `16569`
+- **Rogue Leather Set** (`set_id 393`): Helm `16561`, Shoulders `16562`, Chest `16563`, Gloves `16560`, Legs `16564`, Boots `16558`
+  - ⚠️ **`16559` (General's Leather Armsplints, wrists) is NOT part of set `393`** — it carries **`set_id 0`**, as do `16557` (General's Leather Girdle, belt) and `16570` (General's Chain Wristguards). Equipping any of them **breaks the set bonus**. Each of the six sets above has exactly **6 members in the DB and none includes a wrist or belt piece**, so the Wrist and Waist slots must be filled from outside the set.
+- **Silk Set** (`set_id 387`) — shared by Priest / Mage / Warlock: Helm `16533`, Shoulders `16536`, Chest `16535` *(Warlord's Silk Raiment, `inventory_type 20` = robe, i.e. the chest piece)*, Gloves `16540`, Legs `16534`, Boots `16539`
+- **Druid Dragonhide Set** (`set_id 398`): Helm `16550`, Shoulders `16551`, Chest `16549`, Gloves `16555`, Legs `16552`, Boots `16554`
+
+> ✅ **Slot assignments above re-derived from live `tw_world.item_template.inventory_type`.** 📕 An earlier revision attached **23** of these real ids to the wrong slots (the Warrior's `16543` was listed as Gloves when it is Leggings, the Druid row was wrong in all six slots, and so on). The **class-to-set assignment was always correct** — only the id→slot mapping was broken.
 
 ---
 
@@ -2024,7 +2235,29 @@ Restoration (20 points):
 
 ---
 
+
+## Part IV: Legendary & Artifact Weapons Directory
+
+| Item ID | Item Name | Slot | Quality | Unique Effects & Description |
+| :---: | :--- | :---: | :---: | :--- |
+| **`19019`** | **Thunderfury, Blessed Blade of the Windseeker** | 1H Sword | Legendary | Chance on hit: 300 Nature blast + chain lightning debuff (-25 Nature resist, -20% attack speed). Highest threat weapon in the game. |
+| **`17182`** | **Sulfuras, Hand of Ragnaros** | 2H Mace | Legendary | Chance on hit: 273–333 Fireball + 5 Fire damage shield. 223–372 Physical damage (80.4 DPS, 3.70 speed). |
+| **`22589`** | **Atiesh, Greatstaff of the Guardian (Mage)** | 2H Staff | Legendary | +28 Spell Power to group, +2% Spell Crit to group, Karazhan teleport portal on 1-min cooldown. |
+| **`22630`** | **Atiesh, Greatstaff of the Guardian (Warlock)** | 2H Staff | Legendary | +33 Spell Damage & Healing to group, +2% Spell Hit to group, Karazhan teleport portal. |
+| **`22631`** | **Atiesh, Greatstaff of the Guardian (Priest)** | 2H Staff | Legendary | +62 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
+| **`22632`** | **Atiesh, Greatstaff of the Guardian (Druid)** | 2H Staff | Legendary | +11 Feral Attack Power to group, +44 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
+| **`22691`** | **Corrupted Ashbringer** | 2H Sword | Epic | 259–389 Damage (90.0 DPS, 3.60 speed), +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event. |
+| **`13262`** | **Ashbringer (Purified Blade)** | 2H Sword | Legendary | 201–247 Damage (74.7 DPS, 3.00 speed), Holy burst damage proc. Legendary blade of Highlord Alexandros Mograine. |
+| **`17782`** | **Talisman of Binding Shard** | Neck | Legendary | +10 Fire Resist, +10 Nature Resist, +10 Frost Resist, +10 Shadow Resist, +10 Arcane Resist. Rare legendary necklace. |
+| **`82001`** | **Cape of Alexandros** | ⚠️ **Not equippable** (`inventory_type = 0`) | Poor (q1) | Tattered cloak that once covered the back of the Ashbringer (Turtle-WoW exclusive). 📕 An earlier revision listed it as an equippable **Cloak**; live `tw_world.item_template` gives it **`inventory_type 0`**, so no character can wear it. Treat it as flavour/quest text only, not as a gear option. |
+| **`82002`** | **Tabard of the Ashbringer** | Tabard | Epic | Filled with holy radiant light (Turtle-WoW exclusive). |
+
+---
+
 ## Part V: BiS Weapons Directory (Organized by Weapon Type)
+
+> ⚠️ **READ THE `stat_type` CORRECTION FIRST.** Every `+N Strength / Stamina / Agility / Intellect / Attack Power / Spell Damage` line in **Parts III through IX** is **UNVERIFIED** — not because `stat_type` is unused, but because **no systematic re-derivation has been done and a spot check found both exact matches and outright errors.** A stat line must be assembled from **both** sources: **flat stats** from `stat_type1..10` / `stat_value1..10` (**9,372 of 26,543 items** carry them — live figures) **and** percent/proc values from the `spellid_1..5` aura resolved in `spell_template` (**11,599 items** carry a non-zero `spellid_*`, of which **6,539** also set `spelltrigger`), plus the `armor` / `block` / `dmg_*` / resistance columns. Full corrected audit, the correct column indices, and worked correct-vs-wrong examples: the [Part II stat correction](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented). **Item IDs, names, slots, weapon speeds and boss sources are not in question — only the stat lines are.**
+
 
 ### 🔨 Two-Handed Weapons (Swords, Maces, Axes & Polearms)
 
@@ -2066,7 +2299,7 @@ Restoration (20 points):
 | **`55348`** | **Kirel'narak, the Death Sentence** | 2H Staff | Emerald Sanctum (Custom) | 3.20 | 60.9 | +25 Int, +25 Sta, +92 Spell Damage, +2% Spell Hit. (ilvl 96 Custom BiS Staff) |
 | **`55127`** | **Shar'tateth, the Shattered Edge** | 2H Axe | Emerald Sanctum (Custom) | 3.80 | 100.0 | +38 Strength, +30 Stamina, +2% Crit, +1% Hit. (ilvl 92 Custom 2H Axe) |
 | **`55116`** | **Raka'shishi, Spear of the Adrift Hunt** | 2H Polearm | Emerald Sanctum (Custom) | 3.70 | 100.0 | +40 Agility, +24 Stamina, +2% Crit, +2% Hit. (ilvl 92 Custom 2H Polearm) |
-| **`55100`** | **Checkmate** | 2H Mace | Scarlet Citadel (Custom) | 3.70 | 93.5 | +32 Strength, +28 Stamina, +2% Crit, +1% Hit. (ilvl 88 Custom 2H Mace) |
+| **`55100`** | **Checkmate** | 2H Mace | **Scarlet Citadel (Custom)** | 3.70 | 93.5 | ❌ **stat line is WRONG — corrected:** the DB gives **+40 Agility, +25 Stamina** (`stat_type1 3 / stat_value1 40`, `stat_type2 7 / stat_value2 25`), **not** "+32 Strength, +28 Stamina, +2% Crit, +1% Hit". ilvl 88, `required_level 60`, `class 2 / subclass 5` (Warrior 2H Mace), `dmg 273–419`, `spellid_1 8815`. Warrior 2H, so the +40 is **Agility**, not Strength. |
 | **`55277`** | **The End of All Ambitions** | 2H Sword | Lower Karazhan (Custom) | 3.50 | 84.6 | +30 Strength, +22 Agility, +22 Stamina, +1% Crit. (ilvl 83 Custom 2H Sword) |
 
 ---
@@ -2335,7 +2568,8 @@ Restoration (20 points):
 - **`18329`** : **Arcanum of Rapidity** (+1% Attack Speed to Head/Legs).
 - **`18330`** : **Arcanum of Focus** (+8 Spell Damage & Healing to Head/Legs).
 - **`18331`** : **Arcanum of Protection** (+1% Dodge to Head/Legs).
-- **`11642`** : **Lesser Arcanum of Voracity** (+8 Strength, Agility, Stamina, Intellect, or Spirit).
+- **`11642`** : **Lesser Arcanum of Constitution** (Cenarion Circle line — `spellid_1 15389` *"Lesser Arcane Amalgamation", miscValue 1503*: **permanently adds 100 hit points** to a leg or head slot item). 📕 An earlier revision mislabelled this id as *"Lesser Arcanum of Voracity"*. It is **not**.
+- **`11645` – `11649`** : **Lesser Arcanum of Voracity**, 5 ranks — the +8-all-stat head/legs enchant that `11642` was wrongly credited with: `11645` +8 **Strength** (miscValue `1506`), `11646` +8 **Stamina** (`1507`), `11647` +8 **Agility** (`1508`), `11648` +8 **Intellect** (`1509`), `11649` +8 **Spirit** (`1510`).
 - **`19782`** : **Presence of Might** (Warrior ZG: +10 Stamina, +7 Defense, +15 Shield Block Value).
 - **`19783`** : **Syncretist's Sigil** (Paladin ZG: +10 Stamina, +7 Defense, +24 Healing).
 - **`19784`** : **Death's Embrace** (Rogue ZG: +28 Attack Power, +1% Dodge).
@@ -2350,14 +2584,43 @@ Restoration (20 points):
 
 ## Part X: How to Optimize & Deploy BiS Gear for Turtle-WoW Latest Content
 
-When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, standard Vanilla BiS gearing strategies must be adapted for new mechanics, high armor values, and heavy elemental damage profiles:
+When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, standard Vanilla gearing strategies must be adapted for new mechanics, high armor values, and heavy elemental damage profiles.
+
+> ### 📕 Earlier revision of this Part was framed as a "How to Optimize & Deploy **BiS** Gear" guide. That framing has been corrected.
+>
+> Turtle-WoW does not publish or expect a pre-raid BiS progression path:
+> - **Official wiki `PreBISGuide`**: ***"You don't need dungeon Pre-BIS on Turtle WoW."***
+> - **Official Mage FAQ**: ***"There are currently no up to date pre-raid BiS lists for any mage specs… you can just jump right into ZG, AQ20, Onyxia, MC, BWL, AQ40 and ES… it is not recommended to go out of your way to farm pre-raid BiS gear."***
+> - `turtlelootline.com/builds` (the natural home for curated presets) is **login-gated, HTTP 401**.
+>
+> **Read this Part instead as:** "how to bring the *dungeon and raid items you already have* to the encounters below" — resistance stacking, hit caps, healer mana, and consumable restock. The **stat lines** in the gear tables it references are **UNVERIFIED-PENDING-REDERIVATION** (see the `stat_type` warning in the Part II header); the **item IDs, slots, speeds and boss sources** are verified. The **resistance target caps and the "mandatory consumables" column below are COMMUNITY / UNVERIFIED** — nothing in Turtle-WoW or this codebase sets them.
 
 ### 🗺️ The Turtle-WoW Endgame Raid Hierarchy
 
-1. **Emerald Sanctum (Map ID `807` - 40-Man Raid)**: Heavy Nature damage, acid breaths, and dragonkin mechanics. Bosses like *Solnius* and *Erennius* hit hard and require rapid dispels and Nature Resistance.
-2. **Scarlet Citadel (Map ID `45` - 40-Man Raid)**: Intense Holy and Fire damage, high-density add pulls, and enrage mechanics.
-3. **Lower Karazhan Halls (Map ID `532` - 10-Man Raid)**: Shadow and Arcane mechanics requiring tight interrupts, high individual DPS checks, and crowd control.
-4. **Karazhan Crypt (Map ID `800` - 5-Man Dungeon)** & **Hateforge Quarry (Map ID `808` - 5-Man Dungeon)**: High-tier 5-man progression instances dropping pre-raid and Tier 2 equivalent gear.
+**The current Turtle-WoW progression spine is:**
+
+**Lower Karazhan Halls (Map ID `532`, 10-man, Tier 1) → Emerald Sanctum (Map ID `807`, 40-man, Tier 2) → Tower of Karazhan (40-man, T3.5)**, with **Naxxramas** and **AQ40** also in play. Turtle-WoW's raid progression is *not* the vanilla MC → BWL → AQ → Naxx ladder — those instances still exist and still drop their classic gear, but the current tier content is the custom chain above.
+
+| Tier | Instance | Type | Damage profile / notes |
+| :---: | :--- | :--- | :--- |
+| T1 | **Lower Karazhan Halls** (Map `532`) | 10-man | Shadow and Arcane mechanics; tight interrupts, high individual DPS checks, crowd control. |
+| T2 | **Emerald Sanctum** (Map `807`) | 40-man | Heavy Nature damage, acid breaths, dragonkin mechanics. Bosses like *Solnius* and *Erennius* require rapid dispels and Nature Resistance. |
+| — | **Scarlet Citadel** (Map `45`, `.tele ScarletCitadel` = id `500`) | **40-man** | Intense Holy and Fire damage, high-density add pulls, enrage mechanics. Four bosses: **Daelus**, **Ardaeus**, **Mariella**, **Abbendis**. |
+| T3.5 | **Tower of Karazhan** | 40-man | Current top tier. |
+| — | **Naxxramas**, **AQ40** | 40-man | Both still in play; Naxx T3 sets and AQ40 items are the backbone of the Part II loadouts. |
+
+**5-man / side content:** Caverns of Time (Black Morass, Karazhan Crypt, Stormwind Vault — the "Dire Maul+"), **Karazhan Crypt** (Map `800`) and **Hateforge Quarry** (Map `808`) as high-tier 5-man progression, plus **Gilneas City**, **Stormwrought Ruins** and **The Crescent Grove**.
+
+**World bosses:** **Ostarius of Uldum** (40, T2.5–T3) • **Nerubian Overseer** (40, T2–T2.5) • **Dark Reaver of Karazhan** (40, T1) • **Concavius** (20+).
+
+**Scarlet Citadel is a real 40-man raid in this fork — VERIFIED in this repository:**
+- `sql/base/tw_world_game_tele.sql` — `game_tele` id **`500`** = `(500, 32.5495, 13.2999, 16.869, 6.28138, **45**, 'ScarletCitadel')` → **map ID 45**.
+- Interior teleports on the same map: **`809`** `'BossMariella'`, **`810`** `'BossArdaeus'`, **`819`** `'sizetest'`.
+- `src/scripts/dungeons/scarlet_citadel/` — a complete instance script: `instance_scarlet_citadel.cpp` (`class instance_scarlet_citadel : public ScriptedInstance`, with `SetData`/`GetData`/`Save`), `trashmobs_scarlet_citadel.cpp`, `trashbosses_scarlet_citadel.cpp`, and **four boss scripts** `boss_daelus` / `boss_ardaeus` / `boss_mariella` / `boss_abbendis` (`NPC_DAELUS 2000000`, `NPC_ARDAEUS 2000001`, `NPC_MARIELLA 2000002`, `NPC_ABBENDIS 2000003`; `ScarletCitadelEncounter` enum plus `TYPE_ERIC_VESPER`).
+- The **Scarlet Enclave** is a separate instance (`game_tele` `697` `'scarletenclave'`) — both exist; they are not the same place.
+
+> 📕 **Correction logged.** An intermediate revision of *this document* removed Scarlet Citadel from the hierarchy, on the strength of the public turtlecraft.gg instance list, TurtleLootline's instance DB, and a 2024-11-03 forum statement (*"Scarlet Citadel raid won't be added to the game, perhaps in the distant future"*). **That was wrong, and the general rule it broke is stated below.**
+> ⚠️ **SOURCE-OF-TRUTH RULE FOR THIS DOCUMENT: the repository's database and scripts beat public websites.** turtlecraft.gg, turtlelootline.com and the forums describe the *official* Turtle-WoW realm. **This fork is not that realm** and carries instances the public sites do not list. Any claim about what does or does not exist in Turtle-WoW **must be checked against `sql/base/` and `src/scripts/` here first.** External sources are supporting evidence at best, never grounds for deleting content.
 
 ---
 
@@ -2390,7 +2653,7 @@ When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, sta
 ### 🔮 3. Caster & Healer Scaling in Extended Encounters
 
 1. **Spell Hit Cap (16% Mandatory)**:
-   - Bosses in Emerald Sanctum and Scarlet Citadel have high spell resist levels.
+   - Bosses in Emerald Sanctum, **Scarlet Citadel**, Tower of Karazhan and Naxxramas have high spell resist levels.
    - Fire Mages must equip **Neltharion's Tear** (`19379`) and **Band of Unnatural Forces** (`23038`) alongside 3/3 Elemental Precision to eliminate spell resists on rolling *Ignite* stacks.
    - Warlocks must prioritize **Neltharion's Tear** and **Sapphiron's Left Eye** (`23049`) to ensure *Curse of Shadows* and *Shadow Bolts* never miss.
 

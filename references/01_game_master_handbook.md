@@ -1,8 +1,9 @@
 # 01. Game Master & World Administration Handbook (Master Codex)
 
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS Core Engine
-> **Source Verification**: `src/game/Chat/Chat.cpp`, `Commands.cpp`, `Level3.cpp`, `AhBot.cpp`
-> **Security Coverage**: Security Levels 0–4 (Player, Moderator, GameMaster, Administrator, Conso> **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📋 Operations (commands.md)](../commands.md) • [🤖 Volume 02: Bot Automation](./02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [⚔️ Volume 04: BiS Gear & Specs](./04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md) • [🏰 Volume 06: Raid Operations](./06_automated_raid_and_dungeon_operations.md) • [🛡️ Volume 07: Guilds](./07_guilds_and_guild_operations.md) • [🌍 Volume 08: World & Strategies](./08_open_world_control_and_strategies.md)
+> **Source Verification**: `src/game/Chat/Chat.cpp`, `src/game/Commands/Commands.cpp`, `src/shared/Common.h`, `modules/mod-playerbots/src/ahbot/AhBot.cpp`
+> **Security Coverage**: Security Levels 0–6 (Player, Observer, Moderator, Developer, Administrator, SigMaChaD, Console) — see the rank legend in Section 6
+> **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📋 Operations (commands.md)](../commands.md) • [🤖 Volume 02: Bot Automation](./02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [⚔️ Volume 04: BiS Gear & Specs](./04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md) • [🏰 Volume 06: Raid Operations](./06_automated_raid_and_dungeon_operations.md) • [🛡️ Volume 07: Guilds](./07_guilds_and_guild_operations.md) • [🌍 Volume 08: World & Strategies](./08_open_world_control_and_strategies.md)
 
 ---
 
@@ -34,7 +35,7 @@
 | **01** | **Game Master & World Administration** | **100% of GM commands, server maintenance, character progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.** | **Current File** |
 | **02** | **[Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)** | **Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.** | [Open Volume 02](./02_playerbot_and_raid_automation.md) |
 | **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements.** | [Open Volume 03](./03_turtle_world_and_teleports.md) |
-| **04** | **[Class Specs & Endgame Gear Directory](./04_class_specs_and_endgame_gear.md)** | **30 Class Specs across all 9 classes, 100% explicit 16–17 slot loadouts, Tier 1/2/3 set IDs, weapons, trinkets, enchants & verified talent builds.** | [Open Volume 04](./04_class_specs_and_endgame_gear.md) |
+| **04** | **[Class Specs & Endgame Gear Directory](./04_class_specs_and_endgame_gear.md)** | **Per-class talent skeletons + 30 one-click gear loadout examples across all 9 classes**, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations. Turtle-WoW publishes **no canonical builds**, so doc 04 tags every claim by verification tier rather than asserting optimal spreads. | [Open Volume 04](./04_class_specs_and_endgame_gear.md) |
 | **05** | **[Eluna Scripting & Core Development Engine](./05_developer_eluna_and_engine.md)** | **Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.** | [Open Volume 05](./05_developer_eluna_and_engine.md) |
 | **06** | **[Automated Raid & Dungeon Operations](./06_automated_raid_and_dungeon_operations.md)** | **1-Click .raid ready pipeline, instant raid attunements, master keyring spawner, autonomous .dc tank autopilot, and tactical macros.** | [Open Volume 06](./06_automated_raid_and_dungeon_operations.md) |
 | **07** | **[Guilds & Guild Operations](./07_guilds_and_guild_operations.md)** | **Complete Guild System: `.bot <guild>` batch operations, charter signing, `/w <bot> guild` management, guild bank (`gb`), and 25-guild simulation.** | [Open Volume 07](./07_guilds_and_guild_operations.md) |
@@ -69,7 +70,7 @@ Instantly raises character to level 60, teaches all class spells, trainer recipe
 .replenish
 ```
 
-> **Primary Professions Note**: In vanilla/Turtle CMaNGOS, `.maxskill` explicitly skips primary/secondary professions and riding (`Player.cpp:7250`). To learn and max your chosen primary professions (limit 2), run:
+> **Primary Professions Note**: In vanilla/Turtle CMaNGOS, `.maxskill` explicitly skips primary/secondary professions and riding (`src/game/Objects/Player.cpp:7167`). To learn and max your chosen primary professions (limit 2), run:
 >
 > ```lua
 > -- Choose up to 2 primary professions:
@@ -140,12 +141,14 @@ Immediately flushes and hot-reloads the most critical database tables without re
 
 ```lua
 .reload quest_template
-.reload spell_template
 .reload creature_template
 .reload item_template
-.reload gameobject_template
+.reload creature
+.reload gameobject
 .reload eluna
 ```
+
+> ⚠️ **Do not add `spell_template` or `gameobject_template` to this macro.** Neither exists in this fork's reload table (`Chat.cpp:537-649`) and both return `There is no such subcommand.` Spell template changes require a **server restart**; GameObject *metadata* has no reload target at all (only in-world placement via `.reload gameobject`).
 
 #### 🧹 Macro 8: Realm Save & Graceful Restart (5-Minute Warning)
 
@@ -175,7 +178,7 @@ Commands dedicated to your player character or targeted player (`%t`):
 | :--- | :---: | :--- | :--- | :--- |
 | `.levelup` | 3 | `.levelup [#]` | Increases character level by specified amount (e.g. 60 or 1). | `.levelup 60` |
 | `.learn` | 3 | `.learn <all_myspells\|all_trainer\|all_items\|id>` | Teaches spells, all class spells, trainer abilities, or specific spell ID. | `.learn all_myspells` |
-| `.learn all_recipes` | 3 | `.learn all_recipes <profession_name>` | Teaches all recipes AND advances skill to 300/300 for specified profession. | `.learn all_recipes first aid` |
+| `.learn all_recipes` | 3 | `.learn all_recipes <profession_name>` | Teaches every recipe for the named profession and raises that skill to its own current maximum (skill-line cap — **not** a flat 300). | `.learn all_recipes first aid` |
 | `.unlearn` | 3 | `.unlearn <spell_id>` | Removes a specific spell from character spellbook. | `.unlearn 133` |
 | `.unlearnoffline` | 3 | `.unlearnoffline <player> <spell_id>` | Removes spell from an offline player character. | `.unlearnoffline Bob 133` |
 | `.maxskill` | 3 | `.maxskill` | Advances learned weapon & defense skills to 300. (Skips professions/riding). | `.maxskill` |
@@ -198,22 +201,28 @@ Commands dedicated to your player character or targeted player (`%t`):
 ### Secondary Skills & Professions Maxing Suite
 
 > [!IMPORTANT]
-> **CMaNGOS Core Engine Behavior (`Player.cpp:7250`)**:
+> **CMaNGOS Core Engine Behavior (`src/game/Objects/Player.cpp:7167`, inside `Player::UpdateSkillsToMaxSkillsForLevel()`)**:
 > The native `.maxskill` command explicitly skips professions, secondary skills, and riding:
 >
 > ```cpp
-> if (IsProfessionOrRidingSkill(pskill)) continue;
+> if (IsProfessionOrRidingSkill(pskill))
+>     continue;
 > ```
 >
-> To max professions and secondary skills, use `.learn all_recipes <name>` (`Commands.cpp:719`), which discovers the skill entry and automatically executes:
+> `HandleMaxSkillCommand` (`Commands.cpp:418-431`) then calls `Player::UpdateSkillsToMaxSkillsForLevel()` for the selected player.
+>
+> To max professions and secondary skills, use `.learn all_recipes <name>` (`Commands.cpp:719`), which discovers the skill line, teaches its recipes, and then executes (`Commands.cpp:738-739`):
 >
 > ```cpp
-> target->SetSkill(skill_id, 300, 300);
+> uint16 maxLevel = target->GetSkillMaxPure(targetSkillInfo->id);
+> target->SetSkill(targetSkillInfo->id, maxLevel, maxLevel);
 > ```
+>
+> Note there is no literal `300` here: the skill is raised to whatever `GetSkillMaxPure()` returns for that skill line, so level-capped skills such as First Aid may land well below 300.
 
 #### Secondary Skills Directory (All Players Can Learn All 4)
 
-| Secondary Skill | Skill ID | Apprentice Spell | Instant Max Command (Recipes + 300/300) | Manual Skill Setting |
+| Secondary Skill | Skill ID | Apprentice Spell | Instant Max Command (recipes + skill-line maximum) | Manual Skill Setting |
 | :--- | :---: | :---: | :--- | :--- |
 | **First Aid** | `129` | `3273` | `.learn all_recipes first aid` | `.setskill 129 300 300` |
 | **Survival** *(Turtle)* | `142` | `51296` | `.learn all_recipes survival` | `.setskill 142 300 300` |
@@ -223,7 +232,7 @@ Commands dedicated to your player character or targeted player (`%t`):
 
 #### Primary Professions Directory (Choose up to 2)
 
-| Primary Profession | Skill ID | Apprentice Spell | Instant Max Command (Recipes + 300/300) | Manual Skill Setting |
+| Primary Profession | Skill ID | Apprentice Spell | Instant Max Command (recipes + skill-line maximum) | Manual Skill Setting |
 | :--- | :---: | :---: | :--- | :--- |
 | **Alchemy** | `171` | `2259` | `.learn all_recipes alchemy` | `.setskill 171 300 300` |
 | **Blacksmithing** | `164` | `2018` | `.learn all_recipes blacksmithing` | `.setskill 164 300 300` |
@@ -320,9 +329,9 @@ Fine-grained attribute modification and cosmetic transformations via `.modify`:
 | `.modify mana` | 3 | `.modify mana <amount>` | Sets current and maximum Mana points. | `.modify mana 10000` |
 | `.modify rage` | 3 | `.modify rage <amount>` | Sets Warrior/Druid Rage pool (100 = 10 rage, 1000 = full rage). | `.modify rage 1000` |
 | `.modify energy` | 3 | `.modify energy <amount>` | Sets Rogue/Cat Energy pool (100 = full energy). | `.modify energy 100` |
-| `.modify speed` | 3 | `.modify speed <0.1–50>` | Modifies running and walking speed multiplier (1.0 = default). | `.modify speed 2.5` |
-| `.modify aspeed` | 3 | `.modify aspeed <0.1–50>` | Modifies all-speed multiplier (run, swim, flight). | `.modify aspeed 3.0` |
-| `.modify scale` | 3 | `.modify scale <0.1–10>` | Adjusts character 3D model scale factor (1.0 = standard size). | `.modify scale 1.2` |
+| `.modify speed` | 3 | `.modify speed <0–100>` | Sets the walk / run / **swim** speed multiplier (1.0 = default). Rejects anything `> 100` or `< 0`. Flying speed is **not** affected. | `.modify speed 2.5` |
+| `.modify aspeed` | 3 | `.modify aspeed <0–100>` | Same command as `.modify speed` — both spellings map to `HandleModifyASpeedCommand` (`Chat.cpp:375-376`), which applies only to `MOVE_WALK`, `MOVE_RUN` and `MOVE_SWIM` (`Commands.cpp:7334-7336`). | `.modify aspeed 3.0` |
+| `.modify scale` | 3 | `.modify scale <0–100> [on\|off]` | Adjusts character 3D model scale factor (1.0 = standard size). Rejects `> 100` or `<= 0`; an `on`/`off` suffix is consumed as a "permanent" flag (`Commands.cpp:7354-7356`). | `.modify scale 1.2` |
 | `.modify morph` | 3 | `.modify morph <display_id>` | Transforms character model into any NPC display model ID. | `.modify morph 10045` |
 | `.demorph` | 2 | `.demorph` | Removes active model morph and restores natural character appearance. | `.demorph` |
 | `.modify gender` | 4 | `.modify gender <male\|female>` | Changes character gender model permanently. | `.modify gender female` |
@@ -364,7 +373,7 @@ Inventory manipulation, gear spawning, remote banking, and player/bot mail deliv
 | `.additemset` | 3 | `.additemset <set_id>` | Spawns entire equipment set into bags (e.g. Tier 1–3 sets). | `.additemset 209` |
 | `.deleteitem` | 3 | `.deleteitem <item_id> [count]` | Destroys specified item ID from player inventory. | `.deleteitem 19019 1` |
 | `.cleaninventory` | 3 | `.cleaninventory` | Deletes all non-equipped items in bags. | `.cleaninventory` |
-| `.itemmove` | 2 | `.itemmove <src_slot> <dst_slot>` | Moves item from source equipment/bag slot to destination slot. | `.itemmove 1 19` |
+| `.itemmove` | 3 | `.itemmove <src_slot> <dst_slot>` | Moves item from source equipment/bag slot to destination slot. | `.itemmove 1 19` |
 | `.bank` | 3 | `.bank` | Opens personal bank storage vault remotely anywhere. | `.bank` |
 | `.mailbox` | 3 | `.mailbox` | Opens mailbox interface remotely without finding a mailbox object. | `.mailbox` |
 | `.balance` | 3 | `.balance <account> [amount]` | Displays or modifies Turtle Token donation coin balance for account. | `.balance 1 500` |
@@ -379,13 +388,28 @@ Inventory manipulation, gear spawning, remote banking, and player/bot mail deliv
 
 ## 6. Accounts, Security Ranks & Permissions
 
-Account provisioning, security ranks (0–4), IP locks, and GM status:
+Account provisioning, security ranks (0–6), IP locks, and GM status:
+
+### Security Level Legend (`src/shared/Common.h:184-193`)
+
+| Sec | Core enum | Rank name | Notes |
+| :---: | :--- | :--- | :--- |
+| 0 | `SEC_PLAYER` | Player | Regular player account. |
+| 1 | `SEC_OBSERVER` | Observer | Read-only GM assistance; this is what every `Sec 1` row below means. |
+| 2 | `SEC_MODERATOR` | Moderator | Bans, kicks, freezes, ticket queue, teleports. |
+| 3 | `SEC_DEVELOPER` | Developer | Content and world editing: spawns, `.modify`, cheats, most `.reload` targets. |
+| 4 | `SEC_ADMINISTRATOR` | Administrator | Full administrative control of the realm. |
+| 5 | `SEC_SIGMACHAD` | SigMaChaD | Highest rank assignable to an account via `.account set gmlevel`. |
+| 6 | `SEC_CONSOLE` | Console | Command-line console only — **not reachable from the game client**. |
+
+> [!IMPORTANT]
+> There is **no `SEC_GAMEMASTER`** in this core. `modules/mod-playerbots/cmangos-compat-shim.h:638-640` defines `SEC_GAMEMASTER` as a compatibility alias for `SEC_ADMINISTRATOR` (4) so legacy CMaNGOS plugin sources still compile. Treat any "GameMaster" rank as Administrator, and read `Sec 1` as Observer — never as a combined "Observer/GameMaster" tier.
 
 | Command | Sec | Syntax & Arguments | Description | Example |
 | :--- | :---: | :--- | :--- | :--- |
 | `.account create` | 4 | `.account create <name> <password>` | Creates new game account with player security (Level 0). | `.account create Alice pass123` |
-| `.account delete` | 4 | `.account delete <name>` | Deletes account and all associated characters permanently. | `.account delete Alice` |
-| `.account set gmlevel` | 4 | `.account set gmlevel <name> <0–4>` | Sets rank: 0=Player, 1=Observer/Mod, 2=GameMaster, 3=Developer, 4=Admin. | `.account set gmlevel Bob 3` |
+| `.account delete` | 6 | `.account delete <name>` | **Console only** — deletes an account and all associated characters permanently. Must be issued from the server console / RA, not in-game. | `.account delete Alice` |
+| `.account set gmlevel` | 4 | `.account set gmlevel <name> <0–5>` | Sets account rank: 0=Player, 1=Observer, 2=Moderator, 3=Developer, 4=Administrator, 5=SigMaChaD. (6/Console is reserved and rejected here.) | `.account set gmlevel Bob 3` |
 | `.account set password` | 3 | `.account set password <name> <pass> <pass>` | Resets user account password. | `.account set password Bob pw pw` |
 | `.account characters` | 3 | `.account characters [account_id\|name]` | Lists all character names and GUIDs belonging to account. | `.account characters Alice` |
 | `.account twofa` | 4 | `.account twofa <setup\|disable>` | Configures or removes 2-Factor Authentication on account. | `.account twofa setup` |
@@ -407,16 +431,16 @@ In-game world editing, creature spawning, pathing, and interactive gameobjects:
 | `.npc add` | 3 | `.npc add <creature_entry>` | Spawns NPC permanently at your current coordinates facing your heading. | `.npc add 10184` |
 | `.npc delete` | 3 | `.npc delete [guid]` | Permanently despawns and deletes targeted NPC from world database. | `.npc delete` |
 | `.npc info` | 3 | `.npc info` | Dumps creature entry ID, GUID, faction, health, display ID, and AI script. | `.npc info` |
-| `.npc aiinfo` | 3 | `.npc aiinfo` | Dumps active CreatureAI script state, event timers, and combat phase flags. | `.npc aiinfo` |
+| `.npc aiinfo` | 4 | `.npc aiinfo` | Dumps active CreatureAI script state, event timers, and combat phase flags. | `.npc aiinfo` |
 | `.npc move` | 3 | `.npc move [guid]` | Teleports targeted NPC to your current character coordinates. | `.npc move` |
 | `.npc summon` | 3 | `.npc summon <creature_entry>` | Summons temporary NPC to your coordinates. | `.npc summon 10184` |
 | `.npc set entry` | 3 | `.npc set entry <entry_id>` | Transforms targeted creature spawn into another template entry. | `.npc set entry 10184` |
 | `.npc set movetype` | 3 | `.npc set movetype <0\|1\|2>` | Sets movement: 0=Stay Idle, 1=Random Walk, 2=Waypoints. | `.npc set movetype 1` |
 | `.npc set wanderdistance` | 3 | `.npc set wanderdistance <dist>` | Sets max random wander radius in yards. | `.npc set wanderdistance 15` |
-| `.npc set factionid` | 3 | `.npc set factionid <faction_id>` | Overrides creature faction standing (e.g. 35 = Friendly). | `.npc set factionid 35` |
+| `.npc factionid` | 3 | `.npc factionid <faction_id>` | Overrides the faction of the targeted creature spawn (e.g. 35 = Friendly). This is a **top-level** `.npc` sub-command, not a `.npc set` field. | `.npc factionid 35` |
 | `.npc addweapon` | 3 | `.npc addweapon <slot 1-3> <item_id>` | Equips visual weapon/shield model onto targeted NPC spawn. | `.npc addweapon 1 19019` |
-| `.npc spawn set` | 3 | `.npc spawn set <field> <val>` | Directly writes field override into `creature` spawn table record. | `.npc spawn set spawntimesecs 300` |
-| `.npc template set` | 3 | `.npc template set <field> <val>` | Directly writes field override into `creature_template` database record. | `.npc template set minlevel 60` |
+| `.npc spawn set` | 3 | `.npc spawn set <field> <val>` | Writes a field override into the `creature` spawn record. Valid fields: `entry`, `displayid`, `emotestate`, `standstate`, `sheathstate`, `movetype`, `wanderdistance`, `respawntime`, `deathstate`, `auras` (`Chat.cpp:427-436`). | `.npc spawn set respawntime 300` |
+| `.npc template set` | 3 | `.npc template set <field> <val>` | Writes a field override into the `creature_template` record. Valid fields: `displayid`, `mountdisplayid`, `level`, `faction`, `scale`, `detectionrange`, `callforhelprange`, `leashrange` (`Chat.cpp:453-460`). | `.npc template set level 60` |
 | `.npc follow` | 3 | `.npc follow` | Orders targeted NPC to follow GM. | `.npc follow` |
 | `.npc unfollow` | 3 | `.npc unfollow` | Halts NPC follow behavior. | `.npc unfollow` |
 | `.npc evade` | 3 | `.npc evade` | Forces NPC to evade combat and return to spawn point. | `.npc evade` |
@@ -432,11 +456,11 @@ In-game world editing, creature spawning, pathing, and interactive gameobjects:
 | `.gobject move` | 3 | `.gobject move <guid> [x y z]` | Moves GameObject to target coordinates or character location. | `.gobject move 12345` |
 | `.gobject turn` | 3 | `.gobject turn <guid> [o]` | Adjusts orientation rotation angle of GameObject. | `.gobject turn 12345 3.14` |
 | `.gobject rotate` | 3 | `.gobject rotate <guid> [ax ay az]` | Rotates GameObject around arbitrary Euler coordinate axes. | `.gobject rotate 12345` |
-| `.gobject scale` | 3 | `.gobject scale <guid> <0.1–10>` | Adjusts physical scale factor of GameObject model. | `.gobject scale 12345 2.0` |
+| `.gobject scale` | 3 | `.gobject scale <guid> <0.1–50>` | Adjusts physical scale factor of GameObject model. Accepted range is 0.1–50.0 — outside it the engine answers `Scale must be between 0.1 and 50.` and makes no change (`Commands.cpp:9638`). | `.gobject scale 12345 2.0` |
 | `.gobject info` | 3 | `.gobject info [guid]` | Dumps entry, display ID, state, respawn timer, and owner. | `.gobject info` |
 | `.gobject toggle` | 3 | `.gobject toggle <guid>` | Opens or closes doors, gates, portcullises, and levers instantly. | `.gobject toggle 12345` |
 | `.gobject set lootstate` | 3 | `.gobject set lootstate <guid> <0-3>` | Forces GameObject state: 0=Not ready, 1=Ready, 2=Activated, 3=Despawned. | `.gobject set lootstate 12345 1` |
-| `.linkgrave` | 3 | `.linkgrave <graveyard_id> [alliance\|horde]` | Binds current subzone/area to specified graveyard ID in database. | `.linkgrave 100` |
+| `.linkgrave` | 4 | `.linkgrave <graveyard_id> [alliance\|horde]` | Binds current subzone/area to specified graveyard ID in database. | `.linkgrave 100` |
 | `.neargrave` | 3 | `.neargrave [alliance\|horde]` | Discovers nearest linked graveyard entry for current player coordinates. | `.neargrave` |
 | `.wchange` | 3 | `.wchange <0–3> <0–1>` | Modifies zone weather: 0=Fine, 1=Rain, 2=Snow, 3=Storm with intensity. | `.wchange 1 0.8` |
 
@@ -452,7 +476,8 @@ Quest state manipulation, raid lockout resets, instance diagnostics, and world e
 | `.quest complete` | 3 | `.quest complete <quest_id>` | Instantly marks all objectives complete and ready for reward turn-in. | `.quest complete 87` |
 | `.quest remove` | 3 | `.quest remove <quest_id>` | Drops quest from quest log. | `.quest remove 87` |
 | `.quest test` | 3 | `.quest test <quest_id>` | Tests quest availability, prerequisites, and flags. | `.quest test 87` |
-| `.quest statuses` | 0 | `.quest statuses` | Dumps progress and state of all active quests for player. | `.quest statuses` |
+| `.quest status` | 2 | `.quest status <quest_id\|quest_link>` | Dumps the state, objectives and counters of **one** quest on a player's quest log (accepts a raw ID or a shift-click `\|Hquest:...` link). There is no plural form under `.quest`. | `.quest status 87` |
+| `.queststatuses` | 0 | `.queststatuses` | **Top-level command, not a `.quest` sub-command.** Sends the player an addon message (`TWQUEST`) listing the IDs of every quest they have completed, for the Turtle quest-tracker addon. | `.queststatuses` |
 | `.instance unbind` | 3 | `.instance unbind <map_id\|all>` | Clears personal raid lockout bind for specified map or all raids. | `.instance unbind all` |
 | `.instance groupunbind` | 3 | `.instance groupunbind <map_id\|all>` | Clears raid lockout binds for all members in current group. | `.instance groupunbind all` |
 | `.instance listbinds` | 3 | `.instance listbinds` | Displays active instance lockouts, difficulty, and reset timestamps. | `.instance listbinds` |
@@ -486,7 +511,9 @@ The server runs as non-root **systemd user services** (`systemctl --user`). Use 
 | **Recent Crash Logs** | `journalctl --user -u turtle-mangosd --since "5 min ago"` | Essential when troubleshooting boot crashes. |
 | **Reset Crash Lock** | `systemctl --user reset-failed turtle-mangosd turtle-realmd` | Clears systemd start rate-limiting after crash. |
 | **Restart Server** | `systemctl --user restart turtle-mangosd` | Re-reads binary & core configuration. |
-| **Recompile Binary** | `systemctl --user stop turtle-mangosd && make -C build mangosd && systemctl --user start turtle-mangosd` | Rebuilds world server safely. |
+
+> [!WARNING]
+> **Recompiling the world server is out of scope for this handbook.** Building `mangosd` is an operator/deployment action handled outside this reference, and no command row here should be read as an instruction to compile. The in-game alternative for content changes is `.reload <target>` (Section 13), which re-reads individual database tables in-process — note there is no catch-all `.reload all` target.
 
 ---
 
@@ -505,14 +532,13 @@ CMaNGOS core lifecycle, performance profiling, and character export/import tools
 | `.server idleshutdown` | 4 | `.server idleshutdown <seconds> [reason]` | Schedules shutdown that occurs only when server has 0 active players. | `.server idleshutdown 60 Idle shutdown` |
 | `.server resetallraids` | 4 | `.server resetallraids` | Forces an immediate server-wide reset of all raid instances and player binds. | `.server resetallraids` |
 | `.server corpses` | 4 | `.server corpses` | Triggers immediate cleanup and expiration cycle for abandoned corpses. | `.server corpses` |
-| `.server set motd` | 3 | `.server set motd <message>` | Dynamically updates the realm Message of the Day displayed on login. | `.server set motd Welcome!` |
-| `.server exit` | 4 | `.server exit` | Terminates server process immediately without waiting for worker shutdown. | `.server exit` |
+| `.server exit` | 6 | `.server exit` | **Console only** — terminates the server process immediately without waiting for a worker shutdown. Must be issued from the server console / RA, not in-game. | `.server exit` |
 | `.saveall` | 4 | `.saveall` | Synchronously flushes and saves all character and guild data to database. | `.saveall` |
 | `.broadcast` | 4 | `.broadcast <message>` | Sends global red-text announcement to all online players. | `.broadcast Event starting!` |
 | `.notify` | 4 | `.notify <message>` | Displays global screen popup notification in center of screen for all players. | `.notify Welcome to Tortoise!` |
 | `.minchatlevel` | 4 | `.minchatlevel <level>` | Sets minimum player level required to speak in public world channels. | `.minchatlevel 10` |
 | `.perf enable` | 4 | `.perf enable <0\|1>` | Enables or disables core performance statistics gathering. | `.perf enable 1` |
-| `.perf intervalreport` | 3 | `.perf intervalreport` | Generates detailed breakdown of periodic tick times and diff statistics. | `.perf intervalreport` |
+| `.perf intervalreport` | 4 | `.perf intervalreport` | Generates detailed breakdown of periodic tick times and diff statistics. | `.perf intervalreport` |
 | `.perf resources` | 3 | `.perf resources` | Dumps process memory usage, virtual memory, threads, and socket handles. | `.perf resources` |
 | `.perf cpu` | 3 | `.perf cpu` | Dumps CPU time and processor utilization breakdown. | `.perf cpu` |
 | `.perf memory` | 3 | `.perf memory` | Dumps heap allocation and allocated memory blocks. | `.perf memory` |
@@ -522,8 +548,11 @@ CMaNGOS core lifecycle, performance profiling, and character export/import tools
 | `.pdump list` | 4 | `.pdump list` | Lists all character dump files available in the server dumps directory. | `.pdump list` |
 | `.character deleted list name` | 3 | `.character deleted list name <pattern>` | Searches deleted characters table by name pattern. | `.character deleted list name Bob` |
 | `.character deleted restore` | 3 | `.character deleted restore <guid\|name> [new_name] [account]` | Restores a deleted character back into active characters table. | `.character deleted restore Bob` |
-| `.character erase` | 4 | `.character erase <name>` | Permanently purges character record and inventory from database. | `.character erase Spammer` |
+| `.character erase` | 6 | `.character erase <name>` | **Console only** — permanently purges a character record and inventory from the database. Must be issued from the server console / RA, not in-game. | `.character erase Spammer` |
 | `.service del_characters` | 4 | `.service del_characters` | Purges expired deleted characters exceeding server retention window. | `.service del_characters` |
+
+> [!NOTE]
+> `.server` has **no `set` sub-command** and therefore no Message of the Day command (`src/game/Chat/Chat.cpp:700-711`). The complete top-level list is exactly eight entries: `corpses`, `exit`, `idlerestart`, `idleshutdown`, `info`, `resetallraids`, `restart`, `shutdown`. The only child tables in the family are the argument tables behind the four timer commands (`restart`, `shutdown`, `idlerestart`, `idleshutdown`), each of which accepts `cancel` plus a `<delay> [reason]` argument (`Chat.cpp:671-697`). Edit the MOTD in the server configuration files; it is read on login.
 
 ---
 
@@ -574,7 +603,7 @@ Guild management, housing, Cartographer reveal, and custom challenge modes:
 | `.guild rank` | 3 | `.guild rank <player> <0–9>` | Sets guild rank index (0 = Guild Master). | `.guild rank Bob 1` |
 | `.guild rename` | 3 | `.guild rename "<old_name>" "<new_name>"` | Renames existing guild. | `.guild rename "Old" "New"` |
 | `.guild leader` | 3 | `.guild leader <player>` | Transfers guild leadership to player. | `.guild leader Bob` |
-| `.guild house` | 3 | `.guild house <teleport\|buy>` | Guild housing management: teleport to guild hall or purchase hall. | `.guild house teleport` |
+| `.guild house` | 3 | `.guild house <on\|off>` | Toggles guild housing for your guild. `on` records your **current position** as the guild house teleport point (row in `guild_house`), `off` deletes it. It does not teleport you and there is no `teleport` or `buy` option; requires guild membership, then asks you to run `.reload housing`. | `.guild house on` |
 | `.cartographer` | 0 | `.cartographer` | Toggles full map exploration reveal matching Cartographer addon. | `.cartographer` |
 | `.hcmessages` | 0 | `.hcmessages <on\|off>` | Toggles global server-wide Hardcore death announcement broadcasts. | `.hcmessages on` |
 | `.hcchat` | 0 | `.hcchat <on\|off>` | Toggles Hardcore channel communication mode. | `.hcchat on` |
@@ -585,12 +614,12 @@ Guild management, housing, Cartographer reveal, and custom challenge modes:
 | `.copy` | 0 | `.copy <target_name>` | Duplicates physical appearance of target (uses Appearance Token 80699). | `.copy Bob` |
 | `.loothelper` | 3 | `.loothelper [creature_entry]` | Spawns test dummy (entry 1001000) to simulate drops and loot chance. | `.loothelper 10184` |
 | `.shellcoin` | 0 | `.shellcoin` | Shows balance of Turtle shell coin vanity tokens. | `.shellcoin` |
-| `.radio` | 0 | `.radio <station_id\|stop>` | Plays streaming Turtle radio soundtrack in client. | `.radio 1` |
+| `.radio` | 0 | `.radio <1\|2>` | Plays a streaming Turtle radio track in the client (`.radio 1` → music ID 60401, `.radio 2` → 60423). Only the literal arguments `1` and `2` are accepted — there is **no** `stop`, station-ID or channel argument; anything else fails silently with no error message. | `.radio 1` |
 | `.blockegg` | 3 | `.blockegg <egg_id>` | Blocks or unblocks Easter egg interaction. | `.blockegg 1` |
 | `.showborders` | 3 | `.showborders <on\|off>` | Visualizes zone boundary lines in client. | `.showborders on` |
 | `.anonymous whispers` | 3 | `.anonymous whispers <on\|off>` | Sends GM whispers without revealing GM character identity. | `.anonymous whispers on` |
 | `.anonymous mail` | 3 | `.anonymous mail <on\|off>` | Sends GM mail without revealing character name. | `.anonymous mail on` |
-| `.shop log` | 3 | `.shop log <account_id>` | Dumps donation shop transaction purchase logs. | `.shop log 1` |
+| `.shop log` | 3 | `.shop log [account_name]` | Dumps donation shop transaction purchase logs. The argument is an **account name** (normalized via `AccountMgr::normalizeString`), not an account ID; with no argument it falls back to the selected player's own account. | `.shop log Alice` |
 | `.shop refund` | 3 | `.shop refund <order_id>` | Processes refund for shop donation item. | `.shop refund 42` |
 
 ---
@@ -650,7 +679,15 @@ Flushes server memory caches and re-reads world database tables without server r
 .reload housing                 # Reloads Turtle-WoW custom guild housing coordinates
 ```
 
-### Complete Target Directory (`.reload <target>`) Verified from `src/game/Chat/Chat.cpp`
+### Complete Target Directory (`.reload <target>`)
+
+Covers **all 106 reload targets registered in `src/game/Chat/Chat.cpp`**, plus one extra that the core table does not contain:
+
+| Extra target | Why it is not in `Chat.cpp` |
+| :--- | :--- |
+| `eluna` | Not a core reload target. It is intercepted by the Eluna module's player hook (`src/modules/Eluna/hooks/PlayerHooks.cpp:82`, `const std::string reload_command = "reload eluna";`), which flushes Lua states and re-reads all Eluna scripts. Removing or disabling the Eluna module also removes this target. |
+
+The 106 core targets, exactly as they appear in the reload command table:
 
 ```text
 account_banned                  areatrigger_involvedrelation    areatrigger_tavern
@@ -695,20 +732,23 @@ variables                       visibilities
 
 ## 14. Auction House Bot Administration (`.ahbot`)
 
-> **Module Source**: `src/game/AuctionHouseBot/AhBot.cpp`, `AhBot.h`  
-> **Security Level**: 3 (GameMaster) / 4 (Administrator)  
+> **Module Source**: `modules/mod-playerbots/src/ahbot/AhBot.cpp`, `modules/mod-playerbots/src/ahbot/AhBot.h` (there is no `src/game/AuctionHouseBot/` directory — AHBot ships inside mod-playerbots)
+> **Security Level**: 2 (Moderator) — registered as `SEC_MODERATOR` → `HandleAhBotCommand` (`src/game/Chat/Chat.cpp:1014`)
 > **Configuration**: `run/ahbot.conf`
+
+> [!WARNING]
+> **AHBot is build-gated.** It only exists when the world server is compiled with `BUILD_PLAYERBOTS=ON`. In a `BUILD_PLAYERBOTS=OFF` build the command resolves to the stub in `src/game/PlayerbotStubs.cpp:41-42`, which prints `AHBot not built (BUILD_PLAYERBOTS=OFF).` and does nothing. The sub-commands themselves are real (`AhBot.cpp:639-712`) — so if every `.ahbot` sub-command below answers with that message, the module is simply not compiled into your binary.
 
 The Auction House Bot simulates an active player economy across Alliance, Horde, and Neutral goblin auction houses:
 
 | Command | Sec | Syntax & Arguments | Description | Example |
 | :--- | :---: | :--- | :--- | :--- |
-| `.ahbot status` | 3 | `.ahbot status [all]` | Shows active AHBot auction counts, items, and wallet stats. | `.ahbot status all` |
-| `.ahbot reload` | 3 | `.ahbot reload` | Re-reads `ahbot.conf` settings without restarting the world server. | `.ahbot reload` |
-| `.ahbot rebuild` | 3 | `.ahbot rebuild [all]` | Flushes active bot auctions and rebuilds the market listings. | `.ahbot rebuild all` |
-| `.ahbot update` | 3 | `.ahbot update` | Triggers an immediate market update and bid/expire evaluation tick. | `.ahbot update` |
-| `.ahbot item` | 3 | `.ahbot item <id> [val [chnc [min [max]]]]` | Overrides market pricing, posting chance, and item quantity limits. | `.ahbot item 19019 10000 50 1 3` |
-| `.ahbot item reset` | 3 | `.ahbot item <id> reset` | Restores default configuration values for specific item ID. | `.ahbot item 19019 reset` |
+| `.ahbot status` | 2 | `.ahbot status [all]` | Shows active AHBot auction counts, items, and wallet stats. | `.ahbot status all` |
+| `.ahbot reload` | 2 | `.ahbot reload` | Re-reads `ahbot.conf` settings without restarting the world server. | `.ahbot reload` |
+| `.ahbot rebuild` | 2 | `.ahbot rebuild [all]` | Flushes active bot auctions and rebuilds the market listings. | `.ahbot rebuild all` |
+| `.ahbot update` | 2 | `.ahbot update` | Triggers an immediate market update and bid/expire evaluation tick. | `.ahbot update` |
+| `.ahbot item` | 2 | `.ahbot item <id> [val [chnc [min [max]]]]` | Overrides market pricing, posting chance, and item quantity limits. | `.ahbot item 19019 10000 50 1 3` |
+| `.ahbot item reset` | 2 | `.ahbot item <id> reset` | Restores default configuration values for specific item ID. | `.ahbot item 19019 reset` |
 
 ---
 

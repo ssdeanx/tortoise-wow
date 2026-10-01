@@ -908,11 +908,7 @@ void RandomPlayerbotFactory::CreateRandomBots()
         sPlayerbotAIConfig.randomBotAccounts.push_back(accountId);
 
         int count = sAccountMgr.GetCharactersCount(accountId);
-#ifdef MANGOSBOT_TWO
-        if (count >= 10)
-#else
-        if (count >= 9)
-#endif
+        if (count < 0 || (uint32) count >= sPlayerbotAIConfig.maxCharactersPerAccount)
         {
             totalRandomBotChars += count;
             continue;
@@ -921,11 +917,7 @@ void RandomPlayerbotFactory::CreateRandomBots()
 	RandomPlayerbotFactory factory(accountId);
 	if (sPlayerbotAIConfig.useFixedClassRaceCounts)
 	{
-#ifdef MANGOSBOT_TWO
-	    uint32 maxAllowed = 10 - count;
-#else
-	    uint32 maxAllowed = 9 - count;
-#endif
+	    uint32 maxAllowed = sPlayerbotAIConfig.maxCharactersPerAccount - (uint32) count;
 	    uint32 created = 0;
 
 	    while (!remaining.empty() && created < maxAllowed)

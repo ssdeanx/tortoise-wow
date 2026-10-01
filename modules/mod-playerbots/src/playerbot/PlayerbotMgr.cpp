@@ -2584,11 +2584,7 @@ void PlayerbotHolder::CreateBot(Player* master, const std::string param, std::li
         return;
     }
 
-    uint32 maxCharsPerAccount = 9;
-#ifdef MANGOSBOT_TWO
-    maxCharsPerAccount = 10;
-#endif
-
+    uint32 maxCharsPerAccount = sPlayerbotAIConfig.maxCharactersPerAccount;
     if (sAccountMgr.GetCharactersCount(accountId) >= maxCharsPerAccount)
     {
         messages.push_back("Account has max characters");
@@ -3033,10 +3029,7 @@ void PlayerbotHolder::UpdatePendingTests(uint32 elapsed)
 
         if (dynamic_cast<PlayerbotMgr*>(this))
         {
-            uint32 maxCharsPerAccount = 9;
-#ifdef MANGOSBOT_TWO
-            maxCharsPerAccount = 10;
-#endif
+            uint32 maxCharsPerAccount = sPlayerbotAIConfig.maxCharactersPerAccount;
             uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID((dynamic_cast<PlayerbotMgr*>(this))->GetMaster()->GetObjectGuid());
                 if (accountId == 0) continue;
 

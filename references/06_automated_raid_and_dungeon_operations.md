@@ -1,19 +1,38 @@
 # 06. Automated Raid & Dungeon Operations Handbook
 
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + mod-playerbots + mod-dungeon-clear + Eluna
-> **Engine Verification**: `run/lua_scripts/raid_automation.lua` (**v1.3.0**), `PlayerbotMgr.cpp`, `Commands.cpp`, `DungeonClearCommand.cpp`
+> **Engine Verification**: `run/lua_scripts/raid_automation.lua` (**v1.4.0** — `local SCRIPT_VERSION = "1.4.0"` at `run/lua_scripts/raid_automation.lua:632`), `PlayerbotMgr.cpp`, `src/game/Chat/Chat.cpp`, `DungeonClearCommand.cpp`
+> ⚠️ An earlier revision of this header cited `Commands.cpp` as a source file. **No such file exists in this tree.** The chat table lives in `src/game/Chat/Chat.cpp`; the playerbot command handlers live in `modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp`.
 > **Security Requirement**: Accessible to all players (`SEC_PLAYER` / Level 0) with elevated GM features where noted
 > **Master Portals**: [🏠 Master Portal (gm_commands.md)](../gm_commands.md) • [📜 Volume 01: GM Handbook](./01_game_master_handbook.md) • [🤖 Volume 02: Playerbot Handbook](./02_playerbot_and_raid_automation.md) • [🗺️ Volume 03: World & Teleports](./03_turtle_world_and_teleports.md) • [⚔️ Volume 04: BiS Gear & Specs](./04_class_specs_and_endgame_gear.md) • [📜 Volume 05: Eluna Scripting](./05_developer_eluna_and_engine.md)
 
-> ⚠️ **Read `run/lua_scripts/`, not `lua_scripts/`, when you audit the script.** Two
-> copies of `raid_automation.lua` exist in this repository and **only one is live**:
-> `run/mangosd.conf` sets `Eluna.ScriptPath = "./lua_scripts"` **relative to the
-> `run/` working directory**, so the live script is `run/lua_scripts/raid_automation.lua`.
-> A stale **v1.1.0** copy sits at the repo-root `lua_scripts/raid_automation.lua` and
-> is **never loaded** — v1.1.0 has no `tank3` / `tank4` / `tanks` / `marks` /
-> `ccmark` / `resume` / `gather` / `avoid` / `roll` at all. Auditing or editing the
-> wrong file produces a large set of false "this command does not exist" findings.
-> That happened during this handbook's audit.
+> ⚠️ **Read `run/lua_scripts/`, not `lua_scripts/`, when you audit the script.**
+> *(Original warning, kept for history — the situation it describes has since
+> changed. See the note immediately below it.)* Two copies of
+> `raid_automation.lua` used to exist in this repository and **only one was
+> live**: `run/mangosd.conf` sets `Eluna.ScriptPath = "./lua_scripts"`
+> **relative to the `run/` working directory**, so the live script is
+> `run/lua_scripts/raid_automation.lua`. A stale **v1.1.0** copy sat at the
+> repo-root `lua_scripts/raid_automation.lua` and was **never loaded** — v1.1.0
+> has no `tank3` / `tank4` / `tanks` / `marks` / `ccmark` / `resume` / `gather` /
+> `avoid` / `roll` at all. Auditing or editing the wrong file produces a large
+> set of false "this command does not exist" findings. That happened during this
+> handbook's audit.
+>
+> **⚠️ The live-copy advice still holds; the "two copies exist on disk" premise no
+> longer does.** `find . -name raid_automation.lua` now returns exactly **one**
+> hit, `run/lua_scripts/raid_automation.lua` (**v1.4.0**). The v1.1.0 copy is
+> still in git **HEAD** (`git show HEAD:lua_scripts/raid_automation.lua` → 700
+> lines, `SCRIPT_VERSION = "1.1.0"` at `:18`) but has been **deleted from the
+> working tree and not yet committed** — `git status --short` shows
+> ` D lua_scripts/raid_automation.lua`. Two consequences:
+> 1. **A fresh clone of HEAD, or a `git checkout` of that path, resurrects the
+>    stale v1.1.0 file.** Do not do it. If a future `git checkout`/branch-switch
+>    restores it, delete it again before auditing anything.
+> 2. Until the deletion is committed, a colleague's clean clone and this working
+>    tree disagree about what the repo contains. That is a git-state question, not
+>    an engine question, and the engine answer is unchanged: `run/` is the only
+>    directory Eluna ever loads.
 
 ---
 
@@ -29,7 +48,7 @@
 7. [Automatic Role & Formation Matrix](#7-automatic-role--formation-matrix)
 8. [Master Instance Fast-Teleport Directory](#8-master-instance-fast-teleport-directory)
 9. [C++ Engine Contracts & Technical FAQ](#9-c-engine-contracts--technical-faq)
-10. [The `.raid` Operator Facade (v1.3.0)](#13-the-raid-operator-facade-v130) — **the full five-layer command surface, the `@filters`, and the trap register** *(numbered §13; it sits here because it is command reference, not encounter mechanics)*
+10. [The `.raid` Operator Facade (v1.4.0)](#13-the-raid-operator-facade-v140) — **the full five-layer command surface, the `@filters`, and the trap register** *(numbered §13; it sits here because it is command reference, not encounter mechanics)*
 
 ---
 
@@ -41,7 +60,7 @@ This operations handbook documents the **Tortoise-WoW Autonomous Raid Controller
 
 - **No Level Tampering**: Bots and characters invited via the in-game group finder (LFT / LFG) are already level 60. The controller never alters character levels.
 - **Player-Controlled Group Topology**: In Vanilla WoW, a standard group is capped at 5 members. Raids hold 6 to 40 members across 8 subgroups. Group-to-raid conversion is handled by the player via the in-game UI. The controller never forces group conversions.
-- **Engine-Verified Syntax**: All commands dispatch directly into the CMaNGOS command handler (`PlayerbotMgr.cpp`, `Commands.cpp`, `DungeonClearCommand.cpp`) using native server tokens. Client chat prefixes (`/p`, `/ra`) are never sent into server command queues.
+- **Engine-Verified Syntax**: All commands dispatch directly into the CMaNGOS command handler (`PlayerbotMgr.cpp`, `DungeonClearCommand.cpp`) using native server tokens. ⚠️ An earlier version of this bullet also listed `Commands.cpp`. **No such file exists in this tree** — the base chat table is `src/game/Chat/Chat.cpp` and the playerbot handlers are `modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp`. Client chat prefixes (`/p`, `/ra`) are never sent into server command queues.
 - **Raid Attunement vs Quest Sharing**: Generic quest sharing does not grant raid access. The controller executes verified quest completions and spawns physical access keys for both Classic raids and Turtle-WoW custom content.
 
 ---
@@ -52,20 +71,61 @@ Create these 5 macros in your World of Warcraft **Macro UI** (`/m`) and place th
 
 ### 🌟 Macro 0: "Assemble + Prep" (the one you actually start from)
 
-*Run this first. It assembles the raid — and `.bot group` is what gives every bot
-its role-matched, varied spec.*
+*Run this first. It assembles the raid.*
 
 ```text
 .bot group size=20
+.raid check
+.raid tanks 2
 .raid roles
 .raid ready
 ```
 
-*(`.bot group` picks a role and a class that can fill it per bot, then applies a
-spec matching that role and varies within it. `.raid roles` then splits formations
-by role — the thing `.bot group` leaves undone, since a joining bot inherits the
-inviter's formation — and focus-locks the DPS. `.raid ready` gears, enchants,
-trains, restocks and attunes.)*
+*(`.bot group` fills the raid to the class shape its size row calls for. ⚠️ **It does
+NOT assign role-matched specs** — see the correction below. `.raid check` then shows
+you what every bot actually got, `.raid tanks 2` promotes real protection-specced
+bots, `.raid roles` splits formations by role — the thing `.bot group` leaves
+undone, since a joining bot inherits the inviter's formation — and focus-locks the
+DPS. `.raid ready` gears, enchants, trains, restocks and attunes.)*
+
+> 🚨 **CRITICAL CORRECTION — `.bot group` assigns no role-matched spec.** *(The
+> original note under this macro said "`.bot group` picks a role and a class that
+> can fill it per bot, then applies a spec matching that role and varies within
+> it." **That is wrong. It never forwards the role it picks, so no bot ever gets a
+> spec matched to it.**)*
+>
+> The verified chain, end to end:
+> - `PlayerbotMgr.cpp:2825` rolls `BotRoles role = BotRoles(urand(BOT_ROLE_TANK,
+>   BOT_ROLE_DPS))`. That `role` is used for exactly **one** thing: picking a class
+>   that can fill it, `factory.GetRandomClass(0, role)` at `:2831`.
+> - `PlayerbotMgr.cpp:2855` then builds the create string as `level=` `class=`
+>   `group=` plus passthrough. **There is no `role=` in it.** `CreateBot`
+>   (`PlayerbotHolder::HandleCreate`) therefore keeps its initialiser
+>   `BotRoles role = BotRoles::BOT_ROLE_NONE;` (`:2536`) — the *only* place that
+>   ever writes it is the `else if (key == "role")` parser branch at `:2562-2563`,
+>   which nothing here reaches.
+> - `PlayerbotMgr.cpp:2680` calls `ChangeTalentsAction::AutoSelectTalents(newBot,
+>   &out, role)` with that `BOT_ROLE_NONE`.
+> - `ChangeTalentsAction::getPremadePaths` (`:162`) applies its role filter **only**
+>   under `if (role != BotRoles::BOT_ROLE_NONE && ...)` (`:170`). With
+>   `BOT_ROLE_NONE` that filter is skipped, so it returns **every premade spec for
+>   that class**, and `PickPremadePath` (`:230`, called at `:379`) picks one
+>   **at random**.
+> - `uint8 groupSize = 5;` at `:2785` is a plain local. Nothing persists it.
+>
+> **What this means operationally:** the tank/heal/dps numbers in the size row only
+> decided **which classes got drawn**. The specs those bots ended up with are
+> arbitrary picks from each class's entire premade list. A `size=20` raid can and
+> routinely does come out with **zero protection-specced bots** — and
+> `PlayerbotAI::IsTank`, which `@tank` filters and `.dc`'s
+> `DispatchToTankBots` both read, goes by the *installed spec strategy*. Without
+> real tanks, `.dc on` answers `No tank bot found in your group.`
+>
+> **So verify, don't assume:** run `.raid check` after `.bot group` and look for
+> `protection` in each tank candidate's strategy dump, then promote with
+> `.raid tanks <n>` — which is the one path that really does re-spec
+> (`talents do protection` + `reset ai`, Lua `:1965-1972`). Do **not** run
+> `.dc on` before that.
 
 ### 🌟 Macro 1: "1-Click Raid Ready"
 
@@ -91,7 +151,9 @@ enchants, spell training, consumables, attunements and master keys. Append
 *(Sequences `dc bosses` → `dc pull dynamic` → `dc on` → `dc status`. `dc bosses` is
 the real pre-flight: it has no authorization gate, works before `dc on` has ever
 been issued, and prints the exact anchor list the run will route through. An
-empty list is what `dc on` will refuse on.)*
+empty list is what `dc on` will refuse on. ⚠️ An earlier version of this note
+called `dc bosses` **the only** verb with no authorization gate. That exclusivity
+is false — see the corrected gate list in [§13.2](#132--battle--run-control).)*
 
 ### ⏸️ Macro 3: "Party Hold / Drink Break"
 
@@ -134,19 +196,41 @@ is what the DPS focus-lock follows.)*
 
 ## 3. The Master 1-Click Pipeline (`.raid ready`)
 
-> ⚠️ **`.bot group` comes first, and it is not optional.** `.bot group size=N` is
-> what gives every bot its role-matched spec. `.raid ready` does **not** do that,
-> and deliberately does not try — see
-> [`.bot group` assigns the spec too](../02_playerbot_and_raid_automation.md).
-> Running `.raid ready` on a group assembled some other way (`.bot add <account>`,
-> hand-made characters) is fine; the specs are simply whatever those characters
-> already had.
+> ⚠️ **`.bot group` comes first — but it does not give anyone a role-matched
+> spec, and treating it as if it does is the single most damaging belief in this
+> handbook.**
+> *(Superseded instruction, kept visible: this note previously read "**.bot group
+> comes first, and it is not optional.** `.bot group size=N` is what gives every
+> bot its role-matched spec. `.raid ready` does **not** do that, and deliberately
+> does not try." The premise was false, and it pointed at a superseded cross-doc
+> claim — [`.bot group` assigns the spec too](../02_playerbot_and_raid_automation.md)
+> is corrected in the same way.)*
+>
+> **The verified behaviour:** `.bot group size=N` picks a role at random
+> (`PlayerbotMgr.cpp:2825`) and uses it only to choose a class (`:2831`), then
+> forwards **no** `role=` to `HandleCreate` (`:2855`). `CreateBot` keeps
+> `BOT_ROLE_NONE` (`:2536`, written only at `:2562-2563`), and
+> `AutoSelectTalents` at `:2680` therefore skips its role filter entirely
+> (`ChangeTalentsAction::getPremadePaths`, `:170`) and picks a **random premade
+> spec for that class** (`PickPremadePath:230`). Full chain in
+> the **🚨 CRITICAL CORRECTION** block under [§2 Macro 0](#2-master-macro-cheat-sheet-copy-paste-ready).
+>
+> **Reversed advice:** `.bot group` is *not* the spec step, and `.raid tanks <n>`
+> is the only real one. So the correct order is `.bot group size=N` → **`.raid
+> check`** (read the actual spec strategies) → **`.raid tanks <n>`** (make real
+> tanks) → `.raid roles` → `.raid ready`. Running `.raid ready` on a group
+> assembled some other way (`.bot add <account>`, hand-made characters) is
+> equally fine; there the specs are simply whatever those characters already had,
+> and `.raid check` tells you what that is.
 
 Executing `.raid ready` runs a 3-stage preparation sequence:
 
 ```text
-[ .bot group size=20  — roles + varied specs already done ]
+[ .bot group size=20  — fills the roster to the class shape; assigns NO specs ]
            │
+           ▼
+Stage 0: Verify & Promote  ──► .raid check   (read every bot's real spec strategy)
+           │                 ──► .raid tanks <n>  (talents do protection + reset ai)
            ▼
 Stage 1: Roster & Formations  ──► Class census + feasibility check on your chat
            │                      Splits formations by role (4 broadcasts):
@@ -303,29 +387,59 @@ line per role order — five broadcasts for `.raid roles`, not forty whispers.
 bot**, and both are on `.raid tank3` / `.raid tank4` / `.raid marks`:
 
 - `talents do <spec>` + `reset ai` — only from the tank commands, and only for the
-  bots being promoted. `.raid roles` sends none, because `.bot group` already
-  assigned role-matched, varied specs.
+  bots being promoted. `.raid roles` sends none. ⚠️ **The old justification here was
+  "because `.bot group` already assigned role-matched, varied specs" — that is
+  false** (see the Macro 0 correction: `HandleGroup` never forwards `role=`, so
+  `AutoSelectTalents` gets `BOT_ROLE_NONE` and picks a random premade spec).
+  **The real reason `.raid roles` sends none is that it does not know which bots
+  need promoting** — it sends no talent command at all, on purpose. Which means the
+  tank commands are not a formality you can skip: they are the **only** place any
+  bot in this pipeline ever gets a role-matched spec.
 - `rti <icon>` + `co +mark rti` — only in `.raid marks <tank…>`, because each
   tank needs a *different* icon and no filter can express "tank #2 gets cross".
 
 Note the role filters do **not** require the roles to exist first, as an earlier
 version of this document claimed. `@tank` resolves through
-`PlayerbotAI::IsTank`, which reads the installed spec strategy — and that is
-already correct before `.raid roles` runs, because `.bot group` built it. So the
-formation split works on the first call.
+`PlayerbotAI::IsTank`, which reads the installed spec strategy. ⚠️ The old
+conclusion here was "that is already correct before `.raid roles` runs, because
+`.bot group` built it. So the formation split works on the first call." **That
+inference does not hold.** The *mechanism* claim is right — the filters need no
+prior setup step and they do work on the first call — but the *reason* was wrong:
+`.bot group` does not build a spec, so a bot it created may resolve as **not** a
+tank. The formation split will then silently assign those bots `@ranged` or
+`@melee` instead of `shield`. **Verify with `.raid check` and promote with
+`.raid tanks <n>` before `.raid roles`**, or you are formatting a raid that
+nobody is tanking.
 
 Use a `bot` subcommand that accepts `*` (`.bot gear * best`,
 `.bot consumes *`, …) for server-side iteration.
 
 ### ⚠️ `.dc test` cannot run raids
 
-**`.dc test` cannot run raids.** The automated harness is registered for **68 dungeons only — every one of them a 5-man**. There is no token for Ruins or Temple of Ahn'Qiraj, Molten Core, Blackwing Lair, Naxxramas, Onyxia's Lair, or Karazhan. Typing one of those returns:
+**`.dc test` cannot run the raids you care about.** The automated harness is
+registered for **68 dungeons**, and the count and the token list are exact
+(`TestRun/DcTestDungeonRegistry.cpp` — 68 rows, names and order as printed below).
+⚠️ **Superseded wording, kept visible:** an earlier version of this section said
+the harness is registered for "**68 dungeons only — every one of them a 5-man**",
+and further down it said flatly "**No raid tokens exist.**" **Both absolutes are
+false**, and this document contradicted itself: §12.3 describes map 45 as a
+**40-Man Raid Fortress**, and the corrections table below already admits
+`scarlet-citadel` is "the only raid-flavoured entry in the list."
+
+**The precise position:** the 68 rows are overwhelmingly 5-man dungeons, plus
+**one raid-flavoured row** — `scarlet-citadel`, map `45`, level 63, no heroic
+variant. So it is not "no raid tokens exist"; it is "the only raid token that
+exists is the Turtle-WoW Scarlet Citadel." There is **no** token for Ruins or
+Temple of Ahn'Qiraj, Molten Core, Blackwing Lair, Naxxramas, Onyxia's Lair or
+Karazhan. Typing one of those returns:
 
 ```text
 unknown dungeon 'aq40' — see .dc test list
 ```
 
-To test a **raid**, use the **live** half of the engine instead — you stand in the raid, hand it a tank bot, and drive it:
+**The practical conclusion is unchanged** — every vanilla raid and every AQ wing
+has to be tested through the live half of the engine instead. You stand in the
+raid, hand it a tank bot, and drive it:
 
 ```text
 .raid roles
@@ -344,17 +458,85 @@ That is the supported path for AQ20/AQ40/MC/BWL/Naxx/Onyxia. `.dc test` is the u
 | **Who may run it** | Any player (`SEC_PLAYER`) | **GM only** (`SEC_GAMEMASTER`) |
 | **Where** | In-game session only | In-game **or the server console** |
 | **Who it drives** | The **tank bot in your group** | Its own generated party (you are not in it) |
-| **Content** | Any map DC supports — **including all raids** | **5-man dungeons only** (68 tokens) |
+| **Content** | Any map DC supports — **including all raids** | **68 tokens: 5-man dungeons plus the raid-flavoured `scarlet-citadel`** |
 | **Purpose** | You supervise a real run | Unattended batch regression runs |
 
 Every live command routes through `DungeonClearDispatch::DispatchToTankBots`, which searches your group for a bot holding the **tank** role. With no tank bot you get `No tank bot found in your group.`
 
-**That role comes from `.bot group`, not from `.raid roles`.** `IsTank` reads the
-installed spec strategy, and `.bot group` already built a tank-role spec for the
-bots it created as tanks. So the requirement is satisfied before any `.raid`
-command runs — as long as you assembled with `.bot group`. If you used `.bot add
-<account>` or hand-made characters, check that at least one Warrior, Paladin or
-Feral Druid is actually protection/feral-specced.
+#### 🚨 That role does NOT come from `.bot group`. Read this before you trust `.dc on`
+
+*(Superseded claim, kept visible: this paragraph previously read "**That role
+comes from `.bot group`, not from `.raid roles`.** `IsTank` reads the installed
+spec strategy, and `.bot group` already built a tank-role spec for the bots it
+created as tanks. So the requirement is satisfied before any `.raid` command runs
+— as long as you assembled with `.bot group`." **Every sentence of that is
+wrong.**)*
+
+**What actually happens.** `IsTank` reads the installed spec strategy, yes. But
+`.bot group` does not install a tank spec, because it never forwards the role it
+picks: `HandleGroup` rolls `BotRoles role = urand(BOT_ROLE_TANK, BOT_ROLE_DPS)`
+at `PlayerbotMgr.cpp:2825` and uses it **only** to choose a class (`:2831`), then
+builds the create string as `level=` `class=` `group=` plus passthrough at `:2855`
+— **no `role=`**. `HandleCreate` therefore holds `BOT_ROLE_NONE` (`:2536`, written
+only by the `else if (key == "role")` branch at `:2562-2563`), and
+`AutoSelectTalents(newBot, &out, role)` at `:2680` runs with it.
+`ChangeTalentsAction::getPremadePaths` skips its role filter entirely when
+`role == BOT_ROLE_NONE` (`:170`), so it returns **every premade spec that class
+has**, and `PickPremadePath` (`:230`) picks one **at random**.
+
+**The consequence you must plan around:** a `size=20` raid can and routinely will
+come out with **ZERO protection-specced bots**. The tank/heal/dps figures in the
+size row only chose **which classes were drawn** — the specs are arbitrary picks
+from each class's whole premade list. So the tank role in a `.bot group`-assembled
+raid comes from **whichever random premade spec happened to land**, which is a
+coin flip, not a design. `.dc on` will then answer
+`No tank bot found in your group.`, and if one bot *does* land on protection by
+chance, `@tank` filters and formations will bind to it while the rest of your
+tank-capable roster sits in `@ranged`.
+
+> ⚠️ **The script itself still tells you the false thing — and it is a source
+> file, so this is a note, not a fix.** `ApplyRaidSetup` ends with a `Say()` at
+> `raid_automation.lua:1852-1853`:
+>
+> ```text
+> Formations split by role, DPS focus-locked. Specs and roles were already
+> set by `.bot group` and were left alone.
+> ```
+>
+> **That second sentence is the same false claim this section corrects.** It is
+> live in v1.4.0, so expect to read it every time you run `.raid roles`, and do
+> not treat it as confirmation. The first sentence is accurate. The Lua is a
+> source file and is left untouched; correcting the message belongs with whoever
+> changes the script, and it should be corrected in the same pass as any real fix
+> to the `HandleGroup` role forwarding. (The same applies to the header comment
+> over the tank-promotion branch at `:1859-1863`, which asserts "`.bot group
+> size=N` fixes the tank count to that row" — true of the *class quota*, false as
+> a statement about specs. The branch's own first line, "the one place that
+> genuinely re-specs", **is** correct, and is the finding this whole correction
+> rests on.)
+
+**What to do instead, in this order:**
+```text
+.bot group size=20     -- fills the roster; assigns NO specs
+.raid check            -- prints every bot's live spec strategy; look for "protection"
+.raid tanks 2          -- promotes 2 real tanks: talents do protection + reset ai
+.raid roles            -- only now are @tank/@heal filters meaningful
+.raid ready            -- gear, enchants, consumables, attunements
+.dc bosses             -- confirm the anchor list
+.dc on                 -- now it has a tank to drive
+```
+
+`.raid tanks <n>` is the **only** re-spec path in the whole pipeline, and it does
+send the real thing: `talents do protection` followed by `reset ai`
+(`run/lua_scripts/raid_automation.lua:1965-1972`, in v1.4.0 queued as two **ordered
+deferred steps** so the respec and the kit rebuild cannot be separated). It needs a
+target or a name — it never guesses, and `.raid roles` lists the tank-capable
+candidates for you to paste in.
+
+If you assembled with `.bot add <account>` or hand-made characters instead, the
+same check applies: confirm at least one Warrior, Paladin or Feral Druid is
+actually protection/feral-specced (and remember the level-60 druid cat/bear coin
+flip below), then promote if not.
 
 A second gate sits behind that: only the **DC leader** (the lead tank) actually answers. Non-leaders stay silent rather than replying in duplicate.
 
@@ -370,7 +552,7 @@ A second gate sits behind that: only the **DC leader** (the lead tank) actually 
 | `.dc status` | `[addon\|silent]` | `Dungeon clear: on/off. Next boss: <name>. Skipped: <n>.` plus a stall reason when one is latched. The server also pushes status packets automatically on state changes, so you rarely need to poll. |
 | `.dc bosses` | `[addon\|silent]` | Full boss checklist with Alive/Dead state. **Works even before `.dc on` has ever been issued** — it resets stale completion latches itself, so a re-entered instance does not show phantom "Done" rows. |
 | `.dc go` | `<boss name or entry>` | Overrides routing to a specific boss. Accepts a **numeric creature entry** or a **case-insensitive name substring**. Requires an active run, else: `Dungeon clear is not enabled. Please enable it first.` |
-| `.dc config` | *none — display only* | Dumps **every** DungeonClear tunable as the AI actually reads it this tick. `*` = active per-run override, `H` = heroic-mode default. Because it reads live config, it confirms a `worldserver.conf` edit took effect **without** `.reload config`. |
+| `.dc config` | *none — display only* | Dumps **every** DungeonClear tunable as the AI actually reads it this tick. `*` = active per-run override, `H` = heroic-mode default. Because it reads live config, it confirms a **`mod_dungeon_clear.conf`** edit took effect **without** `.reload config`. ⚠️ An earlier version of this row said `worldserver.conf`; that was wrong and it disagreed with [§13.2](#132--battle--run-control), which had it right. The file is `run/mod_dungeon_clear.conf` (the `.dist` template is `DcSettingsRegistry.h:11`), and `DungeonClearUtil.h:36` names the `Logger.playerbots.dungeonclear.pull` line in it. **Nothing under `modules/mod-dungeon-clear/src/` reads `worldserver.conf`.** |
 | `.dc spectate` | `[follow [name]\|next\|prev\|list]`, or bare | Camera. Bare = free-fly. `follow` rides a bot (bare `follow` is a toggle — that is how you turn it off); `follow <name>` jumps to a named bot. `next`/`prev` walk every bot in the instance, not just tanks. `list` shows the roster. Acts on **you**, not the tank, so it works even if you are not the tank and even from outside the party. |
 
 ### `.dc test` Commands (GM only)
@@ -402,7 +584,14 @@ botanica  mechanar  arcatraz  mgt  uk  nexus  an  ok  dtk  vh  gundrak
 hos  hol  cos  oculus  up  toc  fos  pos  hor
 ```
 
-**No raid tokens exist.** For raids use the live commands.
+**No vanilla raid tokens exist.** ⚠️ *(Superseded: this line previously read
+"**No raid tokens exist.**" That absolute was false and contradicted this
+document's own §5.1 corrections table and §12.3. There **is** one raid-flavoured
+row — `scarlet-citadel`, map `45`, the Turtle-WoW 40-Man Raid Fortress described
+in [§12.3](#123-scarlet-citadel-map-45-40-man-raid-fortress), which is a 40-man
+raid with seven scripted bosses, not a 5-man. Everything vanilla — AQ20, AQ40, MC,
+BWL, Naxx, Onyxia, Karazhan — has no token at all, and for those you use the live
+commands above.)*
 
 ### `.dc go` reference for Ahn'Qiraj (maps 509 / 531)
 
@@ -449,8 +638,10 @@ Practical consequence: because Ouro and the C'Thun Eye have no spawn rows, they 
 ### Recommended raid test sequence
 
 ```text
--- 1. Assemble (assigns roles + varied specs), then gear and prep
+-- 1. Assemble (fills the roster; assigns NO specs), then verify, promote, gear
 .bot group size=20
+.raid check            -- what specs did they actually get?
+.raid tanks 2          -- the only real re-spec: talents do protection + reset ai
 .raid roles
 .raid ready
 
@@ -495,14 +686,16 @@ Verified against `tw_world.game_tele` and **fixed in `run/lua_scripts/raid_autom
 
 `.tele group` is **`SEC_DEVELOPER`** and requires a **selected, grouped player** — you cannot run it solo. The remaining Zul'Farrak gap needs a `game_tele` row, which is a database write and deliberately out of scope here; use `.tele 209 <x> <y> <z>` at the pyramid meanwhile.
 
-**Not bugs — leave alone:** `.raid tele karazhan`, `.raid tele crypt` and `.raid tele vault` resolve to `game_tele` rows on **map 0**. That is correct, not a mis-resolution: `game_tele` has *no* row on their interior maps (810 / 812 / 813), so the outdoor row is the only teleport that exists and is serving as the instance entrance.
+**Not bugs — leave alone:** `.raid tele karazhan`, `.raid tele crypt` and `.raid tele vault` resolve to `game_tele` rows on **map 0**. That is correct, not a mis-resolution: `game_tele` has *no* row on their interior maps (**35** Stormwind Vault / **532** + **814** Karazhan / **800** Karazhan Crypt), so the outdoor row is the only teleport that exists and is serving as the instance entrance. *(The interior ids `810 / 812 / 813` given here previously are the old wrong numbers — `812` is not a map at all, and `813` is `Winter Veil Vale`.)*
 
-⚠️ **But §8's map numbers for the custom instances do not match the database.** Verified `game_tele` maps: Scarlet Citadel = **45** (not 811), Karazhan/Crypt/Vault = 0 (entrances, interior maps 812/813/810 have no tele row), `sanctumraid` = **807** (not 814), `crescentgrove` = 802 (not 805), `hateforgeinstance` = 808 (not 806), `gilneascity` = 815 (not 807), `TimbermawHold` = 1. Treat §8's "Map ID" column as unverified until it is re-audited map by map.
+⚠️ **But §8's map numbers for the custom instances do not match the database.** Verified `game_tele` maps: Scarlet Citadel = **45** (not 811), Karazhan/Crypt/Vault = 0 (entrances; their interior maps 532/814, 800 and 35 have no tele row), `sanctumraid` = **807** (not 814), `crescentgrove` = 802 (not 805), `hateforgeinstance` = 808 (not 806), `gilneascity` = 815 (not 807), `TimbermawHold` = 1. **§8 also had Timbermaw and Gilneas swapped with each other.** This note used to be the *only* record of the error, ~500 lines below the table it corrects; the §8 table now carries the correction inline as well, with this note as the authority. §8 also omits seven working aliases the script implements — `molten`, `blackwing`, `zulgurub`, `naxxramas`, `onyxia`, `st`, `zf` — all listed there.
 
 ### Runbook: Onyxia's Lair (the shortest one — start here)
 
 ```text
-.bot group size=20   -- roles + varied specs; what .dc needs a tank for
+.bot group size=20   -- fills the roster; assigns NO specs
+.raid check          -- read the real spec strategies
+.raid tanks 2        -- promote real tanks; this is what .dc needs
 .raid roles          -- formations by role, focus lock
 .raid ready          -- gear, enchants, consumables, attunements
 .raid tele ony       -- now lands INSIDE the lair (map 249)
@@ -519,25 +712,43 @@ Onyxia is the cheapest full-fight test: one boss, no trash gating, and `.dc go 1
 
 ### `.raid` Command Reference (Eluna, engine-verified)
 
-`run/lua_scripts/raid_automation.lua` (**v1.3.0**) registers a `.raid` namespace on
-`PLAYER_EVENT_ON_COMMAND` (event `42`). The full v1.3.0 surface — the five-layer
-operator facade, the filters, and the trap register — is documented in
-[§13](#13-the-raid-operator-facade-v130).
+`run/lua_scripts/raid_automation.lua` (**v1.4.0** — `local SCRIPT_VERSION =
+"1.4.0"` at `:632`, printed at `:2279`, `:2727` and `:3705`) registers a `.raid`
+namespace on `PLAYER_EVENT_ON_COMMAND` (event `42`). The full v1.4.0 surface — the
+five-layer operator facade, the filters, and the trap register — is documented in
+[§13](#13-the-raid-operator-facade-v140).
 
-> ⚠️ **There are two copies of this script in the repository, and only one is
-> live.** `run/lua_scripts/raid_automation.lua` is the live one, because
+> ⚠️ **The live copy is `run/lua_scripts/raid_automation.lua`, and nothing else.**
 > `run/mangosd.conf` sets `Eluna.ScriptPath = "./lua_scripts"` **relative to the
-> `run/` working directory**. A stale **v1.1.0** copy also exists at
-> `lua_scripts/raid_automation.lua` (repo root) and is **not** loaded — v1.1.0
-> lacks `tank3` / `tank4` / `tanks` / `marks` / `ccmark` / `resume` / `gather` /
-> `avoid` / `roll` entirely. Auditing or editing the wrong file produces a large
-> set of false "this command does not exist" findings. That happened during this
-> audit.
+> `run/` working directory**, so that is the only path Eluna ever loads.
+>
+> ⚠️ **Superseded, kept visible:** this block previously read "**There are two
+> copies of this script in the repository, and only one is live.** … A stale
+> **v1.1.0** copy also exists at `lua_scripts/raid_automation.lua` (repo root) and
+> is **not** loaded — v1.1.0 lacks `tank3` / `tank4` / `tanks` / `marks` /
+> `ccmark` / `resume` / `gather` / `avoid` / `roll` entirely." **The "two copies
+> exist on disk" premise is no longer true**: `find . -name raid_automation.lua`
+> returns a single hit. The v1.1.0 file still lives in **git HEAD**
+> (`git show HEAD:lua_scripts/raid_automation.lua` → 700 lines,
+> `SCRIPT_VERSION = "1.1.0"` at `:18`) but has been deleted from the working tree
+> **without being committed** — `git status --short` shows
+> ` D lua_scripts/raid_automation.lua`.
+>
+> **So the hazard has moved, it has not gone away.** The advice is still correct
+> (audit `run/`), and the failure mode it warns about is still real — but the
+> mechanism is now git, not a second file on disk: **a `git checkout` of that
+> path, a branch switch, or a fresh clone of HEAD will resurrect the stale v1.1.0
+> file.** Do not do that, and if it reappears, delete it before auditing anything.
+> The v1.1.0-versus-live version gap it would create is exactly what produces a
+> large set of false "this command does not exist" findings, which is what
+> happened during this audit.
 
 **Order that works:**
 
 ```text
-.bot group size=20     ← gives every bot its role-matched, VARIED spec
+.bot group size=20     ← fills the roster to the size row; assigns NO specs
+.raid check            ← read the spec strategy each bot actually got
+.raid tanks 2          ← THE spec step: talents do protection + reset ai
 .raid roles            ← formations by role, focus lock, roster census
 .raid marks T1 T2 T3   ← optional: one mark icon per tank
 .raid ready            ← gear, enchants, spells, consumables, attunements
@@ -550,7 +761,7 @@ operator facade, the filters, and the trap register — is documented in
 | `.raid tank2` / `tank3` / `tank4` / `tank5` `[<name>]` | Promote a bot to that tank slot. All four land on the **same** branch — `slot = tonumber(sub:sub(5))` parses any trailing digit — so `tank2` and `tank5` work exactly as documented for `tank3`/`tank4`. Without a name it promotes your **current target**, and with neither it errors and changes nothing. |
 | `.raid tanks <n> [names…]` | Count form for any n (1–8). Names optional, but the roster-order fallback is never silent. |
 | `.raid marks <tank…>` | One mark icon per named tank, in priority order: 1st `skull`, 2nd `cross`, 3rd `square`, then `diamond`/`triangle`/`star`/`circle`. |
-| `.raid marks <tank> <icon>` | Set one tank's icon explicitly. ⚠️ **`moon` is deliberately refused** as an icon name: `MARK_ICON_ORDER` excludes it because index 4 is the engine's own CC marker (`values/TargetValue.cpp:57-59`) and a tank marking it makes the whole raid skip that mob. Use `.raid ccmark`. |
+| `.raid marks <tank> <icon>` | Set one tank's icon explicitly. ⚠️ **`moon` is deliberately refused** as an icon name: `MARK_ICON_ORDER` excludes it because index 4 is the engine's own CC marker (`strategy/values/TargetValue.cpp:57-59`) and a tank marking it makes the whole raid skip that mob. Use `.raid ccmark`. |
 | `.raid unmark [tank]` | `co -mark rti` on one bot, or on the whole roster. |
 | `.raid ccmark` (alias `.raid moon`) | **Moon (icon 4)** on your current target — the crowd-control marker. |
 | `.raid skull` (aliases `.raid mark`, `.raid focus`) | Skull (icon 7) on your current target. The dispatch is `elseif sub == "skull" or sub == "focus" or sub == "mark"`, so all three are the same command. |
@@ -579,11 +790,22 @@ command it is an alias of, so they are the same command in every respect:
 Things to know:
 
 - **`.raid roles` no longer assigns specs, and that is deliberate.** An earlier
-  version sent `talents do <spec>` + `reset ai` to every bot. That was a
-  regression — see
-  [`.bot group` assigns the spec too](../02_playerbot_and_raid_automation.md).
-  Short version: `.bot group` already applies a role-matched spec and *varies
-  within the role*; forcing one spec per class flattened it.
+  version sent `talents do <spec>` + `reset ai` to every bot. ⚠️ **The old
+  justification — quoted here verbatim because it is the belief this correction
+  exists to kill: "`.bot group` already applies a role-matched spec and *varies
+  within the role*; forcing one spec per class flattened it." That is false.**
+  `.bot group` applies **no** role-matched spec at all — it never forwards the
+  role it rolls (`PlayerbotMgr.cpp:2825` → `:2831` → `:2855`, no `role=`), so
+  `AutoSelectTalents` gets `BOT_ROLE_NONE` (`:2680`) and picks a random premade
+  spec (`ChangeTalentsAction::getPremadePaths:170`, `PickPremadePath:230`). The
+  cross-doc claim it linked to, [`.bot group` assigns the spec too](../02_playerbot_and_raid_automation.md),
+  carries the same correction.
+  **The real reason `.raid roles` sends none** is that it cannot know which bots
+  need promoting — it addresses the whole roster through `@role` filters and has no
+  per-bot talent reading. One spec per class would also flatten variety, which
+  remains true, but it is a secondary argument, not the load-bearing one. **The
+  load-bearing consequence: `.raid tanks <n>` is now the only re-spec path in the
+  pipeline, and running it is not optional.**
 - **Tanks already have `tank assist` by default — do not add it.** `AiFactory`
   puts it in the default kit for every tank spec, in **both** the combat and the
   noncombat engine: `protection` (warrior and paladin) at `AiFactory.cpp:366,410`
@@ -618,9 +840,40 @@ Things to know:
   **re-rolls on every `reset ai`** — so any rebuild can flip one. Prefer Warriors
   or Paladins for off-tanks, and verify after any promotion. `.raid tanks`
   prints a warning when it promotes a druid for exactly this reason.
-- **`.raid roles` and `.raid start` must be separate commands.** Eluna here has no
-  timer API, so the script cannot wait for commands to be parsed before `dc on`
-  runs. Bots process them on their next AI tick — leave a second or two.
+- **`.raid roles` and `.raid start` must be separate commands** — but **not**
+  for the reason this handbook used to give.
+  ⚠️ **Superseded, kept visible:** "Eluna here has no timer API, so the script
+  cannot wait for commands to be parsed before `dc on` runs. Bots process them on
+  their next AI tick — leave a second or two." **Both halves of that are wrong.**
+  Our Eluna flavour is `ELUNA_VMANGOS` (`src/game/CMakeLists.txt:681`) and it
+  **does** have a timer API:
+  - `CreateLuaEvent` — `src/modules/Eluna/methods/VMangos/GlobalMethods.h:1368`,
+    registered at `:2996`; accepts a delay (ms) or a `{min,max}` range and a
+    repeat count.
+  - `WorldObject:RegisterEvent` — `methods/VMangos/WorldObjectMethods.h:713`,
+    registered at `:1127`; same shape, bound to that object.
+  - `RemoveEventById` / `RemoveEvents` — `GlobalMethods.h:1405` / `:1423`.
+
+  **And the script now uses it.** v1.4.0 registers `MAP_EVENT_ON_UPDATE`
+  (event `23`) → `OnMapTick` at `raid_automation.lua:3702` to drain a **bounded
+  deferred-step queue**: `STEPS_MAX = 64`, `STEP_MAX_AGE_TICKS = 200`
+  (Lua `:1425-1487`, constants at `:1428-1430`). One step runs per map tick; a
+  batch that waits longer than 200 ticks is **aborted and reported** rather than
+  running forever. Each step is `pcall`ed, and a failure aborts the rest of the
+  batch instead of leaving a half-applied state. `.raid attune` (`:1668`) and
+  `.raid promote`/`.raid tanks` (`:1974`) both enqueue into it, and
+  `.raid pending` (see [§13.6](#136--pass--escape-hatches-to-the-raw-engines))
+  reports the queue depth.
+
+  **So "leave a second or two" was the wrong remedy, and the real constraint is
+  different.** `.raid start` dispatches `dc bosses` → `dc pull <mode>` → `dc on` →
+  `dc status` as **four back-to-back `RunCommand` calls with no ordering
+  guarantee** (Lua `:2181-2194`) — there is no queue between them, because the
+  ordering problem here is not "wait long enough" but "four independent bot-AI
+  ticks may interleave". Each of those four is processed by whichever bot runs its
+  AI next. `.raid roles` therefore has to be a separate, earlier command: the
+  formations and the focus lock must be installed before the run starts, and
+  there is no mechanism that can order one chat command after another.
 - **`dc on` is issued exactly once, ever.** It wipes skip and progress state, so
   re-running it mid-raid un-skips every boss.
 - **You cannot be configured.** You are the sender, and a real player has no
@@ -635,7 +888,8 @@ Things to know:
 #### Composition targets
 
 An exact mirror of `LfgAction::AllowedClassRoleNr`
-(`InviteToGroupAction.cpp:89`) — **including the 20-man tank count of 2**. An
+(`InviteToGroupAction.cpp:89`, per-role caps at `:105-121`) — **including the
+20-man tank count of 2**. An
 earlier version of this document claimed the script raised it to 3; that is no
 longer true, and the table now matches what `.bot group` itself targets, so the
 census and reality cannot disagree.
@@ -648,12 +902,46 @@ census and reality cannot disagree.
 | 25 | 3 | 7 | 15 |
 | 40 | 4 | 16 | 20 |
 
-Assignment rules: tank slots are filled first from tank-capable bots (Warrior,
-Paladin, Druid) because they are the scarce resource; the **third** slot prefers
-a Warrior; heal slots come from Priest, Paladin, Shaman or Druid; everything else
-is DPS. Faction is respected — a Paladin is never given a slot in a horde raid
-and a Shaman never in an alliance raid. Off-faction bots are left completely
-untouched and reported by name, because `.bot group` will not create them.
+⚠️ **These numbers shape the CLASS MIX. They do not shape the SPECS.**
+
+**What is real.** The **class caps** in the table are the engine's own
+`AllowedClassRoleNr` (`InviteToGroupAction.cpp:105-121`) and
+`HandleGroup` decrements them as it goes (`PlayerbotMgr.cpp:2870-2873`), so they
+genuinely govern which classes get drawn. **Faction is respected**:
+`HandleGroup` skips `CLASS_PALADIN` on HORDE and `CLASS_SHAMAN` on ALLIANCE
+(`PlayerbotMgr.cpp:2833-2842`), so a Paladin is never given a slot in a horde raid
+and a Shaman never in an alliance one; off-faction bots are left untouched and
+reported by name, because `.bot group` will not create them.
+
+**What is not real — the old "assignment rules" paragraph, kept visible:**
+"Assignment rules: tank slots are filled first from tank-capable bots (Warrior,
+Paladin, Druid) because they are the scarce resource; the **third** slot prefers a
+Warrior; heal slots come from Priest, Paladin, Shaman or Druid; everything else is
+DPS." **There is no slot-filling pass, no ordering, and no "prefers a Warrior".**
+There are no slots at all. The actual loop (`PlayerbotMgr.cpp:2825-2873`) is:
+
+1. `BotRoles role = BotRoles(urand(BOT_ROLE_TANK, BOT_ROLE_DPS))` — a **uniform
+   random role**, redrawn every iteration.
+2. If that role has no classes left (`allowedClassNr[0][role] == 0`) → `continue`.
+3. `uint8 cls = factory.GetRandomClass(0, role)` — a random class that can fill
+   that role.
+4. Faction check: Paladin-on-HORDE and Shaman-on-ALLIANCE → `continue`.
+5. Class-cap check → `continue` if exhausted.
+6. `HandleCreate` with `level= class= group=` — **and no `role=`** (`:2855`).
+7. Decrement `allowedClassNr[0][role]` and `allowedClassNr[cls][role]`
+   (`:2870-2873`), then loop until the group is full or `maxTries` is spent.
+
+There is no "first pass the tanks", no third-slot special case, and no class
+preference of any kind — the role draw is uniform, so a 20-man consumes its tank
+quota at the same rate as everything else, purely by luck of the draw.
+
+**And the specs are not assigned at all**, which is the consequence that matters:
+`CreateBot` receives no `role=`, holds `BOT_ROLE_NONE` (`:2536`), and
+`AutoSelectTalents` at `:2680` skips its role filter
+(`ChangeTalentsAction::getPremadePaths:170`) and picks a **random premade spec for
+that class** (`PickPremadePath:230`). So "2 tanks" in the 20-man row means *two
+tank-capable CLASSES were drawn* — not two protection warriors. Verify with
+`.raid check`, promote with `.raid tanks <n>`.
 
 #### Interrupts
 
@@ -784,20 +1072,26 @@ each bot takes the first filter that matches, so a tank who is also melee keeps
 ### Why the script does not need to know anyone's spec
 
 The role filters are evaluated by **each bot against its own installed strategy
-set** (`RoleChatFilter`, `ChatFilter.cpp:177-213`), which is correct because
-`.bot group` already built the kit from the real talent tab. A bot's role is a
-property of its **spec strategy**, not its class — a `fury` warrior and a
-`protection` warrior are both class 1. So the script says "@tank, use shield" and
-every tank decides for itself. An earlier version of this script invented a
-per-class spec table to assign formations from; that was both unnecessary and
-less accurate.
+set** (`RoleChatFilter`, `ChatFilter.cpp:177-213`). A bot's role is a property of
+its **spec strategy**, not its class — a `fury` warrior and a `protection` warrior
+are both class 1. So the script says "@tank, use shield" and every tank decides
+for itself. An earlier version of this script invented a per-class spec table to
+assign formations from; that was both unnecessary and less accurate.
+⚠️ **The old justification here was "which is correct because `.bot group` already
+built the kit from the real talent tab."** The filtering mechanism is correct, but
+that reason is not: `.bot group` does **not** build a kit from a real talent tab
+for this purpose — it hands `AutoSelectTalents` a `BOT_ROLE_NONE` and lets it pick
+a random premade spec (`PlayerbotMgr.cpp:2680`,
+`ChangeTalentsAction::getPremadePaths:170`). So the filters will correctly report
+*whatever spec each bot ended up with* — including "not a tank", for most of a
+freshly assembled roster. Run `.raid check` first, `.raid tanks <n>` second.
 
 ### Quota Allocation by Group Size
 
 The census **rounds up** to the next row, so a scaled raid that fields fewer
 players than its bracket still reports that bracket's shape. These are the same
-numbers `.bot group` targets, and this is a **feasibility check, not a
-measurement** — the script cannot read a bot's talents from Eluna.
+**class-shape** numbers `.bot group` targets, and this is a **feasibility check,
+not a measurement** — the script cannot read a bot's talents from Eluna.
 
 | Bracket | Group Size | Target Tanks | Target Healers | Target DPS |
 | :---: | :---: | :---: | :---: | :---: |
@@ -811,8 +1105,10 @@ The 40-man row also caps classes in `.bot group`'s own table — priest healers
 11, mage DPS 15, warrior DPS 8, and **paladin tanks 0**.
 
 If the census reports fewer tank-capable or heal-capable bots than the row wants,
-that is a real shortfall and `.dc on` will refuse. Fix it with a different
-`.bot group size=`, or promote tanks with `.raid tanks <n>`.
+that is a real shortfall and `.dc on` will refuse. ⚠️ Note the census counts
+**tank-capable classes**, which `.bot group` really does shape — so a healthy
+census is *not* evidence that anyone is protection-specced. Confirm with
+`.raid check`, and promote real tanks with `.raid tanks <n>`.
 
 ### Stances
 
@@ -840,7 +1136,7 @@ earlier version of this document recommended it. `stance tank` is a valid
 | Cross / Square / Diamond / Triangle | 6 / 5 / 2 / 3 | a tank with `mark rti` | `.raid marks <tank> <icon>` |
 
 > ⚠️ **Moon is icon 4, and it is the engine's own CC marker** — hard-coded in
-> `FindNonCcTargetStrategy::IsCcTarget` (`values/TargetValue.cpp:57-59`) and the
+> `FindNonCcTargetStrategy::IsCcTarget` (`strategy/values/TargetValue.cpp:57-59`) and the
 > default of the `rti cc` value. `dps aoe` skips whatever carries it. An earlier
 > version of this document said `.raid ccmark` sets **Triangle (icon 3)**; that
 > was wrong, and it mattered, because a triangle-marked mob is a *priority kill*
@@ -904,11 +1200,19 @@ Handy overrides:
 
 ### Picking a 3rd / 4th off-tank
 
-`.bot group size=20` builds a **2-tank** roster, and `size=40` a 4-tank one
-(`AllowedClassRoleNr`). Turtle-WoW raids scale 20–40, so a 25- or 30-man fielded
-with a `size=40` group, or a 20-man that wants a third tank, needs the count
-raised. That is the one thing `.bot group` cannot do, because the count is fixed
-by the size row you asked for.
+`.bot group size=20` draws a **2-tank-class** roster, and `size=40` a 4-tank-class
+one (`AllowedClassRoleNr`, `InviteToGroupAction.cpp:105-121`). Turtle-WoW raids
+scale 20–40, so a 25- or 30-man fielded with a `size=40` group, or a 20-man that
+wants a third tank, needs the count raised. That is the one thing `.bot group`
+cannot do, because the count is fixed by the size row you asked for.
+
+⚠️ **Read "tank" in that sentence as "tank-capable class", not "protection
+specced".** The size row governs which classes get drawn; it says nothing about
+which spec any of them ends up with, because `.bot group` forwards no `role=`
+(`PlayerbotMgr.cpp:2855`) and `AutoSelectTalents` receives `BOT_ROLE_NONE`
+(`:2680`) and picks a random premade spec. **`.raid tanks <n>` is therefore not
+merely a convenience for going above the row — on a fresh roster it is how you get
+tanks at all**, including the 2 the row already called for.
 
 ```text
 .raid roles                 -- prints the tank-capable bot names, copy-paste
@@ -962,17 +1266,63 @@ Teleport your entire group/raid directly to the entrance of any dungeon or raid 
 
 ### Turtle-WoW Custom Raids & Dungeons
 
-| Token Alias | Destination Instance | Bracket | Map ID | Location |
+⚠️ **The "Map ID" column below is SUPERSEDED — it is the v1.3.0-era table and it is
+known-wrong.** It is left in place so the change is visible, and the verified
+values are given in the footnote immediately under it. The mistake was previously
+documented only in [§5.1](#51-complete-dc-command-reference-engine-verified), some
+500 lines away; it is called out here because this is where a reader looks.
+
+| Token Alias | Destination Instance | Bracket | Map ID *(superseded — see footnote)* | Location |
 | :--- | :--- | :---: | :---: | :--- |
-| `.raid tele scarlet` | **Scarlet Citadel** | 10-Man Raid | **811** | Tirisfal Glades |
-| `.raid tele karazhan` | **Tower of Karazhan** | 10/40-Man Raid | **812** | Deadwind Pass |
-| `.raid tele timbermaw` | **Timbermaw Hold** | 20-Man Raid | **815** | Felwood |
-| `.raid tele sanctum` | **Emerald Sanctum** | 40-Man Raid | **814** | Mount Hyjal |
-| `.raid tele crypt` | **Karazhan Crypts** | 58–60 Dungeon | **813** | Deadwind Pass |
-| `.raid tele hateforge` | **Hateforge Quarry** | 50–60 Dungeon | **806** | Burning Steppes |
-| `.raid tele crescent` | **Crescent Grove** | 32–38 Dungeon | **805** | Ashenvale |
-| `.raid tele vault` | **Stormwind Vault** | Level 60 Dungeon | **810** | Stormwind City |
-| `.raid tele gilneas` | **Gilneas City** | 42–48 Dungeon | **807** | Gilneas |
+| `.raid tele scarlet` | **Scarlet Citadel** | 10-Man Raid | ~~811~~ → **45** | Tirisfal Glades |
+| `.raid tele karazhan` | **Tower of Karazhan** | 10/40-Man Raid | ~~812~~ → **0** *(entrance)* | Deadwind Pass |
+| `.raid tele timbermaw` | **Timbermaw Hold** | 20-Man Raid | ~~815~~ → **1** | Felwood |
+| `.raid tele sanctum` | **Emerald Sanctum** | 40-Man Raid | ~~814~~ → **807** | Mount Hyjal |
+| `.raid tele crypt` | **Karazhan Crypts** | 58–60 Dungeon | ~~813~~ → **0** *(entrance)* | Deadwind Pass |
+| `.raid tele hateforge` | **Hateforge Quarry** | 50–60 Dungeon | ~~806~~ → **808** | Burning Steppes |
+| `.raid tele crescent` | **Crescent Grove** | 32–38 Dungeon | ~~805~~ → **802** | Ashenvale |
+| `.raid tele vault` | **Stormwind Vault** | Level 60 Dungeon | ~~810~~ → **0** *(entrance)* | Stormwind City |
+| `.raid tele gilneas` | **Gilneas City** | 42–48 Dungeon | ~~807~~ → **815** | Gilneas |
+
+> ⚠️ **Map ID footnote — verified against `tw_world.game_tele`, and stated in full
+> in [§5.1](#51-complete-dc-command-reference-engine-verified).** Every row of the
+> old column was wrong, and **Timbermaw Hold and Gilneas City were swapped** with
+> each other as well: the table gave Timbermaw `815` and Gilneas `807`, while the
+> database says Timbermaw is map `1` and Gilneas is `815`. Verified values:
+> Scarlet Citadel = **45**, `sanctumraid` = **807**, `crescentgrove` = **802**,
+> `hateforgeinstance` = **808**, `gilneascity` = **815**, `TimbermawHold` = **1**,
+> and Karazhan / Crypt / Vault = **0**, which is correct and not a bug — their
+> interior maps **35** (Stormwind Vault), **532** + **814** (Karazhan) and **800**
+> (Karazhan Crypt) have **no** `game_tele` row at all, so the outdoor entrance
+> row is the only teleport that exists. *(The ids `810 / 812 / 813` this block
+> previously gave are the old wrong numbers: `812` is not a map, and `813` is
+> `Winter Veil Vale`.)*
+>
+> One more inconsistency in this table, left as-is but flagged: the **Bracket**
+> column says `10-Man Raid` for Scarlet Citadel, while
+> [§12.3](#123-scarlet-citadel-map-45-40-man-raid-fortress) describes map `45` as
+> a **40-Man Raid Fortress** with seven scripted bosses and a
+> `SealedEncounterRegistry` that waits for all 40 members. The encounter reference
+> is the more detailed and more recently verified of the two, so read `40-Man`
+> there. This bracket discrepancy was not part of the Map ID audit and has not
+> been independently re-audited.
+
+> 📋 **Seven working aliases are missing from this table.** The script's
+> `TELEPORT_PRESETS` table (`raid_automation.lua:786-816`) implements a long-form
+> synonym for most of these, and only `zf` was ever mentioned in this handbook:
+>
+> | Extra alias | Resolves to | Present in §8? |
+> | :--- | :--- | :---: |
+> | `.raid tele molten` | `mc` (Molten Core) | ❌ |
+> | `.raid tele blackwing` | `bwl` (Blackwing Lair) | ❌ |
+> | `.raid tele zulgurub` | `zg` (Zul'Gurub) | ❌ |
+> | `.raid tele naxxramas` | `nax` (Naxxramas, inside) | ❌ |
+> | `.raid tele onyxia` | `onyxia` (Onyxia's Lair, inside) | ❌ |
+> | `.raid tele st` | `st` (Sunken Temple) | ❌ |
+> | `.raid tele zf` | `zf` (Zul'Farrak) | ⚠️ mapped, but **no `game_tele` row exists on map 209** — it reports "not found" |
+>
+> `.raid tele st` in particular is worth knowing: without it there is no listed
+> teleport to Sunken Temple at all.
 
 ---
 
@@ -980,7 +1330,7 @@ Teleport your entire group/raid directly to the entrance of any dungeon or raid 
 
 ### Why `.bot gear * epic` instead of `epics`?
 
-In `modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp` (line 3123):
+In `modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp` (line **3178**; the factory is constructed at :3180 — an earlier revision of this section cited 3123, which no longer points at the check):
 
 ```cpp
 if (param == "purple" || param == "epic")
@@ -995,7 +1345,7 @@ The engine string parser performs an exact string equality check on `"epic"` or 
 
 ### Why does `.bot prep *` take no quality argument?
 
-In `PlayerbotMgr.cpp` (line 3197):
+In `PlayerbotMgr.cpp` (line **3252**; an earlier revision cited 3197):
 
 ```cpp
 std::string PlayerbotHolder::HandleBotPrepare(Player* bot, Player* master, const std::string param)
@@ -1018,15 +1368,69 @@ if (!DungeonClearDispatch::DispatchToTankBots(issuer, action, param))
     handler->SendSysMessage("No tank bot found in your group.");
 ```
 
-The autonomous solver does not take over arbitrary bots. It specifically searches your group for a bot whose **role is tank**, and role comes from the installed spec strategy (`PlayerbotAI::IsTank`). `.bot group` already assigns that spec when it creates a bot for a tank slot — `HandleCreate` calls `AutoSelectTalents(newBot, out, role)` with the role it picked. `.raid roles` does **not** assign it and no longer claims to; if your tank is not actually protection/feral-specced, promote one with `.raid tanks <n>`.
+The autonomous solver does not take over arbitrary bots. It specifically searches
+your group for a bot whose **role is tank**, and role comes from the installed spec
+strategy (`PlayerbotAI::IsTank`).
 
-### Why use Greater Blessing of Kings (+10% all stats) over multiple blessings?
+⚠️ **This paragraph previously said "`.bot group` already assigns that spec when it
+creates a bot for a tank slot — `HandleCreate` calls `AutoSelectTalents(newBot,
+out, role)` with the role it picked."** The function reference was right; **the
+role is `BOT_ROLE_NONE`, and the line is `:2680`, not `:2684`.** `HandleGroup`
+rolls a role at `PlayerbotMgr.cpp:2825`, uses it only to pick a class (`:2831`),
+and forwards **no `role=`** in the create string (`:2855`), so `HandleCreate` keeps
+`BOT_ROLE_NONE` (`:2536`, written only at `:2562-2563`) and
+`AutoSelectTalents(newBot, &out, role)` at **`:2680`** receives that.
+`ChangeTalentsAction::getPremadePaths` skips its role filter when the role is
+`BOT_ROLE_NONE` (`:170`) and `PickPremadePath` (`:230`) picks a **random** premade
+spec for the class. **A tank-role spec is therefore not something `.bot group`
+gives anyone.**
 
-In Classic WoW, a player can only receive **one blessing per Paladin caster**. When an Eluna script iterates through multiple Greater Blessings from the same caster, each blessing overwrites the previous one. Greater Blessing of Kings (Spell ID `25898`) provides a flat +10% increase to Strength, Agility, Stamina, Intellect, and Spirit across all classes without generating negative threat interactions (such as Blessing of Salvation on a tank).
+`.raid roles` does **not** assign it either, and no longer claims to. The one
+command that does is **`.raid tanks <n>`** — `talents do protection` followed by
+`reset ai` (`raid_automation.lua:1965-1972`). If your tank is not actually
+protection/feral-specced, promote one with `.raid tanks <n>` (or check first with
+`.raid check`).
+
+### 🗄️ ORPHANED / HISTORICAL — "Why use Greater Blessing of Kings over multiple blessings?"
+
+> 🚨 **This FAQ is ORPHANED. The code it rationalises no longer exists, and this
+> handbook contradicts it four other times.** Read the banner, then skip the
+> paragraph.
+>
+> - **`.raid buff` / `.raid wbuff` / `.raid worldbuff` send nothing.** They only
+>   `Say()` an explanation (`raid_automation.lua:3499-3506`). The whole script
+>   contains **zero** `CastSpell` call sites — stated in
+>   [the §5.1 command reference](#51-complete-dc-command-reference-engine-verified),
+>   in the Stage 5 note in
+>   [§3](#3-the-master-1-click-pipeline-raid-ready) and in
+>   [§13.3](#133--roster--who-is-here-and-what-they-can-do). The
+>   "Instant Raid Buffs" Stage 5 this FAQ belongs to was **removed**, together with
+>   the per-class aura table that sat underneath it.
+> - **A per-class aura table would now be actively harmful, so reintroducing it
+>   would be a regression, not a fix.** The engine already handles auras per spec:
+>   `buff` is in every default combat kit and each spec strategy wires its own.
+>   A table keyed on class would send **`water shield` to every shaman**,
+>   overwriting the engine's correct per-spec choice — enhancement should get
+>   *lightning shield*, restoration *water shield*. That single wrong-aura case is
+>   what got the table removed in the first place.
+> - **The one-blessing-per-caster rule below is still true game rules**, and the
+>   reasoning about *why* a single shared blessing would be the right choice for a
+>   hand-rolled table is sound. It is simply **moot**: no such table exists, and
+>   this is not the layer where aura selection belongs.
+>
+> If you ever find yourself restoring this FAQ's table, that is a regression. Fix
+> the spec strategy instead.
+
+*Original FAQ text, kept for history:* In Classic WoW, a player can only receive
+**one blessing per Paladin caster**. When an Eluna script iterates through multiple
+Greater Blessings from the same caster, each blessing overwrites the previous one.
+Greater Blessing of Kings (Spell ID `25898`) provides a flat +10% increase to
+Strength, Agility, Stamina, Intellect, and Spirit across all classes without
+generating negative threat interactions (such as Blessing of Salvation on a tank).
 
 ---
 
-## 13. The `.raid` Operator Facade (v1.3.0)
+## 13. The `.raid` Operator Facade (v1.4.0)
 
 > ⚠️ **Numbering note.** This section is §13 and sits before the encounter
 > encyclopaedias on purpose — it is command reference, and the encyclopaedias
@@ -1034,10 +1438,10 @@ In Classic WoW, a player can only receive **one blessing per Paladin caster**. W
 > that table is the short form and this is the long one.
 
 The stated purpose of this handbook is to **eliminate manual command
-micromanagement**. v1.3.0 is what that actually looks like: `.raid` is no longer
+micromanagement**. v1.4.0 is what that actually looks like: `.raid` is no longer
 a thin convenience layer over `.dc` and `.bot`, it is a **five-layer operator
-facade** with 12 + 27 + 19 + 4 + 4 commands, an optional `@filter` prefix on every
-order that talks to bots, and a built-in trap register.
+facade** with 12 + 27 + 19 + 4 + **6** commands, an optional `@filter` prefix on
+every order that talks to bots, and a built-in trap register.
 
 ```text
 Layer        What it is for                                    Size
@@ -1046,16 +1450,27 @@ BATTLE       run control, mod-dungeon-clear                      12
 ROSTER       who is here, what they can do, what they are running 27
 TOGGLES      operator switches — every one now has an off form   19
 MOVE         getting bots where they need to be                   4
-PASS         escape hatches to the raw engines                    4
+PASS         escape hatches to the raw engines, plus two
+             no-op diagnostics (preview, pending)                  6
 ```
 
-Two functional gaps are closed by this revision, and they were the two that
+> ⚠️ **Superseded counts, kept visible.** An earlier revision of this section said
+> "**12 + 27 + 19 + 4 + 4**" and gave the total as **66 verbs**. **The total is now
+> 68**, and only the last layer moved: v1.4.0 added two PASS commands,
+> **`.raid preview`** and **`.raid pending`** (`raid_automation.lua:1262` and
+> `:1267`). BATTLE 12, ROSTER 27, TOGGLES 19 and MOVE 4 are all still correct —
+> they match the `COMMANDS` table (Lua `:1170-1268`) counted by `LayerCount()`
+> (`:2297-2311`), which is also what the bare `.raid` index prints.
+
+Two functional gaps were closed in v1.3.0, and they were the two that
 actually hurt:
 
 - **`.raid group <size>`** now wraps the missing **step 1**. v1.2.0's own
   documentation said `.bot group size=N` came first, and then never wrapped it —
   so the documented order was not executable from inside `.raid`. It is now
-  `.raid group size=20`, and it is the same string.
+  `.raid group size=20`, and it is the same string. ⚠️ Note what "step 1" means
+  here: it **fills the roster**, it does not assign specs. The spec step is
+  `.raid tanks <n>`, and the verify step is `.raid check`.
 - **Every toggle has an off form.** v1.2.0 could turn `loot` / `rest` / `aoe` /
   `gather` / `avoid` / `roll` on and nothing could turn them off again. That is
   the entire reason the TOGGLES table exists in the script; in v1.2.0 it was a
@@ -1075,13 +1490,27 @@ Three v1.2.0 behaviours were actively misleading, and all three are now fixed:
 
 | v1.2.0 behaviour | v1.3.0 |
 | :--- | :--- |
-| `.raid` had ~25 verbs and no diagnostics at all | **66 verbs** across five layers — 12 + 27 + 19 + 4 + 4 — including live per-bot strategy, gear score, spell list, position and avoid-list queries |
+| `.raid` had ~25 verbs and no diagnostics at all | **66 verbs** across five layers — 12 + 27 + 19 + 4 + **4** — including live per-bot strategy, gear score, spell list, position and avoid-list queries |
 | One-way toggles | Every toggle has an explicit off form; `unfocus` is genuinely new |
 | An unrecognised `.raid <word>` dumped a 40-line help screen | A one-line "no such command" plus the **closest** matching command, as "Did you mean X?" when it is within edit distance 3 and "Closest: X" otherwise |
 
 The v1.2.0 help screen is still reachable as `.raid help full`. Nothing was
 deleted — the druid coin-flip note, the cosmetic-marker note, the Naxx routing
 warning and the MT-election warning all live in there.
+
+#### v1.3.0 → v1.4.0
+
+⚠️ This table was **missing entirely** — the section jumped straight from
+`v1.2.0 → v1.3.0` and never covered the current release, so a reader auditing the
+live script had no account of what changed. All four rows are verified against
+`run/lua_scripts/raid_automation.lua` (**v1.4.0**).
+
+| v1.3.0 behaviour | v1.4.0 |
+| :--- | :--- |
+| **PASS had 4 verbs** — `all`, `one`, `dc`, `bot`. A typo in a raw verb was invisible, because the engine ignores unrecognised commands **silently**, so a mis-typed order looks exactly like a successful one. | **PASS has 6.** Added **`.raid preview <sub> [args]`** (`:2809-2851`) — a true dry run. It sets `DRY = true`, re-invokes the real `DispatchRaidCommand` under `pcall`, routes `Emit` into a buffer instead of the server, then prints the exact numbered command list it **would** have sent and sends nothing. It refuses to nest (`Refusing to nest a preview inside a preview`) and reports `would send nothing` when the branch really is a no-op. Added **`.raid pending`** (`:2858-2861`) — prints `Step queue: N pending (cap 64, T ticks since load)`, so an operator can tell a long batch from a stuck one. |
+| **Multi-step commands were back-to-back whispers.** `.raid attune` and `.raid tanks` fired every step immediately in one burst, so an error between two steps was invisible and left the raid half-applied. | **A bounded deferred-step queue**, drained by `MAP_EVENT_ON_UPDATE` (event `23`) → `OnMapTick` (`:3702`, implementation `:1461-1487`): **one step per map tick**, `STEPS_MAX = 64` (`:1429`) and `STEP_MAX_AGE_TICKS = 200` (`:1430`). Growth past the cap is **refused with a message**, a batch that stalls past 200 ticks is **aborted and reported**, and every step is `pcall`ed so one bad step aborts the rest instead of continuing half-applied. `.raid attune` (`:1668`) and `.raid promote`/`.raid tanks` (`:1974`) both enqueue into it. |
+| **Promotion sent `talents do <spec>` and `reset ai` as two back-to-back whispers**, and could interleave with anything else. | **ORDERED promotion.** The same two commands are now two consecutive queue steps per bot (`:1955-1972`). The reason is precise and the failure was silent: `talents do` without a following `reset ai` leaves a bot **carrying new talents with a strategy set rebuilt from the OLD talent tab** — exactly the half-state `reset ai` exists to prevent. Queuing them in order makes an error between them visible at the moment it happens, instead of surfacing much later as "this bot behaves like the wrong spec". The script now prints `N steps queued - respec and rebuild stay paired`, and if the queue refuses the batch it says so explicitly: `Promotion queue refused - NO talent command was sent.` |
+| **Runtime errors in a command were invisible to the operator.** The dispatch body was registered directly with the event, with **zero `pcall`**, so a mid-command failure only reached `ELUNA_LOG_ERROR` in a log file the operator is not reading — chat just stopped with no explanation. | **`OnRaidCommand` wraps the dispatch in `pcall`** (`:3639-3654`). On failure it reports in the operator's own chat: `Command failed mid-way: <err>`, then `Some commands may already have been sent. Use .raid pending and .raid status to see where it got to.` The success path is untouched. Combined with `.raid pending`, a partially-applied command is now both **visible** and **diagnosable**. |
 
 ### 13.2 ⚔️ BATTLE — run control
 
@@ -1090,12 +1519,12 @@ script never addresses a tank for DC.
 
 | Command | Engine string | Note |
 | :--- | :--- | :--- |
-| `.raid start [<off\|on\|dynamic>]` | `dc bosses` → `dc pull <m>` → `dc on` → `dc status` | In that order, and it **matters**. `dc bosses` is the only verb with no authorization gate and works while DC is off; an empty anchor list is what `dc on` will refuse on. `dc pull` is sent **before** `dc on` because the preference survives the disabled window and `dc on` applies it at run start. **`dc on` is issued exactly once, ever** — re-running it wipes skip and progress state and un-skips every boss. |
+| `.raid start [<off\|on\|dynamic>]` | `dc bosses` → `dc pull <m>` → `dc on` → `dc status` | In that order, and it **matters**. `dc bosses` is **one of only three verbs with no authorization gate** (see the gate list below) and works while DC is off; an empty anchor list is what `dc on` will refuse on. `dc pull` is sent **before** `dc on` because the preference survives the disabled window and `dc on` applies it at run start. **`dc on` is issued exactly once, ever** — re-running it wipes skip and progress state and un-skips every boss. |
 | `.raid stop` | `dc off` | v1.3.0 alias of `off`; same string. `stop` is the word an operator reaches for first, `off` is the word DC itself uses. |
 | `.raid off` | `dc off` | Tears down the run. |
 | `.raid pause` | `dc pause pause` | **Explicit intent, never the bare toggle.** The bare form is a stateless toggle that races DC's own auto-pause sites, so a pause landing just after a door or wait-at-boss auto-pause **resumes** instead (`DungeonClearChatActions.cpp:1096-1107`). Boss progress is preserved. |
 | `.raid resume` | `dc pause resume` | The other half of the same reasoning. |
-| `.raid go <boss>` | `dc go <boss>` | Also **clears any pause** as part of its intent, so `go` is itself a resume. Matching is exact numeric creature entry first, then a case-insensitive substring on the boss name. |
+| `.raid go <boss>` | `dc go <boss>` | Also **clears any pause** as part of its intent — `DcRun::Of(context).paused = false;` at `DungeonClearChatActions.cpp:1046` (an earlier revision cited `:1044-1046`, which no longer brackets it) — so `go` is itself a resume. Matching is exact numeric creature entry first, then a case-insensitive substring on the boss name. |
 | `.raid skip` | `dc skip` | Abandons the current anchor or due event. |
 | `.raid pull <off\|on\|dynamic>` | `dc pull <mode>` | Bare **sets `dynamic`**; anything unrecognised is **clamped to `dynamic`** with a correction printed. The engine's `(current+1)%3` bare toggle is unreachable from here. |
 | `.raid status` | `dc status` | The leader's own view. |
@@ -1107,13 +1536,43 @@ script never addresses a tank for DC.
 > mistake with `go`:** `.raid go onyxia`, not `.raid go` followed by a chat
 > message. The argument is parsed from the same line.
 
+#### Which verbs have no authorization gate
+
+⚠️ **Superseded claim, kept visible:** this section used to say `dc bosses` is
+"**the only verb with no authorization gate**". **That is false.** Of the **nine**
+`Execute` handlers in `DungeonClearChatActions.cpp`, **six** call
+`IsAuthorized(bot, event)` and **three** do not:
+
+| Handler | `Execute` at | Authorization gate |
+| :--- | :---: | :---: |
+| `DcOnAction` | `:223` | ✅ `:225` |
+| `DcOffAction` | `:355` | ✅ `:357` |
+| `DcSkipAction` | `:394` | ✅ `:396` |
+| `DcStatusAction` | `:480` | ❌ **none** |
+| `DcBossesAction` | `:517` | ❌ **none** |
+| `DcGoAction` | `:896` | ✅ `:898` |
+| `DcPauseAction` | `:1075` | ✅ `:1077` |
+| `DcResumeOnDoorOpenedAction` | `:1159` | ❌ **none** |
+| `DcPullAction` | `:1185` | ✅ `:1187` |
+
+So the correct statement is: **`dc bosses`, `dc status` and the
+door-reopened auto-resume are the only three verbs with no authorization gate.**
+(`DcResumeOnDoorOpenedAction` is not a chat verb at all — it is the engine's own
+auto-resume when a door opens — so among the verbs an operator can *type*, it is
+`dc bosses` and `dc status`.)
+
+**The advice that rested on the old claim is unchanged and still worth following:**
+run `dc bosses` as a pre-flight. It works before `dc on` has ever been issued, and
+an empty anchor list is exactly what `dc on` will refuse on. The exclusivity was
+never what made it useful.
+
 ### 13.3 📋 ROSTER — who is here, and what they can do
 
 #### The commands
 
 | Command | Engine string | Note |
 | :--- | :--- | :--- |
-| `.raid group <size>` | `bot group size=<n>` | **STEP 1.** Loops until the group is full, picking a ROLE at random then a class that can fill it, and `AutoSelectTalents` per bot — this is what gives every bot a role-matched, **varied** spec. Waits for completion; it creates bots one at a time. Above 40 the script refuses outright, because the engine parses `size=` with `stoi` into a `uint8` and a larger number **wraps** instead of failing. |
+| `.raid group <size>` | `bot group size=<n>` | **STEP 1 — the roster filler, not the spec step.** It loops until the group is full, picking a ROLE at random then a class that can fill it. ⚠️ **It does NOT give every bot a role-matched spec** — an earlier version of this row claimed it did. `HandleGroup` never forwards `role=`, so `AutoSelectTalents` receives `BOT_ROLE_NONE` and picks a random premade spec for the class (`PlayerbotMgr.cpp:2825`/`:2831`/`:2855` → `:2680` → `ChangeTalentsAction::getPremadePaths:170`, `PickPremadePath:230`). **Follow it with `.raid check` and `.raid tanks <n>`, which is the only re-spec path.** Waits for completion; it creates bots one at a time. Above 40 the script refuses outright, because the engine parses `size=` with `stoi` into a `uint8` and a larger number **wraps** instead of failing. |
 | `.raid roles` · `.raid setup` | 5 broadcasts | Census, formations by role, `co +focus rti targets` on `@dps`. Sends **no** talent commands. |
 | `.raid ready [<quality>]` · `.raid auto` | `roles` + `gear` + `attune` | ⚠️ **Takes only `best` and `epic`**, and unlike `gear` it silently coerces anything else to `best`. |
 | `.raid gear [<quality>]` · `.raid prep` | `bot gear * <q>` + enchants/train/prep/consumes/food/potions/regs/ammo + `repairitems`/`replenish` | 10 accepted qualities — see [§5.1](#51-complete-dc-command-reference-engine-verified). |
@@ -1142,7 +1601,7 @@ are the first thing to reach for when a bot is not behaving.
 
 | Command | Engine string | What it actually answers |
 | :--- | :--- | :--- |
-| **`.raid check [<name>]`** | `bot r all ?` · `bot w <name> all ?` | **Every bot prints its live installed strategy set, all four engines.** This is the single most useful command in the facade. `all ?` is a real node (`ChatCommandHandlerStrategy.cpp:53`) → `ChangeAllStrategyAction` (`ChatActionContext.h:135`) → `ChangeStrategyAction.cpp:148-151`, which calls `ai->PrintStrategies(requester, BOT_STATE_ALL)`. The `?` is the only character that makes it print, and it is a plain substring test, so it rides along harmlessly in the same message. Sibling forms by state: `co ?` (`:40`), `nc ?` (`:78`), `de ?` (`:94`), `react ?` (`:110`). |
+| **`.raid check [<name>]`** | `bot r all ?` · `bot w <name> all ?` | **Every bot prints its live installed strategy set, all four engines.** This is the single most useful command in the facade, and after the `.bot group` correction above it is the **verification step you should not skip**. `all ?` is a real node → `ChangeAllStrategyAction` (`ChatActionContext.h:135`) → `ChangeStrategyAction.cpp:148-151`, which calls `ai->PrintStrategies(requester, BOT_STATE_ALL)`. The `?` is the only character that makes it print, and it is a plain substring test, so it rides along harmlessly in the same message. The five state-prefixed forms are **five adjacent lines of one `supported` list** in `strategy/generic/ChatCommandHandlerStrategy.cpp`: `co` **:49**, `nc` **:50**, `de` **:51**, `react` **:52**, `all` **:53** — so `co ?` is `:49`, `nc ?` is `:50`, `de ?` is `:51` and `react ?` is `:52`. ⚠️ An earlier revision of this row cited `:40`, `:78`, `:94` and `:110`; those are `ss`, `save mana`, `give leader` and `jump` and have nothing to do with this. **The script's own help text gets it right** — `raid_automation.lua:2541` prints `co  nc  de  react  all  strategy add/remove/print (:49-53)`, and that span is exactly right. So the error was this document's, not the script's; the Lua is a source file and is left untouched. |
 | **`.raid rc`** | `bot r ready` | Per-bot HP/MP, distance, and food / water / potion stock. Bots that fail report **which** check they failed. Also answers a raid ready-check. |
 | **`.raid gearscore`** (`.raid gs`) | `bot r who` | Class, talent spec, **level**, **gear score**, and equipped-item quality counts. `GetEquipGearScore` is called at `WhoAction.cpp:127`. |
 | **`.raid who`** | `bot r who` | The same string as `gearscore`; both print gear score. |
@@ -1150,6 +1609,15 @@ are the first thing to reach for when a bot is not behaving.
 | **`.raid spells [<name>]`** | `bot r spells` · `bot w <name> spells` | The spell list a bot has actually learned. This is the reliable way to confirm what it really specced, as opposed to what its class suggests. |
 | **`.raid where [<name>]`** (`.raid pos`) | `bot r where` | Where each bot actually is. This is how you find the one that did not follow. |
 | **`.raid avoidmob <id>` | `bot r avoid creature <id>` | "The raid should not path through these." `-<id>` removes one, bare **prints** the list. Comma-separate for several (`.raid avoidmob 1234,5678`). The engine accepts a creature **name** or a numeric id and answers either way, so a wrong guess is visible rather than silent. |
+
+**Two PASS-layer diagnostics belong with these, because they answer questions
+about a command you have not sent yet.** Both are documented in full in
+[§13.6](#136--pass--escape-hatches-to-the-raw-engines), and both send nothing:
+
+| Command | Engine string | What it actually answers |
+| :--- | :--- | :--- |
+| **`.raid preview <sub> [args]`** | *(none — dry run)* | "What would that command actually send, right now, for this roster?" It re-runs the real branch with `Emit` routed to a buffer and prints the numbered list. Use it **before** `.raid tanks <n>`, or before any `.raid all` you have not run before, because the engine ignores unrecognised commands silently and a typo otherwise looks exactly like a success. |
+| **`.raid pending`** | *(none — reports queue depth)* | "Is the deferred `.raid attune` / `.raid tanks` batch still draining, or is it stuck?" Prints `Step queue: N pending (cap 64, T ticks since load)`. Run it after any command that failed mid-way. |
 
 > ⚠️ **`.raid check` falsifies a claim the script itself used to make.** The
 > v1.2.0 header asserted that no chat command could report a bot's live strategy
@@ -1162,7 +1630,12 @@ are the first thing to reach for when a bot is not behaving.
 per bot, and on a 40-man it is a wall. What you are looking for is the spec
 strategy (`protection`, `holy`, `frost`, …) and `tank assist` / `dps assist`,
 which come from the engine's default kit rather than from anything the script
-sent.
+sent. ⚠️ **This run is no longer optional, and it is the step that replaces the
+`.bot group`-assigns-the-spec belief.** Because `HandleGroup` forwards no `role=`,
+the spec strategy in this dump is a **random pick from the class's whole premade
+list** — so `protection` may be absent from every single bot. Look for
+`protection` specifically, then run `.raid tanks <n>` for the count you need, then
+`.raid check` again only if a promotion misbehaved.
 
 ### 13.4 🎚️ TOGGLES — every switch now has an off form
 
@@ -1212,9 +1685,12 @@ same layer with a note rather than scattered.
 
 ### 13.6 🔓 PASS — escape hatches to the raw engines
 
-Four, and they are **last** on purpose. An operator who genuinely needs a raw verb
-should not have to read source to find it; an operator who is guessing should not
-have 55 verbs to guess from.
+**Six**, and they are **last** on purpose. An operator who genuinely needs a raw
+verb should not have to read source to find it; an operator who is guessing should
+not have 55 verbs to guess from. ⚠️ **Four was the v1.3.0 count** (superseded) —
+v1.4.0 added the last two rows, both of which are **no-op diagnostics** that
+belong here precisely because they answer "did that raw verb actually do
+anything?".
 
 | Command | Engine string |
 | :--- | :--- |
@@ -1222,6 +1698,71 @@ have 55 verbs to guess from.
 | `.raid one <name> <cmd>` | `bot w <name> <cmd>` — one order to one bot |
 | `.raid dc <sub> [args]` | `dc <sub> [args]` — the 10 live verbs in `DungeonClearDispatch` (`DungeonClearCommand.cpp:337-347`); the 11th, `test`, is **refused** as the GM harness |
 | `.raid bot <verb> [args]` | `bot <verb> [args]` — **allowlisted** passthrough |
+| **`.raid preview <sub> [args]`** | **nothing — dry run.** See below. |
+| **`.raid pending`** | **nothing — reports queue depth.** See below. |
+
+#### `.raid preview <sub> [args]` — the dry run
+
+`raid_automation.lua:2809-2851`. **It exists because the engine ignores
+unrecognised commands SILENTLY**, so a typo in a raw verb is indistinguishable
+from a success. `.raid preview` removes the ambiguity: it prints the exact
+command list a subcommand **would** send, and sends **nothing**.
+
+How it works: it sets `DRY = true`, then **re-invokes the real
+`DispatchRaidCommand`** for your subcommand under `pcall` with `Emit` routed into
+a buffer rather than to the server, then prints the buffer as a numbered list and
+clears `DRY`. It is the *same* code path as the live command, so what you read is
+what you would get — it is not a reimplementation that can drift.
+
+```text
+.raid preview roles
+.raid preview tanks 3
+.raid preview all @frost co +aoe
+```
+
+```
+.raid preview roles would send 5 command(s). Nothing was sent:
+   1. bot r @tank formation shield
+   2. bot r @heal formation far
+   ...
+```
+
+- A subcommand that really is a no-op prints `would send nothing` — which is
+  itself the answer you wanted.
+- **It refuses to nest**: `Refusing to nest a preview inside a preview.`
+- **One honest limitation**: the previewed command's own narrative `Say()` output
+  still prints and is **not** buffered. That is deliberate — buffering it would
+  mean routing the messaging helpers too, which is a much wider change than a dry
+  run needs. So read the numbered list and ignore the prose above it.
+- A runtime error inside the previewed branch is caught and reported as
+  `Preview of '<sub>' failed: <err>` — no `pcall` swallowed it silently.
+
+#### `.raid pending` — is the deferred batch draining or stuck?
+
+`raid_automation.lua:2858-2861`. One line of output:
+
+```text
+Step queue: 12 pending (cap 64, 37 ticks since load).
+```
+
+Read it like this:
+
+| Reading | Meaning | Action |
+| :--- | :--- | :--- |
+| `0 pending` | Nothing queued. The last batch finished. | Carry on. |
+| A small `N`, `T` climbing | **Normal.** The queue runs **one step per map tick** (Lua `:1461-1487`). A 40-man `.raid tanks` is 2 steps per bot, so a 20-bot promotion legitimately takes ~40 ticks. | Wait. |
+| `N` near `cap 64` | The queue is **full**. A further `.raid attune` or `.raid tanks` is **refused** with `Step queue full (N queued, 64 max) - '<label>' refused` — and for `promote` that means `Promotion queue refused - NO talent command was sent.` | Wait for it to drain. Nothing is half-applied. |
+| `T` past ~200 with `N` not falling | **Stuck.** `STEP_MAX_AGE_TICKS = 200` (`:1430`) aborts the batch and reports `'<label>' waited more than 200 ticks without completing; the batch is abandoned.` | Investigate the failing step; `.eluna reload` rebuilds the queue from scratch. |
+
+`.raid pending` is also the **first thing to run after any command that failed
+mid-way** — the `pcall` wrapper's own error message tells you to use it
+(Lua `:3648-3650`).
+
+> **`preview` and `pending` are diagnostics, not orders.** They sit in the PASS
+> layer because that is where "I am about to hand something to a raw engine"
+> lives, and both answer a question about that handoff. Neither appears in any
+> other layer's count, and neither sends a single command — `.raid preview` says
+> so on every run, and `.raid pending` has no engine string at all.
 
 > `bot w` reaches **every character on the named account**, not just one
 > character: the name is resolved with `GetAccountId` and fanned out across that
@@ -1263,15 +1804,15 @@ not knowing.
 | Refused | Why |
 | :--- | :--- |
 | **`delete`** | **Permanently deletes the character.** |
-| **`init`** | **Randomises gear** (`HandleBotInit`, `PlayerbotMgr.cpp:3267`). Distinct from `prep` — it is **not** an alias of it, and `.raid prep` is the safe one. |
+| **`init`** | **Randomises gear** (`HandleBotInit`, `PlayerbotMgr.cpp:3260` — an earlier revision cited `:3267`). Distinct from `prep` — it is **not** an alias of it, and `.raid prep` is the safe one. |
 | **`do`** | **Multi-word is broken.** `PlayerbotMgr.cpp:2023` re-reads an invariant `param` on every loop iteration, so the trimming is discarded and **`tank attack` can never resolve**. Only single-word actions work; use `.raid all tank attack` instead. |
 | **`c`** | **Inert.** It forces `"monstertalk " + param` into `cdebug`, `DebugAction` prints a usage line, and the handler returns `"ok"` — **reporting success while doing nothing**. |
 | **`tweak`** | **A no-op.** `sPlayerbotAIConfig.tweakValue = sPlayerbotAIConfig.tweakValue++` assigns the increment to itself and discards it, so the value never changes. GM-only, takes no arguments. |
 | **`cmd`** | Duplicate of `.raid one`, with a worse error message. |
 | **`reload`** | `SEC_GAMEMASTER`, and it reloads the whole AI config mid-raid. |
 | **`help`** | Refused so it cannot shadow `.raid help`, which is the operator surface. Use `.raid help chat` for the raw chat-command list. |
-| **`refresh`** | ⚠️ **Advertised in the engine's own help** at `PlayerbotMgr.cpp:3421` and implemented at `:3355` — but **absent from the handler map**, so it answers "unknown command". Listed here because anyone who reads the help will try it. |
-| `levelup` · `level` · `always` · `random` · `self` · `spoof` · `create` · `runtest` · `test` | Not exposed. `always` flips whether **you** are treated as a self-bot, not a raid switch; `self` turns the caller into a self-bot; `spoof` overrides who the "master" is (a headless-testing hook); `create` bypasses the `HandleGroup` path that assigns role-matched specs, which is how you get a raid of badly-specced bots. |
+| **`refresh`** | ⚠️ **Advertised in the engine's own help** at `PlayerbotMgr.cpp:3414` and implemented at `:3348` (`HandleBotRefresh`) — but **absent from the handler map**, so it answers "unknown command". An earlier revision cited `:3421` and `:3355`. Listed here because anyone who reads the help will try it. |
+| `levelup` · `level` · `always` · `random` · `self` · `spoof` · `create` · `runtest` · `test` | Not exposed. `always` flips whether **you** are treated as a self-bot, not a raid switch; `self` turns the caller into a self-bot; `spoof` overrides who the "master" is (a headless-testing hook). ⚠️ On `create`: an earlier version of this row said it "bypasses the `HandleGroup` path **that assigns role-matched specs**, which is how you get a raid of badly-specced bots." **The relative clause was wrong** — `HandleGroup` assigns no role-matched specs at all, so `create` is not bypassing anything of the kind. What `create` actually bypasses is the **class-shape loop and its caps** (`AllowedClassRoleNr`): you get exactly the class and level you asked for, with no role quota to satisfy, which is how you end up with a raid that has no tank-capable class in it at all. `HandleCreate` still honours a `role=` if you pass one, because `:2562-2563` does parse it — `.bot group` is simply the path that never does. |
 | `!` | Not a `bot` verb at all — GM-only "select every bot" shorthand. Refused only so the error is legible. |
 
 ### 13.7 🏷️ FILTERS — the `@token` prefixes
@@ -1325,7 +1866,7 @@ was written when there were five layers; `filters` is the sixth.)
 | `.raid help roster` | 27 roster commands. |
 | `.raid help toggles` | The toggle table, on and off strings side by side. |
 | `.raid help move` | Soft vs hard, and the difference. |
-| `.raid help pass` | The four escape hatches. |
+| `.raid help pass` | The escape hatches — the four raw passthroughs, plus the `preview` and `pending` diagnostics. |
 | `.raid help filters` | The `@token` reference. |
 | `.raid help traps` | The footguns — see below. |
 | `.raid help chat` | The raw chat-command list, sorted into useful / fights-DC / irrelevant. |
@@ -1421,13 +1962,24 @@ produces false "this is broken" findings:
 .raid tele bwl
 .bot summon *
 
--- 3. Automated gearing, attunements, enchants, consumables
+-- 3. Verify specs, then PROMOTE REAL TANKS, then gear/attune
+--    .bot add creates characters; it never assigns a role-matched spec, and
+--    neither does .bot group. BWL needs an MT and an offtank, and
+--    "sam_tanks" is an account name, not a talent tab.
+.raid check
+.raid tanks 2
 .raid roles
 .raid ready
 
 -- 4. Engage autonomous raid clearing
 .raid start
 ```
+
+> ⚠️ **Do not skip `.raid tanks 2` in a BWL run.** `.raid start` ends in `dc on`,
+> which refuses with `No tank bot found in your group.` unless a bot's *installed
+> spec strategy* is protection or tank-feral. `.raid check` is how you find out
+> whether one is; `.raid tanks 2` is how you make one. See
+> [the `.dc on` tank requirement](#-that-role-does-not-come-from-bot-group-read-this-before-you-trust-dc-on).
 
 ### 10.2 Encounter Operations & Engine Automations
 
@@ -1467,8 +2019,8 @@ To ensure robust autonomous clearing and reliable bot behaviors across all vanil
 | **Zul'Farrak** | Map `209`<br>(5-Man) | **Pyramid Wave Event** | • **Ramp-Head Garrisoning**: Bots hold coordinates at top of ramp (`ZF_RAMP_X/Y/Z`), intercepting 100 descending Sandfury trolls before they reach Sergeant Bly and Weegli Blastfuse.<br>• **Gossip Door Trigger**: Blastfuse blows open the door; bots defeat Bly's crew upon betrayal. |
 | **Sunken Temple** | Map `109`<br>(5-Man) | **Avatar of Hakkar** (`8443`) | • **Blood Pool Suppression**: Hakkari Bloodkeepers and Suppressors channel into Hakkar's pool. Offtanks peel suppressors while raid holds center to summon the Avatar. |
 | **Blackrock Depths** | Map `230`<br>(5-Man) | **The Lyceum & Shadowforge Braziers** | • **Dual Flame Keeper Hunt**: 2 Shadowforge Flame Keepers drop braziers. Bots light both braziers within 5 minutes to unlock the Iron Hall doors before infinite dwarf waves overwhelm the party.<br>• **Princess Moira Preservation**: Offtank holds Princess Moira Bronzebeard (`8929`) with fears/stuns without killing her, ensuring Emperor Thaurissan is defeated while preserving the Ironforge royal succession. |
-| **Tower of Karazhan** | Map `812`<br>(10/40-Man) | **Netherspite & Prince Malchezaar** | • **Portal Beam Rotation**: Bots rotate Dominance, Serenity, and Perseverance beams on Netherspite to starve boss buffs and empower the tank/healer.<br>• **Infernal Avoidance**: Bots detect incoming Malchezaar Infernals and relocate outside 20yd fire impact radius. |
-| **Emerald Sanctum** | Map `814`<br>(40-Man) | **Sanctum Dragons** | • **Corrupted Treant Wave Burn**: Treant adds rooted and burned before reaching Sanctum guardians; nature breath cones faced away from raid. |
+| **Tower of Karazhan** | Map `532` 10-Man<br>Map `814` 40-Man<br>~~812~~ superseded | **Netherspite & Prince Malchezaar** | • **Portal Beam Rotation**: Bots rotate Dominance, Serenity, and Perseverance beams on Netherspite to starve boss buffs and empower the tank/healer.<br>• **Infernal Avoidance**: Bots detect incoming Malchezaar Infernals and relocate outside 20yd fire impact radius. |
+| **Emerald Sanctum** | Map `807`<br>(40-Man) | **Sanctum Dragons** | • **Corrupted Treant Wave Burn**: Treant adds rooted and burned before reaching Sanctum guardians; nature breath cones faced away from raid. |
 
 ---
 
@@ -1486,7 +2038,9 @@ To ensure robust autonomous clearing and reliable bot behaviors across all vanil
 .raid tele onyxia
 .bot summon *
 
--- 3. Automated gearing, attunements, enchants, consumables
+-- 3. Verify specs, then PROMOTE REAL TANKS, then gearing/attunements/enchants/consumables
+.raid check
+.raid tanks 2
 .raid roles
 .raid ready
 
@@ -1526,7 +2080,11 @@ Onyxia's Lair (Map `249`, Single Encounter Raid) operates on a fully determinist
 
 In addition to 40-man raid automation, our core features verified scripts, event triggers, and combat handling for 10-man raids and custom Turtle-WoW dungeons.
 
-### 12.1 Lower Karazhan Halls (Map `812`, 10-Man Raid)
+### 12.1 Lower Karazhan Halls (Map `532`, 10-Man Raid)
+
+> This heading previously said Map `812`. `812` is not a row in `map_template`
+> (`sql/base/tw_world_map_template.sql`); Lower Karazhan Halls is `532`
+> (`instance_lower_karazhan_halls`, `player_limit` 10).
 
 Located in Deadwind Pass, Lower Karazhan Halls represents an essential stepping stone between Tier 0.5/Tier 1 and 20/40-man raiding.
 
@@ -1554,7 +2112,11 @@ Moroes spawns with 4 random undead dinner guests from a pool of 6 possible noble
 
 - **Worgen Pack Cleave**: Howlfang summons ferocious Shadowfang Worgen. Tanks stack adds tightly for cleave; Hunters tranquilize enrage effects.
 
-### 12.2 Upper Karazhan Halls (Map `812`, 10-Man Raid)
+### 12.2 Upper Karazhan Halls (Map `814`, 40-Man Raid)
+
+> This heading previously said Map `812` and 10-Man. Both were wrong: Upper
+> Karazhan is `814` (`Karazhan (Upper)`, `player_limit` 40), while the 10-Man
+> Karazhan map is `532` (§12.1). `812` is not a row in `map_template`.
 
 #### King's Council (`boss_kings_council.cpp`)
 
@@ -1631,7 +2193,11 @@ The Scarlet Citadel is Turtle WoW's flagship raid fortress, featuring rigorous p
 - **Hazard Keep-Out (`DcHazardRegistry`)**: Void Zone (`2000016`), Kill Zone (`2000018`), Poison Cloud (`16363`) maintain 10yd standoff and 8yd active vacate.
 - **Script-Only Doors (`DcEventDoorRegistry`)**: Gates `5000001` through `5000010` are recognized as script-driven, preventing desync attempts.
 
-### 12.4 Karazhan Crypt (Map `813`, 5-Man Level 58–60 Dungeon)
+### 12.4 Karazhan Crypt (Map `800`, 5-Man Level 58–60 Dungeon)
+
+> This heading previously said Map `813`. `813` is `Winter Veil Vale`, a
+> 0-player map with no instance script. Karazhan Crypt is `800`
+> (`instance_karazhan_crypt`, `player_limit` 5).
 
 Custom high-level dungeon featuring tight subterranean corridors and punishing undead mechanics:
 

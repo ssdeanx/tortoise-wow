@@ -174,6 +174,7 @@ bool PlayerbotAIConfig::Initialize()
     ConfigAccess* configA = reinterpret_cast<ConfigAccess*>(&config);
 
     BarGoLink::SetOutputState(config.GetBoolDefault("AiPlayerbot.ShowProgressBars", false));
+    maxCharactersPerAccount = (uint32) std::max(1, config.GetIntDefault("AiPlayerbot.MaxCharactersPerAccount", 9));
     globalCoolDown = (uint32) config.GetIntDefault("AiPlayerbot.GlobalCooldown", 500);
     maxWaitForMove = config.GetIntDefault("AiPlayerbot.MaxWaitForMove", 3000);
     expireActionTime = config.GetIntDefault("AiPlayerbot.ExpireActionTime", 5000);
@@ -614,11 +615,7 @@ bool PlayerbotAIConfig::Initialize()
         return false;
     }
 
-#ifdef MANGOSBOT_TWO
-    uint32 const charactersPerBotAccount = 10;
-#else
-    uint32 const charactersPerBotAccount = 9;
-#endif
+    uint32 const charactersPerBotAccount = sPlayerbotAIConfig.maxCharactersPerAccount;
     uint32 const requiredAccountCount = maxRandomBots / charactersPerBotAccount +
         (maxRandomBots % charactersPerBotAccount ? 1u : 0u);
 

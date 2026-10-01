@@ -1250,14 +1250,11 @@ CompositeChatFilter::~CompositeChatFilter()
 
 std::string CompositeChatFilter::Filter(std::string message)
 {
-    for (int j = 0; j < filters.size(); ++j)
+    for (std::list<ChatFilter*>::iterator i = filters.begin(); i != filters.end(); i++)
     {
-        for (std::list<ChatFilter*>::iterator i = filters.begin(); i != filters.end(); i++)
-        {
-            message = (*i)->Filter(message);
-            if (message.empty())
-                break;
-        }
+        message = (*i)->Filter(message);
+        if (message.empty())
+            break;
     }
 
     return message;

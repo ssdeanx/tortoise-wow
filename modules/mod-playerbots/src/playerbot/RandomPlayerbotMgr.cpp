@@ -5208,10 +5208,7 @@ std::list<std::string> RandomPlayerbotMgr::HandleConsoleLoginDebug(std::string p
 
 uint32 RandomPlayerbotMgr::GetOrCreateAccount(Player* master, std::string& error)
 {
-    uint32 maxCharsPerAccount = 9;
-#ifdef MANGOSBOT_TWO
-    maxCharsPerAccount = 10;
-#endif
+    uint32 maxCharsPerAccount = sPlayerbotAIConfig.maxCharactersPerAccount;
 
     auto accountNrQr = LoginDatabase.PQuery("SELECT max(replace(lower(username), lower('%s'), '') + 1 - 1) maxAccountNr FROM account WHERE replace(lower(username), lower('%s'), '') != 0", sPlayerbotAIConfig.randomBotAccountPrefix.c_str(), sPlayerbotAIConfig.randomBotAccountPrefix.c_str());
 
@@ -5297,11 +5294,6 @@ void RandomPlayerbotMgr::OnBotDeleted(uint32 botGuid, uint32 accountId)
 {
     if (accountId > 0 && sPlayerbotAIConfig.IsInRandomAccountList(accountId))
     {
-        uint32 maxCharsPerAccount = 9;
-    #ifdef MANGOSBOT_TWO
-        maxCharsPerAccount = 10;
-    #endif
-    
         if (sAccountMgr.GetCharactersCount(accountId) == 0)
         {
             std::ostringstream prefix;

@@ -10,6 +10,19 @@ set(PB_ROOT "${CMAKE_SOURCE_DIR}/modules/mod-playerbots")
 # the old vendor CMakeLists did the find_package and the linking. Both have to
 # come along, or the build fails deep inside a source file with
 # "'boost::filesystem' has not been declared".
+# CMake 4.x no longer ships the bundled FindBoost module, and this project pins
+# `cmake_minimum_required(VERSION 3.1...3.29)`, so policy CMP0167 defaults to OLD
+# and every configure emits:
+#   "Policy CMP0167 is not set: The FindBoost module is removed."
+# It is only a warning today because a legacy module is still findable, but the
+# behaviour is going away. Setting the policy NEW switches to Boost's own
+# BoostConfig.cmake (present here as /usr/lib/cmake/Boost-1.92.0), which is the
+# supported path. Only imported targets are consumed below - Boost::thread,
+# Boost::filesystem, Boost::system - and those are identical in config mode, so
+# nothing downstream has to change.
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 find_package(Boost 1.70 REQUIRED COMPONENTS thread filesystem system)
 
 # Both linkage modes: the static path folds this module into `modules`, the

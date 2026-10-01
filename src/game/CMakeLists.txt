@@ -688,9 +688,26 @@ if(BUILD_ELUNA)
     ${CMAKE_SOURCE_DIR}/src/modules/Eluna/methods/VMangos
   )
 
+  # Eluna's bundled .ext extensions must sit at the ROOT of the script path, not one
+  # level down: `_Misc.ext` does require("StackTracePlus"), and require resolution only
+  # finds it because ElunaLoader::ReadFiles adds "<subdir>/?.ext;" to package.path while
+  # recursing. Installing the `extensions` DIRECTORY wrapper therefore produced
+  # lua_scripts/extensions/..., which still loads only by accident.
+  #
+  # Note this target is CMake's global `install` (make install), NOT part of `all`, and
+  # it writes under CMAKE_INSTALL_PREFIX. The live realm instead runs from the source
+  # tree with Eluna.ScriptPath = "./lua_scripts" relative to run/ (systemd
+  # WorkingDirectory), so the real script path is <repo>/run/lua_scripts and this rule
+  # does NOT populate it. Copy the extensions there manually, or point
+  # CMAKE_INSTALL_PREFIX at run/.
   install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/src/modules/Eluna/extensions
+    FILES ${CMAKE_SOURCE_DIR}/src/modules/Eluna/extensions/_Misc.ext
+          ${CMAKE_SOURCE_DIR}/src/modules/Eluna/extensions/ObjectVariables.ext
     DESTINATION ${BIN_DIR}/lua_scripts
+  )
+  install(
+    FILES ${CMAKE_SOURCE_DIR}/src/modules/Eluna/extensions/StackTracePlus/StackTracePlus.ext
+    DESTINATION ${BIN_DIR}/lua_scripts/StackTracePlus
   )
 endif()
 
