@@ -6,9 +6,12 @@
 #ifndef _PLAYERBOT_DCTESTDUNGEONREGISTRY_H
 #define _PLAYERBOT_DCTESTDUNGEONREGISTRY_H
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
+
+#include "TestRun/DcTestComp.h"
 
 // Hand-authored catalogue of the dungeons the `.dc test` harness can run:
 // every map with a curated clear definition (roster patch / event file), one
@@ -38,6 +41,21 @@ namespace DcTestDungeonRegistry
         // this stays a trailing member — those rows need no edit
         // (value-initialized).
         std::uint32_t heroicLevel = 0;
+        // How many slots a run of this row fields. 0 — the value every shipped
+        // row carries — means DcTestComp::kPartySize (5), i.e. the party shape
+        // that has always run, so no row has to be edited to keep working.
+        //
+        // A nonzero value asks for that many. It is validated against the map's
+        // own capacity before anything is created (PlayerLimit / DcTestRunManager),
+        // it decides how many names a `party=` roster must carry, and it crosses
+        // MAX_GROUP_SIZE the group is converted to a RAID at Grouping — which
+        // changes DC's leader election (see DcLeaderSignal::FindLeaderTank) and
+        // nothing else. 0 is deliberately not "1": a row that forgets the field
+        // must reproduce the old five-slot run, not fail.
+        std::uint32_t partySize = 0;
+
+        // The size to actually build: partySize, or the default five when unset.
+        std::size_t PartySize() const { return partySize ? partySize : DcTestComp::kPartySize; }
     };
 
     // Row for a command argument: exact token match, or a numeric mapId when
@@ -46,6 +64,18 @@ namespace DcTestDungeonRegistry
     Row const* Find(std::string const& tokenOrMapId);
 
     std::vector<Row> const& All();
+
+    // How many players mapId's copy of a dungeon holds — map_template.player_limit,
+    // i.e. exactly the number the core's own instance cap is built from
+    // (DungeonMap::GetMaxPlayers, read through sMapStorage; DungeonMap::CanEnter
+    // refuses the player past it with TRANSFER_ABORT_MAX_PLAYERS).
+    //
+    // 0 means the world has no map_template row for that id. That is NOT "the map
+    // holds nobody": CreateInstance would dereference the same null entry, so an
+    // unknown map is left for the core to complain about rather than refused here
+    // with a capacity claim nobody can verify. Callers must treat 0 as "no cap to
+    // check", not as "refuse everything".
+    std::uint32_t PlayerLimit(std::uint32_t mapId);
 
     // Dump the catalogue (plus the test-run caps the dashboard's start form
     // needs) to dc_test_dungeons.json in the worldserver cwd — the same

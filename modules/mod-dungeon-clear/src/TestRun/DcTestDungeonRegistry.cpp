@@ -9,12 +9,16 @@
 #include <fstream>
 #include <sstream>
 
+#ifndef DC_STANDALONE_UNIT_TEST
+#include "Map.h"
 #include "PlayerbotAIConfig.h"
+#include "SQLStorages.h"
 
 #include "Ai/Dungeon/DungeonClear/Settings/DcSettings.h"
 
 #include "TestRun/DcTestGearTiers.h"
 #include "TestRun/DcTestRunRecord.h"
+#endif
 
 namespace DcTestDungeonRegistry
 {
@@ -84,16 +88,17 @@ namespace DcTestDungeonRegistry
             { "dm-north",        "Dire Maul: North",              429,   255.25f,   -16.06f,   -2.59f, 4.700f, 60, "North" },
             { "scholo",          "Scholomance",                   289,   196.37f,   127.05f,  134.91f, 6.090f, 60, "" },
             { "strat",           "Stratholme",                    329,  3593.15f, -3646.56f,  138.50f, 5.330f, 60, "" },
-            // Zul'Gurub (map 309) - a 20-man raid, not a 5-man dungeon. The
-            // harness runs a 5-bot party, so a ZG run is a ROUTE/TRASH/PULL
-            // smoke test (order rows + the Marli room-aggro pre-clear + the
-            // Mandokir gate + the Arlokk gong objective), not a full clear:
-            // expect the bosses to require the real raid. Entrance from
-            // areatrigger_teleport 3928 "Zul'Gurub - Entrance".
-            { "zg",              "Zul'Gurub",                      309, -11916.60f, -1243.52f,   92.53f, 4.712f, 60, "" },
+            // --- Classic Raids --------------------------------------------
+            { "onyxia",          "Onyxia's Lair",                  249,    29.16f,   -71.34f,    -8.18f, 4.440f, 60, "", 0, 40 },
+            { "zg",              "Zul'Gurub",                      309, -11916.90f, -1248.36f,   92.53f, 4.720f, 60, "", 0, 20 },
+            { "mc",              "Molten Core",                    409,  1082.04f,  -474.60f,  -107.76f, 5.030f, 60, "", 0, 40 },
+            { "bwl",             "Blackwing Lair",                 469, -7664.76f, -1100.87f,   399.68f, 0.560f, 60, "", 0, 40 },
+            { "aq20",            "Ruins of Ahn'Qiraj",             509, -8437.74f,  1516.91f,    31.91f, 2.730f, 60, "", 0, 20 },
+            { "aq40",            "Temple of Ahn'Qiraj",            531, -8213.48f,  2016.00f,   129.07f, 1.280f, 60, "", 0, 40 },
+            { "naxx",            "Naxxramas",                      533,  3021.64f, -3402.99f,   298.22f, 2.970f, 60, "", 0, 40 },
             // Turtle custom raid: Scarlet Citadel (map 45, 40-man fortress).
             // Entrance from areatrigger_teleport target / .tele ScarletCitadel
-            { "scarlet-citadel", "Scarlet Citadel",                 45,    32.55f,    13.30f,   16.87f, 6.280f, 63, "" },
+            { "scarlet-citadel", "Scarlet Citadel",                 45,    32.55f,    13.30f,    16.87f, 6.280f, 63, "", 0, 40 },
             // --- The Burning Crusade --------------------------------------
             { "ramparts",        "Hellfire Ramparts",             543, -1355.24f,  1641.12f,   68.25f, 0.669f, 62, "", 70 },
             { "blood-furnace",   "The Blood Furnace",             542,    -4.00f,    14.64f,  -44.80f, 4.887f, 63, "", 70 },
@@ -158,8 +163,24 @@ namespace DcTestDungeonRegistry
         return hit;
     }
 
+    std::uint32_t PlayerLimit(std::uint32_t mapId)
+    {
+#ifndef DC_STANDALONE_UNIT_TEST
+        // The same read the core makes, from the same sMapStorage over
+        // map_template — not Map.dbc, and not a query of our own. MapEntry is
+        // packed with maxPlayers where the core reads it, so there is nothing to
+        // reimplement here: ask it, or ask nobody.
+        MapEntry const* entry = sMapStorage.LookupEntry<MapEntry>(mapId);
+        return entry ? entry->maxPlayers : 0;
+#else
+        (void)mapId;
+        return 0;
+#endif
+    }
+
     void WriteSidecar()
     {
+#ifndef DC_STANDALONE_UNIT_TEST
         char const* path = "dc_test_dungeons.json";
         if (char const* env = std::getenv("DC_TEST_DUNGEONS_FILE"))
             if (env[0])
@@ -218,6 +239,13 @@ namespace DcTestDungeonRegistry
             s << "{\"token\":\"" << EscapeJson(row.token) << '"'
               << ",\"name\":\"" << EscapeJson(row.name) << '"'
               << ",\"mapId\":" << row.mapId
+              // Additive: the form can label the party it is about to ask for,
+              // and this is the only place outside the C++ row that knows it. The
+              // map's own ceiling rides along so the form cannot offer a size the
+              // core would refuse at the door (0 = the world has no map_template
+              // row for this map — see PlayerLimit).
+              << ",\"size\":" << row.PartySize()
+              << ",\"playerLimit\":" << PlayerLimit(row.mapId)
               << ",\"level\":" << row.recommendedLevel
               << ",\"heroicLevel\":" << row.heroicLevel
               << ",\"wing\":\"" << EscapeJson(row.wing) << '"'
@@ -236,5 +264,6 @@ namespace DcTestDungeonRegistry
         if (!f.is_open())
             return;
         f << s.str() << '\n';
+#endif
     }
 }

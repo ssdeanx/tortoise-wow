@@ -45,7 +45,9 @@ TEST(DcTestDungeonRegistryTest, HeroicLevelMatchesTheExpansionCap)
         {574, 575, 576, 578, 595, 599, 600, 601, 602, 604, 608, 619, 632, 650, 658, 668};
     for (Row const& row : All())
     {
-        if (tbcMaps.count(row.mapId))
+        if (std::string(row.token) == "black-morass-tw")
+            EXPECT_EQ(row.heroicLevel, 0u) << row.token;
+        else if (tbcMaps.count(row.mapId))
             EXPECT_EQ(row.heroicLevel, 70u) << row.token;
         else if (wotlkMaps.count(row.mapId))
             EXPECT_EQ(row.heroicLevel, 80u) << row.token;
@@ -110,4 +112,35 @@ TEST(DcTestDungeonRegistryTest, UnknownLookupsReturnNull)
     EXPECT_EQ(Find("0"), nullptr);
     EXPECT_EQ(Find("99999"), nullptr);
     EXPECT_EQ(Find("36x"), nullptr);
+}
+
+TEST(DcTestDungeonRegistryTest, RaidTokensAreRegisteredWithCorrectPartySize)
+{
+    struct ExpectedRaid
+    {
+        char const* token;
+        std::uint32_t mapId;
+        std::uint32_t partySize;
+    };
+
+    ExpectedRaid const raids[] = {
+        { "mc", 409, 40 },
+        { "bwl", 469, 40 },
+        { "onyxia", 249, 40 },
+        { "zg", 309, 20 },
+        { "aq20", 509, 20 },
+        { "aq40", 531, 40 },
+        { "naxx", 533, 40 },
+        { "scarlet-citadel", 45, 40 },
+    };
+
+    for (auto const& expected : raids)
+    {
+        Row const* row = Find(expected.token);
+        ASSERT_NE(row, nullptr) << "missing raid token: " << expected.token;
+        EXPECT_EQ(row->mapId, expected.mapId) << expected.token;
+        EXPECT_EQ(row->PartySize(), expected.partySize) << expected.token;
+        EXPECT_EQ(row->recommendedLevel, expected.mapId == 45 ? 63u : 60u) << expected.token;
+        EXPECT_EQ(row->heroicLevel, 0u) << expected.token;
+    }
 }
