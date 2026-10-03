@@ -6,14 +6,18 @@
 #ifndef _PLAYERBOT_DCTESTROSTER_H
 #define _PLAYERBOT_DCTESTROSTER_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
+#include "TestRun/DcTestComp.h"
+
 // Pure parser for `.dc test start <dungeon> party=Tank,Heal,Dps1,Dps2,Dps3`:
 // the hand-picked-party form of a test run, where real player characters take
-// the five slots instead of randomly drawn addclass-pool bots.
+// the slots instead of randomly drawn addclass-pool bots. How many slots is the
+// run's, not the parser's — the count comes in as `size`.
 //
-// Roles are POSITIONAL — slot 0 tank, slot 1 healer, slots 2-4 dps — mirroring
+// Roles are POSITIONAL — slot 0 tank, slot 1 healer, slots 2+ dps — mirroring
 // the DcTestRunJob::_slots convention (slot 0 is the group leader and the run's
 // tank). There is no per-name role syntax on purpose: the Command Deck's roster
 // builder emits the order, and a positional list is the one form that cannot
@@ -36,7 +40,7 @@ namespace DcTestRoster
     {
         Ok,
         Empty,       // nothing but separators/whitespace
-        WrongCount,  // not exactly kPartySize names
+        WrongCount,  // not exactly the requested number of names
         Duplicate    // the same character named twice
     };
 
@@ -48,13 +52,15 @@ namespace DcTestRoster
     };
 
     // Split on commas, trim each name, assign positional roles. Rejects an empty
-    // list, a list that isn't exactly five names, and a repeated name (compared
+    // list, a list that isn't exactly `size` names, and a repeated name (compared
     // case-insensitively — WoW names are unique up to case, so "Bob,bob" is one
     // character asked to fill two slots, which would deadlock the group build).
-    Result Parse(std::string const& spec);
+    // `size` is the run's slot count (the registry row's partySize); the default
+    // is the five the harness has always asked for.
+    Result Parse(std::string const& spec, std::size_t size = DcTestComp::kPartySize);
 
-    // Positional role for slot `i`; "dps" for anything past the healer.
-    char const* RoleForIndex(std::size_t i);
+    // Positional role for slot `i` given the run's totalSize; scales tanks and healers for raids.
+    char const* RoleForIndex(std::size_t i, std::size_t totalSize = DcTestComp::kPartySize);
 }
 
 #endif  // _PLAYERBOT_DCTESTROSTER_H

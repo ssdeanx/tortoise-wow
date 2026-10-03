@@ -29,19 +29,92 @@ namespace DcTestRoster
                            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             return s;
         }
+
+        // The role list a wrong-count refusal quotes: "tank,heal,dps,dps,dps" for
+        // the five-slot default every run used, and a summary of scaled roles for
+        // longer ones.
+        std::string RoleSummary(std::size_t size)
+        {
+            std::size_t numTanks = 1;
+            std::size_t numHealers = 1;
+
+            if (size >= 26)
+            {
+                numTanks = 3;
+                numHealers = 8;
+            }
+            else if (size >= 16)
+            {
+                numTanks = 2;
+                numHealers = 4;
+            }
+            else if (size >= 6)
+            {
+                numTanks = 2;
+                numHealers = 2;
+            }
+
+            if (numTanks + numHealers >= size)
+            {
+                numTanks = 1;
+                numHealers = 1;
+            }
+
+            std::size_t const numDps = size > (numTanks + numHealers) ? size - numTanks - numHealers : 0;
+            if (size <= DcTestComp::kPartySize)
+            {
+                std::string out = "tank,heal";
+                for (std::size_t i = 2; i < size; ++i)
+                    out += ",dps";
+                return out;
+            }
+            return std::to_string(numTanks) + " tank, " + std::to_string(numHealers) + " heal, " + std::to_string(numDps) + " dps";
+        }
     }
 
-    char const* RoleForIndex(std::size_t i)
+    char const* RoleForIndex(std::size_t i, std::size_t totalSize)
     {
-        if (i == 0)
+        std::size_t numTanks = 1;
+        std::size_t numHealers = 1;
+
+        if (totalSize >= 26)
+        {
+            numTanks = 3;
+            numHealers = 8;
+        }
+        else if (totalSize >= 16)
+        {
+            numTanks = 2;
+            numHealers = 4;
+        }
+        else if (totalSize >= 6)
+        {
+            numTanks = 2;
+            numHealers = 2;
+        }
+
+        if (numTanks + numHealers >= totalSize)
+        {
+            numTanks = 1;
+            numHealers = 1;
+        }
+
+        if (i < numTanks)
             return "tank";
-        if (i == 1)
+        if (i < numTanks + numHealers)
             return "heal";
         return "dps";
     }
 
-    Result Parse(std::string const& spec)
+    Result Parse(std::string const& spec, std::size_t size)
     {
+        // The worked example is the five-slot one people have always typed, plus
+        // an ellipsis when the row asks for more. A refusal that says "needs 20
+        // names" and then shows five is worse than no example at all.
+        std::string const example = size > DcTestComp::kPartySize
+                                        ? "party=Tankname,Healname,Dps1,Dps2,Dps3,..."
+                                        : "party=Tankname,Healname,Dps1,Dps2,Dps3";
+
         std::vector<std::string> names;
         std::size_t from = 0;
         while (from <= spec.size())
@@ -59,13 +132,14 @@ namespace DcTestRoster
         }
 
         if (names.empty())
-            return {Kind::Empty, {}, "party= needs 5 character names, e.g. "
-                                     "party=Tankname,Healname,Dps1,Dps2,Dps3"};
+            return {Kind::Empty, {},
+                    "party= needs " + std::to_string(size) + " character names, e.g. " + example};
 
-        if (names.size() != DcTestComp::kPartySize)
+        // Names the row asked for, and the role each one lands in.
+        if (names.size() != size)
             return {Kind::WrongCount, {},
-                    "party= needs exactly " + std::to_string(DcTestComp::kPartySize) +
-                        " names (tank,heal,dps,dps,dps) — got " + std::to_string(names.size())};
+                    "party= needs exactly " + std::to_string(size) +
+                        " names (" + RoleSummary(size) + ") — got " + std::to_string(names.size())};
 
         for (std::size_t i = 0; i < names.size(); ++i)
             for (std::size_t j = i + 1; j < names.size(); ++j)
@@ -76,7 +150,7 @@ namespace DcTestRoster
         Result out{Kind::Ok, {}, {}};
         out.members.reserve(names.size());
         for (std::size_t i = 0; i < names.size(); ++i)
-            out.members.push_back({names[i], RoleForIndex(i)});
+            out.members.push_back({names[i], RoleForIndex(i, size)});
         return out;
     }
 }

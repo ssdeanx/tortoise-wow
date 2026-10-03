@@ -23,6 +23,28 @@ namespace
         EXPECT_STREQ("dps", RoleForIndex(4));
     }
 
+    TEST(DcTestRoster, Raid40RolesScaledCorrectly)
+    {
+        // 40-man: 3 tanks (0..2), 8 healers (3..10), 29 dps (11..39)
+        EXPECT_STREQ("tank", RoleForIndex(0, 40));
+        EXPECT_STREQ("tank", RoleForIndex(2, 40));
+        EXPECT_STREQ("heal", RoleForIndex(3, 40));
+        EXPECT_STREQ("heal", RoleForIndex(10, 40));
+        EXPECT_STREQ("dps", RoleForIndex(11, 40));
+        EXPECT_STREQ("dps", RoleForIndex(39, 40));
+    }
+
+    TEST(DcTestRoster, Raid20RolesScaledCorrectly)
+    {
+        // 20-man: 2 tanks (0..1), 4 healers (2..5), 14 dps (6..19)
+        EXPECT_STREQ("tank", RoleForIndex(0, 20));
+        EXPECT_STREQ("tank", RoleForIndex(1, 20));
+        EXPECT_STREQ("heal", RoleForIndex(2, 20));
+        EXPECT_STREQ("heal", RoleForIndex(5, 20));
+        EXPECT_STREQ("dps", RoleForIndex(6, 20));
+        EXPECT_STREQ("dps", RoleForIndex(19, 20));
+    }
+
     TEST(DcTestRoster, ParsesFiveNamesIntoRoles)
     {
         Result const r = Parse("Tanky,Healy,Stabby,Casty,Shooty");
