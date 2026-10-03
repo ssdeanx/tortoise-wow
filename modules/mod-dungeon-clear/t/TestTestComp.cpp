@@ -109,3 +109,43 @@ TEST(DcTestComp, RolePoolLookup)
     for (Slot const& s : RolePool("dps"))
         EXPECT_STREQ(s.role, "dps");
 }
+
+TEST(DcTestComp, Raid20CompositionScaling)
+{
+    for (std::uint32_t seed = 0; seed < 50; ++seed)
+    {
+        auto comp = BuildComp(seed, 20);
+        ASSERT_EQ(comp.size(), 20u);
+
+        std::size_t tanks = 0, heals = 0, dps = 0;
+        for (auto const& s : comp)
+        {
+            if (std::string_view(s.role) == "tank") ++tanks;
+            else if (std::string_view(s.role) == "heal") ++heals;
+            else if (std::string_view(s.role) == "dps") ++dps;
+        }
+        EXPECT_EQ(tanks, 2u) << "seed=" << seed;
+        EXPECT_EQ(heals, 4u) << "seed=" << seed;
+        EXPECT_EQ(dps, 14u) << "seed=" << seed;
+    }
+}
+
+TEST(DcTestComp, Raid40CompositionScaling)
+{
+    for (std::uint32_t seed = 0; seed < 50; ++seed)
+    {
+        auto comp = BuildComp(seed, 40);
+        ASSERT_EQ(comp.size(), 40u);
+
+        std::size_t tanks = 0, heals = 0, dps = 0;
+        for (auto const& s : comp)
+        {
+            if (std::string_view(s.role) == "tank") ++tanks;
+            else if (std::string_view(s.role) == "heal") ++heals;
+            else if (std::string_view(s.role) == "dps") ++dps;
+        }
+        EXPECT_EQ(tanks, 3u) << "seed=" << seed;
+        EXPECT_EQ(heals, 8u) << "seed=" << seed;
+        EXPECT_EQ(dps, 29u) << "seed=" << seed;
+    }
+}

@@ -26,7 +26,13 @@ namespace DcTestComp
         }
 
         // Draw one entry from `pool` whose class is not already used, advancing
-        // the PRNG. Callers guarantee at least one such entry exists.
+        // the PRNG. Distinct classes are a PREFERENCE, not a constraint: at the
+        // five-slot default the preference always wins (nine pooled classes, five
+        // seats), so this is the historical draw and the five-slot comp is
+        // bit-identical for a given seed. A raid-sized comp runs out of unused
+        // classes partway through, and then it draws from the whole pool rather
+        // than pinning every remaining seat to pool[0] — which for the DPS pool
+        // would make the entire back line fury warriors.
         Slot Draw(Slot const* pool, std::size_t count, std::set<std::uint8_t> const& used,
                   std::uint32_t& state)
         {
@@ -39,28 +45,68 @@ namespace DcTestComp
             // Defensive: should never happen given the pool sizes, but returning
             // a valid slot beats indexing an empty vector.
             if (candidates.empty())
-                return pool[0];
+                return count ? pool[NextRand(state) % count] : pool[0];
 
             return candidates[NextRand(state) % candidates.size()];
         }
     }
 
-    std::array<Slot, kPartySize> BuildComp(std::uint32_t seed)
+    std::vector<Slot> BuildComp(std::uint32_t seed, std::size_t size)
     {
+        std::vector<Slot> comp;
+        if (size < 2)
+            return comp;  // a run needs at least the tank + healer pair
+
+        std::size_t numTanks = 1;
+        std::size_t numHealers = 1;
+
+        if (size >= 26)
+        {
+            numTanks = 3;
+            numHealers = 8;
+        }
+        else if (size >= 16)
+        {
+            numTanks = 2;
+            numHealers = 4;
+        }
+        else if (size >= 6)
+        {
+            numTanks = 2;
+            numHealers = 2;
+        }
+
+        // Defensive cap so tanks + healers never exceed total slots
+        if (numTanks + numHealers >= size)
+        {
+            numTanks = 1;
+            numHealers = 1;
+        }
+
         std::uint32_t state = seed;
         std::set<std::uint8_t> used;
-        std::array<Slot, kPartySize> comp{};
+        comp.resize(size);
 
-        comp[0] = Draw(kTankPool, std::size(kTankPool), used, state);
-        used.insert(comp[0].classId);
-
-        comp[1] = Draw(kHealPool, std::size(kHealPool), used, state);
-        used.insert(comp[1].classId);
-
-        for (std::size_t i = 2; i < kPartySize; ++i)
+        std::size_t slotIdx = 0;
+        for (std::size_t i = 0; i < numTanks; ++i)
         {
-            comp[i] = Draw(kDpsPool, std::size(kDpsPool), used, state);
-            used.insert(comp[i].classId);
+            comp[slotIdx] = Draw(kTankPool, std::size(kTankPool), used, state);
+            used.insert(comp[slotIdx].classId);
+            ++slotIdx;
+        }
+
+        for (std::size_t i = 0; i < numHealers; ++i)
+        {
+            comp[slotIdx] = Draw(kHealPool, std::size(kHealPool), used, state);
+            used.insert(comp[slotIdx].classId);
+            ++slotIdx;
+        }
+
+        while (slotIdx < size)
+        {
+            comp[slotIdx] = Draw(kDpsPool, std::size(kDpsPool), used, state);
+            used.insert(comp[slotIdx].classId);
+            ++slotIdx;
         }
 
         return comp;

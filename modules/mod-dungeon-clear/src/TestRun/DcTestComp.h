@@ -6,17 +6,26 @@
 #ifndef _PLAYERBOT_DCTESTCOMP_H
 #define _PLAYERBOT_DCTESTCOMP_H
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
 #include <vector>
 
-// A test run fields a 5-bot party: one tank, one healer, three DPS. Which
+// A test run fields one tank, one healer and every remaining seat DPS. Which
 // class/spec fills each role is randomised per run (BuildComp) so successive
 // runs of the same dungeon exercise different pull/heal/threat paths and shake
 // out class-specific edge cases — the earlier fixed prot-warr / holy-priest /
 // mage-rogue-hunter comp only ever tested one shape.
+//
+// The SIZE is the registry row's business, not this file's: a row names how many
+// slots it wants (DcTestDungeonRegistry::Row::partySize) and kPartySize below is
+// what a row that names no size gets — i.e. every run that ever existed. The
+// role LAYOUT does not scale with the size: slot 0 stays the tank (the group's
+// leader, and the driver DC's leader election settles on), slot 1 the healer, and
+// slots 2+ are DPS whatever the count. A twenty-slot comp is therefore one tank,
+// one healer and eighteen DPS, which is the shape DC's own routines are written
+// against — DC elects exactly ONE driver and the rest follow it, so a second
+// tank would only be another follower holding threat off the driver.
 //
 // Every spec is named by its playerbots premade-spec template name
 // (AiPlayerbot.PremadeSpecName.<class>.<n>) and resolved to a specNo at
@@ -40,6 +49,9 @@ namespace DcTestComp
         char const* role;          // "tank" | "heal" | "dps" (for the record/UI)
     };
 
+    // The size every run had before a row could ask for its own: 1 tank,
+    // 1 healer, 3 DPS. Also the default argument of BuildComp, so callers that
+    // have no row in hand (the unit tests) keep the five-slot behaviour.
     inline constexpr std::size_t kPartySize = 5;
 
     // Every class/spec that can legitimately fill each role. BuildComp draws
@@ -91,10 +103,17 @@ namespace DcTestComp
     };
 
     // Deterministically pick a party for the given seed: one tank, one healer,
-    // three DPS, all five on DISTINCT classes (maximises class diversity and
-    // keeps the addclass-pool draw from needing several chars of one class).
-    // Pure — no globals, no I/O — so the same seed always yields the same comp.
-    std::array<Slot, kPartySize> BuildComp(std::uint32_t seed);
+    // three DPS at the default size, all five on DISTINCT classes (maximises
+    // class diversity and keeps the addclass-pool draw from needing several
+    // chars of one class). Pure — no globals, no I/O — so the same seed always
+    // yields the same comp.
+    //
+    // `size` is the row's slot count. Below the pool's class count the distinct-
+    // class draw is unchanged and a bigger comp simply repeats classes once it
+    // runs out; there is no way to seat 20 bots on distinct classes when the
+    // pools carry 9. Empty for size < 2 — there is no tank+healer pair to draw.
+    // A caller asking for fewer than kPartySize gets exactly that many slots.
+    std::vector<Slot> BuildComp(std::uint32_t seed, std::size_t size = kPartySize);
 
     // The pool backing a role token ("tank" | "heal" | "dps"), for callers that
     // must substitute an alternative class when the drawn one has no available
