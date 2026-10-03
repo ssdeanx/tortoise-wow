@@ -398,3 +398,48 @@ order 469 14601 5     # Ebonroc
 order 469 11981 6     # Flamegor
 order 469 14020 7     # Chromaggus
 order 469 11583 8     # Nefarian (end boss)
+
+# --- Onyxia's Lair (map 249) -------------------------------------------------
+order 249 10184 1     # Onyxia
+
+# --- Molten Core (map 409) ---------------------------------------------------
+order 409 12118 1     # Lucifron
+order 409 11982 2     # Magmadar
+order 409 12259 3     # Gehennas
+order 409 12057 4     # Garr
+order 409 12264 5     # Shazzrah
+order 409 12056 6     # Baron Geddon
+order 409 11988 7     # Golemagg the Incinerator
+order 409 12098 8     # Sulfuron Harbinger
+order 409 12018 9     # Majordomo Executus
+order 409 11502 10    # Ragnaros (end boss)
+
+# --- Zul'Gurub (map 309) -----------------------------------------------------
+order 309 14517 1     # High Priestess Jeklik
+order 309 14515 2     # High Priest Venoxis
+order 309 14510 3     # High Priestess Mar'li
+order 309 11382 4     # Bloodlord Mandokir
+order 309 14509 5     # High Priest Thekal
+order 309 15114 6     # Gahz'ranka
+order 309 14511 7     # High Priestess Arlokk
+order 309 11380 8     # Jin'do the Hexxer
+order 309 14834 9     # Hakkar (end boss)
+
+# --- Ruins of Ahn'Qiraj - AQ20 (map 509) -------------------------------------
+order 509 15348 1     # Kurinnaxx
+order 509 15341 2     # General Rajaxx
+order 509 15340 3     # Moam
+order 509 15370 4     # Buru the Gorger
+order 509 15369 5     # Ayamiss the Hunter
+order 509 15339 6     # Ossirian the Unscarred (end boss)
+
+# --- Temple of Ahn'Qiraj - AQ40 (map 531) ------------------------------------
+order 531 15263 1     # The Prophet Skeram
+order 531 15543 2     # Princess Yauj (Bug Trio)
+order 531 15516 3     # Battleguard Sartura
+order 531 15510 4     # Fankriss the Unyielding
+order 531 15299 5     # Viscidus
+order 531 15509 6     # Princess Huhuran
+order 531 15275 7     # Emperor Vek'lor (Twin Emperors)
+order 531 15517 8     # Ouro
+order 531 15727 9     # C'Thun (end boss)
