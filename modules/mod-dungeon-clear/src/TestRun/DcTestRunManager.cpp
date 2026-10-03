@@ -21,7 +21,6 @@
 
 #include "Ai/Dungeon/DungeonClear/Settings/DcSettings.h"
 
-#include "TestRun/DcTestComp.h"
 #include "TestRun/DcTestDungeonRegistry.h"
 #include "TestRun/DcTestPlanManager.h"
 #include "TestRun/DcTestRunJob.h"
@@ -35,6 +34,28 @@ namespace
     uint64 NowUnixMs()
     {
         return static_cast<uint64>(std::time(nullptr)) * 1000;
+    }
+
+    // Does the row's party fit the map the row names? Empty string = it fits.
+    //
+    // map_template.player_limit IS the core's instance cap (DungeonMap::GetMaxPlayers
+    // -> DungeonMap::CanEnter refuses a player past it with
+    // TRANSFER_ABORT_MAX_PLAYERS, and bots are not GMs so they count). Asking here
+    // rather than letting the core refuse it is the whole point of the check: an
+    // over-size party would otherwise log its bots in, form a group, teleport the
+    // leader and then be turned away at the door — surfacing as "party did not
+    // arrive at the dungeon entrance", a diagnosis aimed at the teleport instead
+    // of at the arithmetic that caused it.
+    std::string CapacityRefusal(DcTestDungeonRegistry::Row const& row)
+    {
+        uint32 const want = static_cast<uint32>(row.PartySize());
+        uint32 const limit = DcTestDungeonRegistry::PlayerLimit(row.mapId);
+        if (limit && want > limit)
+            return "map " + std::to_string(row.mapId) + " holds at most " +
+                   std::to_string(limit) + " players (map_template.player_limit) but '" +
+                   std::string(row.token) + "' asks for " + std::to_string(want) +
+                   " — lower the row's partySize";
+        return {};
     }
 }
 
@@ -75,6 +96,10 @@ bool DcTestRunManager::Start(Player* gm, std::string const& dungeonToken,
     if (!gm || !GET_PLAYERBOT_MGR(gm))
         return fail(StartErr::NoMgr, "no playerbot manager on this account");
 
+    // The map's own capacity, before anything is created — see CapacityRefusal.
+    if (std::string const tooBig = CapacityRefusal(*row); !tooBig.empty())
+        return fail(StartErr::MapTooSmall, tooBig);
+
     // Concurrency cap (0 = unlimited). World-thread read, no lock.
     uint32 const maxConcurrent = DcSettings::GetUInt(ObjectGuid::Empty, "TestRun.MaxConcurrent");
     if (maxConcurrent != 0 && _runs.size() >= maxConcurrent)
@@ -84,15 +109,19 @@ bool DcTestRunManager::Start(Player* gm, std::string const& dungeonToken,
 
     // MaxAddedBots pre-check: the core enforces this silently inside
     // AddPlayerBot, so without the pre-check a party over the cap surfaces only
-    // as a 60s spawn timeout. Name the knob instead.
+    // as a 60s spawn timeout. Name the knob instead. The number asked for is the
+    // ROW's size, not the five-slot default — a raid row is over budget at a
+    // fraction of the bots it needs, and quoting 5 there would name a budget that
+    // is in fact fine.
     uint32 const currentBots = uint32(GET_PLAYERBOT_MGR(gm)->GetAllBots().size());
+    uint32 const wantBots = static_cast<uint32>(row->PartySize());
     if (sPlayerbotAIConfig.maxAddedBots > 0 &&
-        currentBots + DcTestComp::kPartySize > static_cast<uint32>(sPlayerbotAIConfig.maxAddedBots))
+        currentBots + wantBots > static_cast<uint32>(sPlayerbotAIConfig.maxAddedBots))
         return fail(StartErr::BotBudget,
                     "would exceed AiPlayerbot.MaxAddedBots (" +
                     std::to_string(sPlayerbotAIConfig.maxAddedBots) + "; " +
                     std::to_string(currentBots) + " bots already added, this run needs " +
-                    std::to_string(DcTestComp::kPartySize) + ") — raise it or stop a run");
+                    std::to_string(wantBots) + ") — raise it or stop a run");
 
     // Create picks slot guids skipping _reservedGuids (all synchronous on the
     // world thread — no TOCTOU with other runs).
@@ -149,6 +178,12 @@ bool DcTestRunManager::StartRoster(Player* gm, std::string const& dungeonToken,
     if (!gm || !GET_PLAYERBOT_MGR(gm))
         return fail(StartErr::NoMgr, "no playerbot manager on this account");
 
+    // Same capacity gate as Start — a roster of the wrong SHAPE is refused by
+    // DcTestRoster::Parse just below, but a roster of the right shape for a map
+    // that cannot hold it must be refused here too, before any character login.
+    if (std::string const tooBig = CapacityRefusal(*row); !tooBig.empty())
+        return fail(StartErr::MapTooSmall, tooBig);
+
     uint32 const maxConcurrent = DcSettings::GetUInt(ObjectGuid::Empty, "TestRun.MaxConcurrent");
     if (maxConcurrent != 0 && _runs.size() >= maxConcurrent)
         return fail(StartErr::CapHit,
@@ -159,7 +194,9 @@ bool DcTestRunManager::StartRoster(Player* gm, std::string const& dungeonToken,
     // (AddPlayerBot with masterAccountId 0), and that cap is only applied to bots
     // added against a master's account.
 
-    DcTestRoster::Result const parsed = DcTestRoster::Parse(partySpec);
+    // The roster must be exactly the row's slot count — the pool path builds
+    // row.PartySize() bots, so a shorter roster is the same run with a hole in it.
+    DcTestRoster::Result const parsed = DcTestRoster::Parse(partySpec, row->PartySize());
     if (parsed.kind != DcTestRoster::Kind::Ok)
         return fail(StartErr::BadRoster, parsed.detail);
 

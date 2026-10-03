@@ -25,8 +25,9 @@
 
 class Player;
 
-// One `.dc test` run in flight: a single 5-bot party driven through the full
-// state machine and watched to a verdict. Extracted verbatim from the old
+// One `.dc test` run in flight: a single party — five bots unless the run's
+// registry row asks for more — driven through the full state machine and
+// watched to a verdict. Extracted verbatim from the old
 // singleton DcTestRunManager so any number of runs can execute at once — the
 // manager (DcTestRunManager) is now just a registry of these jobs.
 //
@@ -72,7 +73,7 @@ public:
         char const* role;   // "tank" | "heal" | "dps"
     };
 
-    // Factory for a roster run: the five slots are given, not drawn. Differs
+    // Factory for a roster run: the slots are given, not drawn. Differs
     // from Create in three ways, all because these are somebody's real
     // characters rather than disposable pool bots:
     //
@@ -88,8 +89,8 @@ public:
     //   * `level` comes from the characters, so there is no level argument.
     //
     // No seed: a roster IS the comp. Returns nullptr + err only if the roster is
-    // not exactly the expected party size (the manager has already validated the
-    // characters themselves).
+    // not exactly the row's party size (the manager has already validated the
+    // count, the characters, and that the map can hold them).
     static std::unique_ptr<DcTestRunJob> CreateFromRoster(Player* gm,
                                                           DcTestDungeonRegistry::Row const& row,
                                                           bool heroic,
@@ -134,7 +135,8 @@ public:
     // Snapshot for the live-status file (takes _obsMutex).
     DcTestRunLive::RunSnapshot Snapshot() const;
 
-    // The 5 slot guids, for the manager's cross-run reservation set.
+    // The slot guids (five of them unless the row asked for more), for the
+    // manager's cross-run reservation set.
     std::vector<ObjectGuid> BotGuids() const;
 
 private:

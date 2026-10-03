@@ -400,7 +400,16 @@ std::unique_ptr<DcTestRunJob> DcTestRunJob::Create(Player* gm, DcTestDungeonRegi
     job->_record.gearIlvl = job->_gear.ilvl;
     job->_record.gearQuality = job->_gear.quality;
 
-    std::array<DcTestComp::Slot, DcTestComp::kPartySize> const comp = DcTestComp::BuildComp(seed);
+    // As many slots as the row asks for. Five unless the row says otherwise, so
+    // every row that has never named a size builds the comp it always built.
+    std::vector<DcTestComp::Slot> const comp = DcTestComp::BuildComp(seed, row.PartySize());
+    if (comp.size() != row.PartySize())
+    {
+        if (err)
+            *err = "a run needs at least a tank and a healer — '" + std::string(row.token) +
+                   "' asked for " + std::to_string(row.PartySize());
+        return nullptr;
+    }
     for (DcTestComp::Slot const& c : comp)
     {
         Slot s;
@@ -545,10 +554,19 @@ std::unique_ptr<DcTestRunJob> DcTestRunJob::Create(Player* gm, DcTestDungeonRegi
                  + "(" + std::to_string(uint32(c.classId)) + ")";
     }
 
+    // Party size is announced only when it is not the five-slot default every
+    // historical run used, so a line-by-line diff of existing TESTRUN START
+    // output still matches. A raid-sized run is a different experiment and has
+    // to say so.
+    std::string const sizeStr =
+        job->_slots.size() == DcTestComp::kPartySize
+            ? std::string()
+            : " size=" + std::to_string(job->_slots.size());
+
     LOG_INFO("playerbots.dungeonclear",
-             "TESTRUN START {} dungeon={} map={} level={} heroic={} seed={} gm={} comp={}",
+             "TESTRUN START {} dungeon={} map={} level={} heroic={} seed={} gm={} comp={}{}",
              job->_record.runId, job->_record.dungeon, job->_mapId, job->_level,
-             heroic ? 1 : 0, seed, gm->GetName(), compStr);
+             heroic ? 1 : 0, seed, gm->GetName(), compStr, sizeStr);
 
     job->EnterStage(Stage::SpawningBots);
     return job;
@@ -561,17 +579,17 @@ std::unique_ptr<DcTestRunJob> DcTestRunJob::CreateFromRoster(Player* gm,
                                                              std::string const& planId,
                                                              std::string* err)
 {
-    if (roster.size() != DcTestComp::kPartySize)
+    if (roster.size() != row.PartySize())
     {
         if (err)
-            *err = "a roster must be exactly " + std::to_string(DcTestComp::kPartySize) + " characters";
+            *err = "a roster must be exactly " + std::to_string(row.PartySize()) + " characters";
         return nullptr;
     }
 
     std::unique_ptr<DcTestRunJob> job(new DcTestRunJob());
     job->_realChars = true;
 
-    // Level is whatever the characters are. The highest of the five stands in
+    // Level is whatever the characters are. The highest of the roster stands in
     // for the run until provisioning reads the live values, so the status line
     // and the dungeon's own level expectations have something sane to show; the
     // record's per-member levels are the real answer.
@@ -644,10 +662,15 @@ std::unique_ptr<DcTestRunJob> DcTestRunJob::CreateFromRoster(Player* gm,
             names += ",";
         names += slot.rosterName + "(" + slot.role + ")";
     }
+    std::string const rosterSizeStr =
+        job->_slots.size() == DcTestComp::kPartySize
+            ? std::string()
+            : " size=" + std::to_string(job->_slots.size());
+
     LOG_INFO("playerbots.dungeonclear",
-             "TESTRUN START {} dungeon={} map={} heroic={} roster={} gm={}",
+             "TESTRUN START {} dungeon={} map={} heroic={} roster={} gm={}{}",
              job->_record.runId, job->_record.dungeon, job->_mapId, heroic ? 1 : 0,
-             names, gm->GetName());
+             names, gm->GetName(), rosterSizeStr);
 
     job->EnterStage(Stage::SpawningBots);
     return job;
@@ -670,6 +693,11 @@ std::string DcTestRunJob::StatusLine() const
     Stage const stage = _stage.load();
     std::string out = _record.runId + " " + _record.dungeon + (_heroic ? " (heroic)" : "") +
                       " [" + StageName(stage) + "] elapsed " + std::to_string(_totalMs / 1000) + "s";
+    // A raid-sized run is a different experiment from the five-bot default and
+    // the confirmation should say so — but only when it IS one, so every
+    // existing status line is unchanged.
+    if (_slots.size() != DcTestComp::kPartySize)
+        out += ", party " + std::to_string(_slots.size());
     // The gear ceiling belongs in the start confirmation: it is the one run
     // parameter with no visible effect until the party is already fighting.
     if (!_realChars)
@@ -1102,7 +1130,7 @@ void DcTestRunJob::TickProvisioning(bool& provisionBudget)
 // ResetStrategies stays: it reloads strategies from config (which is how the
 // dungeon-clear stack gets installed) without touching the character sheet.
 //
-// All five slots are read in one tick — there is no factory roll to spend the
+// Every roster slot is read in one tick — there is no factory roll to spend the
 // shared per-tick provision budget on.
 // Stock playerbots joins any guildless bot to a random bot guild the moment it
 // logs in: RandomPlayerbotMgr::OnBotLoginInternal calls
@@ -1250,6 +1278,35 @@ void DcTestRunJob::TickGrouping()
         group->SetLootMethod(FREE_FOR_ALL);
         group->SendUpdate();
         sObjectMgr.AddGroup(group);
+
+        // A party cannot hold more than MAX_GROUP_SIZE (Group::IsFull caps a
+        // GROUPTYPE_NORMAL group at five and its subgroups counter is null), so a
+        // raid-sized row has to be a raid group BEFORE the add loop or
+        // AddMember starts failing partway and the run dies with "could not add
+        // <class> to the group" for the sixth seat. Convert here for the same
+        // reason PlayerbotMgr's HandleBotAddLogin does — after Group::Create, so
+        // the groups-table row exists to be flipped to isRaid, and before the
+        // first join. ConvertToRaid also initialises the subgroup counters that
+        // _addMember uses to spread members over sub-groups.
+        //
+        // The threshold is SIZE, not the map. Keying on the map would convert
+        // today's five-bot Zul'Gurub run into a raid, and that is not cosmetic:
+        // DcLeaderSignal::FindLeaderTank elects by group kind, so a raid elects
+        // the highest-gear-score tank bot where a party elects the lowest-GUID
+        // one, and a different bot drives the whole clear. Size is also the only
+        // condition under which the conversion is required at all — five bots in
+        // a raid map is a perfectly good party, and that is what the harness has
+        // always built there.
+        if (_slots.size() > MAX_GROUP_SIZE)
+        {
+            group->ConvertToRaid();
+            LOG_INFO("playerbots.dungeonclear",
+                     "TESTRUN {} party of {} exceeds MAX_GROUP_SIZE ({}) — group converted "
+                     "to a raid, so DC's leader election switches to the raid rule "
+                     "(highest-gear-score tank bot instead of lowest-GUID)",
+                     _record.runId, _slots.size(), uint32(MAX_GROUP_SIZE));
+        }
+
         for (std::size_t i = 1; i < _slots.size(); ++i)
         {
             Player* bot = ObjectAccessor::FindPlayer(_slots[i].guid);

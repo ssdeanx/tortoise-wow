@@ -20,7 +20,8 @@ class DcTestRunJob;
 class Player;
 
 // Registry of live `.dc test` runs. Each run is a DcTestRunJob owning its own
-// 5-bot party, instance, watchdog and record; the manager only launches jobs,
+// party (as many bots as its registry row asks for — five unless the row says
+// otherwise), instance, watchdog and record; the manager only launches jobs,
 // ticks them, routes the two observer callbacks to the right job by tank guid,
 // arbitrates the shared bot pool, and writes the one multi-run live-status file
 // the dashboard polls. Any number of runs execute at once — uncapped by default
@@ -51,6 +52,7 @@ public:
     {
         None,
         UnknownDungeon,  // permanent
+        MapTooSmall,     // permanent — the row's party exceeds map_template.player_limit
         NoMgr,           // permanent
         CapHit,          // transient — a run will finish
         BotBudget,       // transient — MaxAddedBots pre-check
@@ -64,8 +66,9 @@ public:
     // Validate + launch a run. On success sets *msg to the start confirmation
     // and returns true; on failure sets *msg to the reason and returns false.
     // Rejections: unknown dungeon, heroic on a row without a heroic mode, no
-    // playerbot manager, concurrency cap hit, MaxAddedBots pre-check, or no
-    // free pool character for a comp class.
+    // playerbot manager, a row whose party does not fit the map's
+    // map_template.player_limit, concurrency cap hit, MaxAddedBots pre-check,
+    // or no free pool character for a comp class.
     // seed 0 rolls a random comp; a nonzero seed reproduces a specific comp.
     // heroic runs the instance at DUNGEON_DIFFICULTY_HEROIC with the row's
     // heroicLevel as the default bot level (level override still wins).
@@ -80,9 +83,10 @@ public:
 
     // Validate + launch a HAND-PICKED party (`.dc test start <d> party=a,b,c,d,e`).
     // `partySpec` is the raw comma-separated name list; roles are positional
-    // (tank, heal, dps, dps, dps — see DcTestRoster).
+    // (tank, heal, dps, dps, dps at the five-slot default — see DcTestRoster).
     //
-    // Refuses on: malformed list, a name no character answers to, a character a
+    // Refuses on: a roster that is not exactly the row's partySize (five unless the
+    // row asks otherwise), a name no character answers to, a character a
     // human is currently playing, a character another live run already holds, and
     // a roster spanning both factions (which cannot be grouped). Level comes from
     // the characters, so there is no level override and no comp seed.
