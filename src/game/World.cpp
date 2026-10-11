@@ -209,6 +209,7 @@ void World::Shutdown()
     });
 
 	sGuildMgr.SaveGuildBanks();
+    m_headlessSessionMgr->Shutdown();                       // save and kick all headless sessions
     sWorld.KickAll();                                       // save and kick all players
     sWorld.UpdateSessions(1);                               // real players unload required UpdateSessions call
     if (m_charDbWorkerThread && m_charDbWorkerThread->joinable())
