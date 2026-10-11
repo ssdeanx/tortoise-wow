@@ -39,8 +39,12 @@ if (MSVC)
     endforeach()
 endif()
 
-if (BUILD_TESTING)
+if (BUILD_TESTING AND EXISTS "${CMAKE_SOURCE_DIR}/src/test/mocks/TestMap.cpp" AND TARGET game-interface)
     function(define_dungeon_clear_tests)
+        if (TARGET dungeon_clear_tests)
+            return()
+        endif()
+
         set(MOD_PATH "${CMAKE_SOURCE_DIR}/modules/mod-dungeon-clear")
 
         # Define our standalone test target

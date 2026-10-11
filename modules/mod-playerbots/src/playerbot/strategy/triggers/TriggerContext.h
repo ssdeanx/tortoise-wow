@@ -24,6 +24,8 @@
 #include "TempleOfAhnQirajDungeonTriggers.h"
 #include "ZulGurubDungeonTriggers.h"
 #include "ScarletCitadelDungeonTriggers.h"
+#include "BlackrockSpireDungeonTriggers.h"
+#include "EmeraldSanctumDungeonTriggers.h"
 #include "GlyphTriggers.h"
 #include "WorldBuffTravelTriggers.h"
 
@@ -316,6 +318,42 @@ namespace ai
             creators["leave blackwing lair"] = [](PlayerbotAI* ai) { return new BlackwingLairLeaveDungeonTrigger(ai); };
             creators["enter scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelEnterDungeonTrigger(ai); };
             creators["leave scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelLeaveDungeonTrigger(ai); };
+            creators["enter blackrock spire"] = [](PlayerbotAI* ai) { return new BlackrockSpireEnterDungeonTrigger(ai); };
+            creators["leave blackrock spire"] = [](PlayerbotAI* ai) { return new BlackrockSpireLeaveDungeonTrigger(ai); };
+            creators["enter emerald sanctum"] = [](PlayerbotAI* ai) { return new EmeraldSanctumEnterDungeonTrigger(ai); };
+            creators["leave emerald sanctum"] = [](PlayerbotAI* ai) { return new EmeraldSanctumLeaveDungeonTrigger(ai); };
+            creators["enter karazhan crypt"] = [](PlayerbotAI* ai) { return new KarazhanCryptEnterDungeonTrigger(ai); };
+            creators["leave karazhan crypt"] = [](PlayerbotAI* ai) { return new KarazhanCryptLeaveDungeonTrigger(ai); };
+            creators["enter upper karazhan"] = [](PlayerbotAI* ai) { return new UpperKarazhanEnterDungeonTrigger(ai); };
+            creators["leave upper karazhan"] = [](PlayerbotAI* ai) { return new UpperKarazhanLeaveDungeonTrigger(ai); };
+
+            // Blackrock Spire Boss Triggers
+            creators["start pyroguard emberseer fight"] = [](PlayerbotAI* ai) { return new PyroguardEmberseerStartFightTrigger(ai); };
+            creators["end pyroguard emberseer fight"] = [](PlayerbotAI* ai) { return new PyroguardEmberseerEndFightTrigger(ai); };
+            creators["start rend blackhand fight"] = [](PlayerbotAI* ai) { return new RendBlackhandStartFightTrigger(ai); };
+            creators["end rend blackhand fight"] = [](PlayerbotAI* ai) { return new RendBlackhandEndFightTrigger(ai); };
+            creators["start the beast fight"] = [](PlayerbotAI* ai) { return new TheBeastStartFightTrigger(ai); };
+            creators["end the beast fight"] = [](PlayerbotAI* ai) { return new TheBeastEndFightTrigger(ai); };
+            creators["start general drakkisath fight"] = [](PlayerbotAI* ai) { return new GeneralDrakkisathStartFightTrigger(ai); };
+            creators["end general drakkisath fight"] = [](PlayerbotAI* ai) { return new GeneralDrakkisathEndFightTrigger(ai); };
+
+            // Emerald Sanctum Boss Triggers
+            creators["start erennius fight"] = [](PlayerbotAI* ai) { return new ErenniusStartFightTrigger(ai); };
+            creators["end erennius fight"] = [](PlayerbotAI* ai) { return new ErenniusEndFightTrigger(ai); };
+            creators["start solnius fight"] = [](PlayerbotAI* ai) { return new SolniusStartFightTrigger(ai); };
+            creators["end solnius fight"] = [](PlayerbotAI* ai) { return new SolniusEndFightTrigger(ai); };
+
+            // Lower Karazhan Halls Boss Triggers
+            creators["start araxxna fight"] = [](PlayerbotAI* ai) { return new AraxxnaStartFightTrigger(ai); };
+            creators["end araxxna fight"] = [](PlayerbotAI* ai) { return new AraxxnaEndFightTrigger(ai); };
+            creators["start howlfang fight"] = [](PlayerbotAI* ai) { return new HowlfangStartFightTrigger(ai); };
+            creators["end howlfang fight"] = [](PlayerbotAI* ai) { return new HowlfangEndFightTrigger(ai); };
+            creators["start lord blackwald fight"] = [](PlayerbotAI* ai) { return new LordBlackwaldStartFightTrigger(ai); };
+            creators["end lord blackwald fight"] = [](PlayerbotAI* ai) { return new LordBlackwaldEndFightTrigger(ai); };
+            creators["start grizikil fight"] = [](PlayerbotAI* ai) { return new GrizikilStartFightTrigger(ai); };
+            creators["end grizikil fight"] = [](PlayerbotAI* ai) { return new GrizikilEndFightTrigger(ai); };
+            creators["start lkh moroes fight"] = [](PlayerbotAI* ai) { return new LkhMoroesStartFightTrigger(ai); };
+            creators["end lkh moroes fight"] = [](PlayerbotAI* ai) { return new LkhMoroesEndFightTrigger(ai); };
 
             // Scarlet Citadel Boss Triggers
             creators["start daelus fight"] = [](PlayerbotAI* ai) { return new DaelusStartFightTrigger(ai); };

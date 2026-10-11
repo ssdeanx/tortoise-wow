@@ -87,6 +87,15 @@ void NaxxramasDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigg
         NextAction::array(0, new NextAction("enable patchwerk fight strategy", 100.0f), NULL)));
 }
 
+void NaxxramasDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Restock the protection potions out of combat. Naxxramas (map 533) stocks
+    // frost/nature/shadow/fire - all four schools the instance casts.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+}
+
 // ---------------------------------------------------------------------------
 // Anub'Rekhan: Crypt Guards 16573 held by offtanks; Locust Swarm 28785 -
 // melee run out of the swarm radius while it channels.
@@ -136,6 +145,11 @@ void FaerlinaFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
     triggers.push_back(new TriggerNode(
         "faerlina enraged",
         NextAction::array(0, new NextAction("attack entry::16506", 80.0f), NULL)));
+
+    // Rain of Fire 28794 is fire.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
 }
 
 void FaerlinaFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -166,6 +180,11 @@ void MaexxnaFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "attackers entry::17055",
         NextAction::array(0, new NextAction("attack entry::17055", 60.0f), NULL)));
+
+    // Poison Shock 28741 / Web Spray 29484 are nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
 }
 
 void MaexxnaFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -205,6 +224,11 @@ void NothFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "attackers entry::16982",
         NextAction::array(0, new NextAction("offtank entry::16982", 55.0f), NULL)));
+
+    // Cripple 29212 / Curse of the Plaguebringer 29213 are shadow.
+    triggers.push_back(new TriggerNode(
+        "shadow protection potion ready",
+        NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 }
 
 void NothFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -231,6 +255,11 @@ void HeiganFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "heigan plague cloud",
         NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
+
+    // Eruption 29371 / Decrepit Fever 29998 are nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
 }
 
 void HeiganFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -264,6 +293,11 @@ void LoathebFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "loatheb spore",
         NextAction::array(0, new NextAction("attack entry::16286", 65.0f), NULL)));
+
+    // Mind Flay 29407 / Retching Plague 30079 are shadow.
+    triggers.push_back(new TriggerNode(
+        "shadow protection potion ready",
+        NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 }
 
 void LoathebFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -294,6 +328,11 @@ void GrobbulusFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode(
         "attackers entry::16290",
         NextAction::array(0, new NextAction("offtank entry::16290", 55.0f), NULL)));
+
+    // Slime Stream 28137 / Slime Spray 28157 are nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
 }
 
 void GrobbulusFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -366,6 +405,11 @@ void ThaddiusFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
     triggers.push_back(new TriggerNode(
         "attackers entry::15930",
         NextAction::array(0, new NextAction("attack entry::15930", 60.0f), NULL)));
+
+    // Chain Lightning 28167 / Ball Lightning 28299 are nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
 }
 
 void ThaddiusFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -475,6 +519,11 @@ void KelThuzadFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode(
         "attackers entry::16429",
         NextAction::array(0, new NextAction("attack entry::16429", 58.0f), NULL)));
+
+    // Void Blast 27812 / Dark Blast 28457 are shadow.
+    triggers.push_back(new TriggerNode(
+        "shadow protection potion ready",
+        NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 }
 
 void KelThuzadFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -516,6 +565,11 @@ void FourHorsemanFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trig
     triggers.push_back(new TriggerNode(
         "void zone too close",
         NextAction::array(0, new NextAction("move away from void zone", 100.0f), NULL)));
+
+    // Korth'azz Meteor 28884 is fire.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
 }
 
 void FourHorsemanFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -625,13 +679,17 @@ void RazuviousFightStrategy::InitDeadTriggers(std::list<TriggerNode*>& triggers)
 }
 
 // ---------------------------------------------------------------------------
-// Patchwerk (16028): pure tank'n'spank - no tactics. The strategy exists for
-// the consumable lifecycle and as a validation marker (Hateful Strike tanking,
-// healer throughput, hard enrage).
+// Patchwerk (16028): no positioning tactics. The strategy exists for the
+// consumable lifecycle and as a validation marker (Hateful Strike tanking,
+// healer throughput, hard enrage) plus Slime Bolt (32309, nature).
 // ---------------------------------------------------------------------------
 
 void PatchwerkFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
+    // Slime Bolt 32309 is nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
 }
 
 void PatchwerkFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

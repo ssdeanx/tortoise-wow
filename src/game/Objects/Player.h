@@ -2227,17 +2227,7 @@ class Player final: public Unit
         std::map<ObjectGuid, bool> m_visibleGobjQuestActivated;
         mutable std::mutex m_visibleGobjsQuestAct_lock;
 
-        void ClearVisibleObjects()
-        {
-            {
-                std::unique_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
-                m_visibleGUIDs.clear();
-            }
-            {
-                std::lock_guard<std::mutex> lock(m_visibleGobjsQuestAct_lock);
-                m_visibleGobjQuestActivated.clear();
-            }
-        }
+        void ClearVisibleObjects();
 
         bool IsInVisibleList(WorldObject const* u) const;
         bool IsInVisibleList_Unsafe(WorldObject const* u) const { return this == u || m_visibleGUIDs.find(u->GetObjectGuid()) != m_visibleGUIDs.end(); }

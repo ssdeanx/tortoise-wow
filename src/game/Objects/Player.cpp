@@ -20902,6 +20902,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             target->DestroyForPlayer(this);
             std::unique_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
             m_visibleGUIDs.erase(t_guid);
+            target->RemoveMovementViewer(GetObjectGuid());
             lock.unlock();
 
             if (Player* plTarget = target->ToPlayer())
@@ -20920,6 +20921,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
             {
                 std::unique_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
                 m_visibleGUIDs.insert(target->GetObjectGuid());
+                target->AddMovementViewer(GetObjectGuid());
                 lock.unlock();
 
                 if (Player* plTarget = target->ToPlayer())
@@ -20990,6 +20992,7 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, T* target, UpdateD
             target->BuildOutOfRangeUpdateBlock(&data);
             std::unique_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
             m_visibleGUIDs.erase(t_guid);
+            target->RemoveMovementViewer(GetObjectGuid());
             lock.unlock();
 
             RemoveBroadcastListener(target, this);
@@ -21020,9 +21023,14 @@ template void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObje
 
 void Player::ActivateBroadcastListeners(std::set<WorldObject*> const& visibleNow)
 {
-    for (WorldObject* obj : visibleNow)
+    for (WorldObject* object : visibleNow)
     {
-        if (Player* target = obj->ToPlayer())
+        // A busy player or bot can otherwise deliver SMSG_MONSTER_MOVE ahead of
+        // its create block, so register movement viewers only once the object is
+        // already visible.
+        if (object)
+            object->AddMovementViewer(GetObjectGuid());
+        if (Player* target = object ? object->ToPlayer() : nullptr)
         {
             if (target->m_broadcaster)
                 target->m_broadcaster->AddListener(this);
@@ -24501,6 +24509,9 @@ void Player::HandleStealthedUnitsDetection()
 
                 m_visibleGUIDs.insert(stealthedUnit->GetObjectGuid());
                 stealthedUnit->SendCreateUpdateToPlayer(this);
+                // Do not expose this socket to movement delivery until the
+                // object's create block has been queued first.
+                stealthedUnit->AddMovementViewer(GetObjectGuid());
             }
         }
         else
@@ -24514,6 +24525,7 @@ void Player::HandleStealthedUnitsDetection()
                         i_player->m_broadcaster->RemoveListener(this);
 
                 m_visibleGUIDs.erase(stealthedUnit->GetObjectGuid());
+                stealthedUnit->RemoveMovementViewer(GetObjectGuid());
             }
         }
     }
@@ -24527,6 +24539,26 @@ bool Player::IsInVisibleList(WorldObject const* u) const
     std::shared_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
     bool atClient = m_visibleGUIDs.find(u->GetObjectGuid()) != m_visibleGUIDs.end();
     return atClient; 
+}
+
+void Player::ClearVisibleObjects()
+{
+    {
+        std::unique_lock<std::shared_mutex> lock(m_visibleGUIDs_lock);
+        // NPC movement is delivered to the viewers registered in
+        // m_movementViewers. Drop those registrations before the visible set is
+        // discarded, or a creature keeps a stale viewer reference.
+        if (Map* map = FindMap())
+            for (ObjectGuid guid : m_visibleGUIDs)
+                if (guid.IsCreatureOrPet())
+                    if (Creature* creature = map->GetAnyTypeCreature(guid))
+                        creature->RemoveMovementViewer(GetObjectGuid());
+        m_visibleGUIDs.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_visibleGobjsQuestAct_lock);
+        m_visibleGobjQuestActivated.clear();
+    }
 }
 
 

@@ -49,10 +49,17 @@ namespace
             RegisterUldamanRoster(t);
             RegisterZulGurubRoster(t);
             RegisterMoltenCoreRoster(t);
+            RegisterLowerKarazhanHallsRoster(t);
+            RegisterKarazhanCryptRoster(t);
             RegisterBlackwingLairRoster(t);
             RegisterOnyxiasLairRoster(t);
             RegisterAhnQirajRoster(t);
             RegisterScarletCitadelRoster(t);
+            RegisterBlackrockSpireRoster(t);
+            RegisterEmeraldSanctumRoster(t);
+            RegisterTowerOfKarazhanRoster(t);
+            RegisterTimbermawHoldRoster(t);
+            RegisterStormwroughtRuinsRoster(t);
             RegisterHellfireRampartsRoster(t);
             RegisterSlavePensRoster(t);
             RegisterUnderbogRoster(t);

@@ -82,6 +82,8 @@
 #include "TempleOfAhnQirajDungeonActions.h"
 #include "ZulGurubDungeonActions.h"
 #include "ScarletCitadelDungeonActions.h"
+#include "BlackrockSpireDungeonActions.h"
+#include "EmeraldSanctumDungeonActions.h"
 
 #ifdef GenerateBotTests
 #include "../tests/TestAction.h"
@@ -382,6 +384,39 @@ namespace ai
             creators["give ahnqiraj supplies"] = [](PlayerbotAI* ai) { return new GiveAhnQirajSuppliesAction(ai); };
             creators["enable scarlet citadel strategy"] = [](PlayerbotAI* ai) { return new ScarletCitadelEnableDungeonStrategyAction(ai); };
             creators["disable scarlet citadel strategy"] = [](PlayerbotAI* ai) { return new ScarletCitadelDisableDungeonStrategyAction(ai); };
+
+            // Blackrock Spire Actions
+            creators["enable blackrock spire strategy"] = [](PlayerbotAI* ai) { return new BlackrockSpireEnableDungeonStrategyAction(ai); };
+            creators["disable blackrock spire strategy"] = [](PlayerbotAI* ai) { return new BlackrockSpireDisableDungeonStrategyAction(ai); };
+            creators["enable pyroguard emberseer fight strategy"] = [](PlayerbotAI* ai) { return new PyroguardEmberseerEnableFightStrategyAction(ai); };
+            creators["disable pyroguard emberseer fight strategy"] = [](PlayerbotAI* ai) { return new PyroguardEmberseerDisableFightStrategyAction(ai); };
+            creators["enable rend blackhand fight strategy"] = [](PlayerbotAI* ai) { return new RendBlackhandEnableFightStrategyAction(ai); };
+            creators["disable rend blackhand fight strategy"] = [](PlayerbotAI* ai) { return new RendBlackhandDisableFightStrategyAction(ai); };
+            creators["enable the beast fight strategy"] = [](PlayerbotAI* ai) { return new TheBeastEnableFightStrategyAction(ai); };
+            creators["disable the beast fight strategy"] = [](PlayerbotAI* ai) { return new TheBeastDisableFightStrategyAction(ai); };
+            creators["enable general drakkisath fight strategy"] = [](PlayerbotAI* ai) { return new GeneralDrakkisathEnableFightStrategyAction(ai); };
+            creators["disable general drakkisath fight strategy"] = [](PlayerbotAI* ai) { return new GeneralDrakkisathDisableFightStrategyAction(ai); };
+
+            // Emerald Sanctum Actions
+            creators["enable emerald sanctum strategy"] = [](PlayerbotAI* ai) { return new EmeraldSanctumEnableDungeonStrategyAction(ai); };
+            creators["disable emerald sanctum strategy"] = [](PlayerbotAI* ai) { return new EmeraldSanctumDisableDungeonStrategyAction(ai); };
+            creators["enable erennius fight strategy"] = [](PlayerbotAI* ai) { return new ErenniusEnableFightStrategyAction(ai); };
+            creators["disable erennius fight strategy"] = [](PlayerbotAI* ai) { return new ErenniusDisableFightStrategyAction(ai); };
+            creators["enable solnius fight strategy"] = [](PlayerbotAI* ai) { return new SolniusEnableFightStrategyAction(ai); };
+            creators["disable solnius fight strategy"] = [](PlayerbotAI* ai) { return new SolniusDisableFightStrategyAction(ai); };
+
+            // Lower Karazhan Halls Actions
+            creators["enable araxxna fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "enable araxxna fight strategy", "+araxxna"); };
+            creators["disable araxxna fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "disable araxxna fight strategy", "-araxxna"); };
+            creators["enable howlfang fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "enable howlfang fight strategy", "+howlfang"); };
+            creators["disable howlfang fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "disable howlfang fight strategy", "-howlfang"); };
+            creators["enable lord blackwald fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "enable lord blackwald fight strategy", "+lord blackwald"); };
+            creators["disable lord blackwald fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "disable lord blackwald fight strategy", "-lord blackwald"); };
+            creators["enable grizikil fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "enable grizikil fight strategy", "+grizikil"); };
+            creators["disable grizikil fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "disable grizikil fight strategy", "-grizikil"); };
+            creators["enable lkh moroes fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "enable lkh moroes fight strategy", "+lkh moroes"); };
+            creators["disable lkh moroes fight strategy"] = [](PlayerbotAI* ai) { return new ChangeAllStrategyAction(ai, "disable lkh moroes fight strategy", "-lkh moroes"); };
+
 
             // Scarlet Citadel Boss Actions
             creators["enable daelus fight strategy"] = [](PlayerbotAI* ai) { return new DaelusEnableFightStrategyAction(ai); };

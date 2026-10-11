@@ -91,6 +91,20 @@ namespace
     // ---- 509 Ossirian crystal GO --------------------------------------------
     constexpr uint32 AQ20_OSSIRIAN_CRYSTAL = 180619;
 
+    // ---- 509 Buru & Ayamiss entries -----------------------------------------
+    constexpr uint32 AQ20_BURU = 15370;
+    constexpr uint32 AQ20_BURU_HATCHLING = 15521;
+    constexpr uint32 AQ20_AYAMISS = 15369;
+    constexpr uint32 AQ20_AYAMISS_LARVA = 15555;
+    constexpr uint32 AQ20_AYAMISS_SWARMER = 15385;
+
+    // ---- 531 Sartura & Fankriss entries -------------------------------------
+    constexpr uint32 AQ40_SARTURA = 15516;
+    constexpr uint32 AQ40_SARTURA_GUARD = 15984;
+    constexpr uint32 AQ40_FANKRISS = 15510;
+    constexpr uint32 AQ40_SPAWN_OF_FANKRISS = 15630;
+    constexpr uint32 AQ40_VEKNISS_HATCHLING = 15962;
+
     // Clear-path order slots, on the SAME encounterIndex scale the base list uses.
     // BossSpawnIndex sets a raw boss's key to (DcBossEntries order - 1), and
     // NextDungeonBossValue advances to the lowest key STRICTLY GREATER than the one
@@ -102,15 +116,24 @@ namespace
     //   531 Ouro   occupies Ouro's own absent slot (order 11 -> key 10), between
     //              Vek'nilash(8) and C'Thun(11)
     constexpr uint32 AQ20_ORDER_RAJAXX = 1;
+    constexpr uint32 AQ20_ORDER_BURU = 3;
+    constexpr uint32 AQ20_ORDER_AYAMISS = 4;
     constexpr uint32 AQ40_ORDER_BUG_TRIO = 1;
+    constexpr uint32 AQ40_ORDER_SARTURA = 4;
+    constexpr uint32 AQ40_ORDER_FANKRISS = 5;
     constexpr uint32 AQ40_ORDER_OURO = 10;
 
     // Event ids.
     constexpr uint32 AQ20_EVENT_RAJAXX = 1;
     constexpr uint32 AQ20_EVENT_OSSIRIAN_CRYSTAL = 2;
+    constexpr uint32 AQ20_EVENT_BURU = 3;
+    constexpr uint32 AQ20_EVENT_AYAMISS = 4;
     constexpr uint32 AQ40_EVENT_BUG_TRIO = 1;
     constexpr uint32 AQ40_EVENT_OURO = 2;
     constexpr uint32 AQ40_EVENT_CTHUN_EYE = 3;
+    constexpr uint32 AQ40_EVENT_SARTURA = 4;
+    constexpr uint32 AQ40_EVENT_FANKRISS = 5;
+    constexpr uint32 AQ40_EVENT_ROOM_PRECLEAR = 6;
 
     // Live anchors (tw_world).
     constexpr float AQ20_RAJAXX_ARENA_X = -9015.17f; // Qeez 15391, the first pull
@@ -230,6 +253,46 @@ void RegisterAhnQirajEvents(std::vector<DungeonEvent>& out)
     out.push_back(EventBuilder(AQ40_MAP, AQ40_EVENT_CTHUN_EYE, "C'thun (Eye phase)")
                       .Conditional(&CthunEyeActive)
                       .KillCreatureEngage(AQ40_CTHUN_EYE, 1, 80.0f).Timeout(600000)
+                      .Build());
+
+    // --- 531 Sartura: prioritize Royal Guards (whirlwind + knockback) ---------
+    out.push_back(EventBuilder(AQ40_MAP, AQ40_EVENT_SARTURA, "Battleguard Sartura & Royal Guards")
+                      .Anchored(AQ40_ORDER_SARTURA)
+                      .KillCreatureEngage(AQ40_SARTURA_GUARD, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ40_SARTURA, /*count*/ 1, 80.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // --- 531 Fankriss: prioritize Spawn of Fankriss and Hatchlings -----------
+    out.push_back(EventBuilder(AQ40_MAP, AQ40_EVENT_FANKRISS, "Fankriss the Unyielding & Spawns")
+                      .Anchored(AQ40_ORDER_FANKRISS)
+                      .KillCreatureEngage(AQ40_SPAWN_OF_FANKRISS, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ40_VEKNISS_HATCHLING, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ40_FANKRISS, /*count*/ 1, 80.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // --- 509 Buru: prioritize Buru Hatchlings --------------------------------
+    out.push_back(EventBuilder(AQ20_MAP, AQ20_EVENT_BURU, "Buru the Gorger & Hatchlings")
+                      .Anchored(AQ20_ORDER_BURU)
+                      .KillCreatureEngage(AQ20_BURU_HATCHLING, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ20_BURU, /*count*/ 1, 80.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // --- 509 Ayamiss: prioritize Swarmers and Larvae in air phase ------------
+    out.push_back(EventBuilder(AQ20_MAP, AQ20_EVENT_AYAMISS, "Ayamiss the Hunter & Swarmers")
+                      .Anchored(AQ20_ORDER_AYAMISS)
+                      .KillCreatureEngage(AQ20_AYAMISS_SWARMER, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ20_AYAMISS_LARVA, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(AQ20_AYAMISS, /*count*/ 1, 80.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // --- 531 Room Pre-Clear: Fankriss the Unyielding and Princess Huhuran trash
+    out.push_back(EventBuilder(AQ40_MAP, AQ40_EVENT_ROOM_PRECLEAR, "Clear the room before the room-aggro boss (Temple of Ahn'Qiraj)")
+                      .Conditional(&DcRoomAggroPreClearCondition)
+                      .KillCreature(/*room trash*/ 0)
                       .Build());
 }
 

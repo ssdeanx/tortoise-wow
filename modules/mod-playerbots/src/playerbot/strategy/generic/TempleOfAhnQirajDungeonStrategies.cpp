@@ -379,6 +379,11 @@ void TwinsFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
         "shadow protection potion ready",
         NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 
+    // Blizzard 26607 is frost.
+    triggers.push_back(new TriggerNode(
+        "frost protection potion ready",
+        NextAction::array(0, new NextAction("frost protection potion", 100.0f), NULL)));
+
     // The room's Qiraji bugs (15316/15317) are mutated and sent at the raid -
     // they are killed once they turn hostile.
     triggers.push_back(new TriggerNode(

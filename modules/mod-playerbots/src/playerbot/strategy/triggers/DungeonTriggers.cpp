@@ -386,11 +386,11 @@ bool ItemBuffReadyTrigger::IsActive()
     return false;
 }
 
-// Shared AQ supply rule (declared in DungeonTriggers.h). True when the bot is
-// inside an AQ raid and at least one of the five Greater Protection Potions has
-// dropped below the low watermark. Counts bags only (inBankAlso=false): the
-// supply action can only top up what the bot can carry, so a bank stack must
-// not mask an empty bag mid-raid.
+// Shared raid supply rule (declared in DungeonTriggers.h). True when the bot's
+// current map is in the per-map supply table and at least one of that map's
+// stocked Greater Protection Potions has dropped below the low watermark.
+// Counts bags only (inBankAlso=false): the supply action can only top up what
+// the bot can carry, so a bank stack must not mask an empty bag mid-raid.
 bool ai::AhnQirajSuppliesLow(PlayerbotAI* ai)
 {
     if (!ai)
@@ -400,12 +400,12 @@ bool ai::AhnQirajSuppliesLow(PlayerbotAI* ai)
     if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported())
         return false;
 
-    uint32 mapId = bot->GetMapId();
-    if (mapId != 509 && mapId != 531) // Ruins of Ahn'Qiraj / Temple of Ahn'Qiraj
-        return false;
-
+    // The table lookup replaces the old hardcoded AQ map-id gate: a map with no
+    // row returns an empty list, which makes the loop below fall straight
+    // through to false. Unstocked maps therefore grant nothing by construction
+    // - they can neither crash nor pick up another raid's potion list.
     uint32 count = 0;
-    uint32 const* items = AhnQirajProtectionPotions(count);
+    uint32 const* items = RaidSupplyPotions(bot->GetMapId(), count);
     for (uint32 i = 0; i < count; ++i)
     {
         if (bot->GetItemCount(items[i], /*inBankAlso*/ false) < AhnQirajSupplyLowWatermark())

@@ -11,6 +11,9 @@ using namespace ai;
 bool LootStartRollAction::Execute(Event& event)
 {
     WorldPacket p(event.getPacket()); //WorldPacket packet for CMSG_LOOT_ROLL, (8+4+1)
+    if (p.size() < 8 + 4 + 4 + 4 + 4 + 4)
+        return false;
+
     ObjectGuid creatureGuid;
     uint32 itemSlot;
     uint32 itemId;
@@ -339,15 +342,33 @@ bool LootRollAction::Execute(Event& event)
     Player* bot = QueryItemUsageAction::ai->GetBot();
 
     WorldPacket p(event.getPacket()); //WorldPacket packet for CMSG_LOOT_ROLL, (8+4+1)
-    ObjectGuid guid;
-    uint32 slot;
-    uint8 rollType;
-    p.rpos(0); //reset packet pointer
-    p >> guid; //guid of the item rolled
-    p >> slot; //number of players invited to roll
-    p >> rollType; //need,greed or pass on roll
+    if (!p.empty() && p.size() >= sizeof(uint64) + sizeof(uint32) + sizeof(uint8))
+    {
+        ObjectGuid guid;
+        uint32 slot;
+        uint8 rollType;
+        p.rpos(0); //reset packet pointer
+        p >> guid; //guid of the item rolled
+        p >> slot; //number of players invited to roll
+        p >> rollType; //need,greed or pass on roll
 
-    return RollWithEtiquette(guid, slot);
+        return RollWithEtiquette(guid, slot);
+    }
+
+    // Trigger-driven roll without incoming network packet (e.g. from dungeon clear loot roll pending):
+    LootRollMap lootRolls = AI_VALUE(LootRollMap, "active rolls");
+    ActiveRolls::CleanUp(bot, lootRolls);
+    SET_AI_VALUE(LootRollMap, "active rolls", lootRolls);
+    if (!bot->GetGroup() || lootRolls.empty() || AI_VALUE(uint8, "bag space") >= 100)
+        return false;
+
+    for (auto const& roll : lootRolls)
+    {
+        if (RollWithEtiquette(roll.first, roll.second))
+            return true;
+    }
+
+    return false;
 }
 
 bool AutoLootRollAction::Execute(Event& event)

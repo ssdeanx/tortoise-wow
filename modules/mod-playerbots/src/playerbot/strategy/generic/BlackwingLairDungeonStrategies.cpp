@@ -74,6 +74,13 @@ void BlackwingLairDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>
     triggers.push_back(new TriggerNode(
         "suppression device close",
         NextAction::array(0, new NextAction("disarm suppression device", ACTION_HIGH + 4), NULL)));
+
+    // Restock the protection potions out of combat. Blackwing Lair (map 469)
+    // stocks fire/shadow/nature/frost - all four are needed because Chromaggus
+    // casts every school in the same fight.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
 }
 
 class SuppressionRoomPassiveMultiplier : public Multiplier
@@ -504,6 +511,17 @@ void ChromaggusFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigge
     triggers.push_back(new TriggerNode(
         "chromaggus bronze affliction",
         NextAction::array(0, new NextAction("clear chromaggus bronze", 100.0f), NULL)));
+
+    // Chromaggus is the only BWL dragon that casts all four schools: his breath
+    // list (boss_chromaggus.cpp:63) is 23308 fire / 23313 nature / 23187 frost,
+    // plus the affliction DoTs 23155 fire and 23169 nature.
+    triggers.push_back(new TriggerNode(
+        "nature protection potion ready",
+        NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "frost protection potion ready",
+        NextAction::array(0, new NextAction("frost protection potion", 100.0f), NULL)));
 }
 
 void ChromaggusFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

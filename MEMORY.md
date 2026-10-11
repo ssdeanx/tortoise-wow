@@ -151,3 +151,106 @@ CREATE TABLE IF NOT EXISTS tw_char.character_inventory_copy LIKE tw_char.charact
 - [Dungeon Clear AI Module Reference](file:///home/sam/tortoise-wow/references/15_dungeon_clear_module.md)
 - [Playerbots Quickstart Guide](file:///home/sam/tortoise-wow/PLAYERBOTS_QUICKSTART.md)
 - [Linux Installation Walkthrough](file:///home/sam/tortoise-wow/INSTALL-LINUX.md)
+
+---
+
+## 6. SOAP Remote-Command Interface
+
+Executes **one server-console command per HTTP request** and returns its text output. Enables driving the live
+server from scripts/agents without attaching to a terminal.
+
+### 6.1 Credentials & Endpoint
+
+| Item | Value |
+| --- | --- |
+| URL | `http://127.0.0.1:7878/` |
+| Username | `SOAP` |
+| Password | `123` |
+| Auth | HTTP Basic (sent in clear text — see 6.5) |
+| Method | `ns1:executeCommand` in namespace `urn:MaNGOS`, command passed as the `<command>` parameter |
+
+### 6.2 Running a Command
+
+The command is a **parameter value**, not the element name — spaces are therefore fine.
+
+```bash
+curl -s -u 'SOAP:123' -H 'Content-Type: text/xml' \
+  --data '<?xml version="1.0"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><ns1:executeCommand xmlns:ns1="urn:MaNGOS"><command>server info</command></ns1:executeCommand></soap:Body></soap:Envelope>' \
+  http://127.0.0.1:7878/
+```
+
+Response (verified live against core `7b4775dd`):
+
+```xml
+<ns1:executeCommandResponse><result>Core revision: 7b4775dd… / Players online: 1. …</result></ns1:executeCommandResponse>
+```
+
+Output lands in the `<result>` element. Failures return a `SOAP-ENV:Fault`; `401` means bad credentials,
+`403` means banned or rank below the required level.
+
+### 6.3 Enabling It
+
+**Build** — SOAP is OFF unless explicitly requested. The root-level CMake option is declared before the legacy
+platform-specific one, so the effective default is OFF even when the legacy block would enable it:
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_SOAP=ON …
+```
+
+Confirm with `grep ENABLE_SOAP build/CMakeCache.txt` → `ENABLE_SOAP:BOOL=ON`.
+
+**Runtime** — `/home/sam/tortoise-wow/run/mangosd.conf` (gitignored, edit survives only on this machine):
+
+```ini
+SOAP.Enabled = 1
+SOAP.IP = 127.0.0.1
+SOAP.Port = 7878
+```
+
+Restart mangosd afterwards; the port should then appear in `ss -tlnp | grep 7878`.
+
+### 6.4 Authority & Constraints
+
+- Commands execute with **`SEC_CONSOLE`** privileges — higher than any player account, regardless of who calls it.
+- Commands run **on the world thread**, the same thread driving gameplay, once per tick. Cheap commands
+  (`server info`, `dc status`) are invisible; heavy ones can cause a visible lag spike for players online.
+- Request bodies are capped at **64 KiB**; oversized requests are rejected.
+- Accounts must have `rank >= 4` (`SEC_ADMINISTRATOR`). The dedicated `SOAP` account is rank 5.
+
+### 6.5 Security
+
+Transport is **plain HTTP with Basic auth — no encryption, no TLS**. Credentials travel the network in
+base64. Keep `SOAP.IP` bound to `127.0.0.1`. Exposing it beyond loopback requires a tunnel (SSH, WireGuard)
+in front of it; never bind it to a public interface directly.
+
+### 6.6 Gotcha — keep the account name uppercase
+
+`AccountMgr::ChangePassword` uppercases the username before hashing (`AccountMgr.cpp:144`), but
+`AccountMgr::CheckPassword` (`AccountMgr.cpp:342`) uppercases **only the password** and uses the stored
+username as-is. The two are asymmetric, so any account whose stored name is not already uppercase cannot
+authenticate over SOAP (HTTP 401).
+
+Practical rules:
+
+- Name the SOAP account in **uppercase** (`SOAP`, not `Soap` or `soap`) so stored name and computed hash agree.
+- **Never** run `.account set password` against it — that path uses `ChangePassword`'s normalized form and
+  immediately desynchronizes the stored `sha_pass_hash`.
+- To rotate the SOAP password, write `sha_pass_hash` directly, matching the stored (uppercase) name:
+  ```sql
+  UPDATE tw_logon.account SET sha_pass_hash=SHA1('SOAP:123') WHERE username='SOAP';
+  ```
+
+### 6.7 Separate concern — game login uses SRP6, not sha_pass_hash
+
+`realmd` authenticates the game client with **SRP6** using the `account.v` / `account.s` columns and never
+reads `sha_pass_hash`. That column only matters to mangosd's `CheckPassword` (SOAP, and `.account password`).
+
+Consequences when troubleshooting login:
+
+- Fixing `sha_pass_hash` has **no effect** on whether a player can log into the game.
+- Setting `v='0', s='0'` makes the next login attempt define that account's password: `AuthSocket.cpp:593`
+  sees the wrong field length and regenerates the verifier from whatever the client sends.
+  This is exactly what `AccountMgr::ChangePassword` does deliberately (it zeroes `v`/`s` "to force update at
+  next realmd login").
+- Game login ignores username case at the SQL layer (case-insensitive collation), but SRP6 mixes the typed
+  username into the hash — which is another reason `v='0', s='0'` self-heals the mismatch.

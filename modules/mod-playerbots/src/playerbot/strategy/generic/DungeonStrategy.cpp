@@ -1,4 +1,3 @@
-
 #include "playerbot/playerbot.h"
 #include "DungeonStrategy.h"
 
@@ -24,6 +23,14 @@ void DungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
         NextAction::array(0, new NextAction("enable karazhan strategy", 100.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
+        "enter karazhan crypt",
+        NextAction::array(0, new NextAction("enable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter upper karazhan",
+        NextAction::array(0, new NextAction("enable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "enter naxxramas",
         NextAction::array(0, new NextAction("enable naxxramas strategy", 100.0f), NULL)));
 
@@ -42,6 +49,14 @@ void DungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "enter scarlet citadel",
         NextAction::array(0, new NextAction("enable scarlet citadel strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter blackrock spire",
+        NextAction::array(0, new NextAction("enable blackrock spire strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter emerald sanctum",
+        NextAction::array(0, new NextAction("enable emerald sanctum strategy", 100.0f), NULL)));
 }
 
 void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -76,6 +91,22 @@ void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
 
     triggers.push_back(new TriggerNode(
         "leave karazhan",
+        NextAction::array(0, new NextAction("disable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter karazhan crypt",
+        NextAction::array(0, new NextAction("enable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave karazhan crypt",
+        NextAction::array(0, new NextAction("disable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter upper karazhan",
+        NextAction::array(0, new NextAction("enable karazhan strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave upper karazhan",
         NextAction::array(0, new NextAction("disable karazhan strategy", 100.0f), NULL)));
 
     triggers.push_back(new TriggerNode(
@@ -117,4 +148,20 @@ void DungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "leave scarlet citadel",
         NextAction::array(0, new NextAction("disable scarlet citadel strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter blackrock spire",
+        NextAction::array(0, new NextAction("enable blackrock spire strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave blackrock spire",
+        NextAction::array(0, new NextAction("disable blackrock spire strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "enter emerald sanctum",
+        NextAction::array(0, new NextAction("enable emerald sanctum strategy", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "leave emerald sanctum",
+        NextAction::array(0, new NextAction("disable emerald sanctum strategy", 100.0f), NULL)));
 }

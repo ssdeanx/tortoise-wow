@@ -12,6 +12,15 @@ void OnyxiasLairDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& tri
         NextAction::array(0, new NextAction("enable onyxia fight strategy", 100.0f), NULL)));
 }
 
+void OnyxiasLairDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Restock the protection potions out of combat. Onyxia's Lair (map 249)
+    // stocks fire only - the sole damage school in the lair.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+}
+
 // ---------------------------------------------------------------------------
 // Onyxia (10184, boss_onyxia.cpp verified).
 //

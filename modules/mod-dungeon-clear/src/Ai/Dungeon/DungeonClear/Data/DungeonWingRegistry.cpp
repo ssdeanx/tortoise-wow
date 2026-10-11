@@ -32,6 +32,8 @@ namespace
             RegisterDireMaulWings(s);
             RegisterScarletMonasteryWings(s);
             RegisterMaraudonWings(s);
+            RegisterBlackrockSpireWings(s);
+            RegisterStratholmeWings(s);
             return s;
         }();
         return store;

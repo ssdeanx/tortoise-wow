@@ -8913,7 +8913,7 @@ void Unit::RemoveFromWorld()
         FindMap()->RemoveRelocatedUnit(this);
         m_needUpdateVisibility = false;
     }
-    Object::RemoveFromWorld();
+    WorldObject::RemoveFromWorld();
 }
 
 void Unit::CleanupsBeforeDelete()

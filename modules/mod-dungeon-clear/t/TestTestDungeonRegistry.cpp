@@ -132,6 +132,19 @@ TEST(DcTestDungeonRegistryTest, RaidTokensAreRegisteredWithCorrectPartySize)
         { "aq40", 531, 40 },
         { "naxx", 533, 40 },
         { "scarlet-citadel", 45, 40 },
+        { "brs", 229, 10 },
+        { "ubrs", 229, 10 },
+        { "lbrs", 229, 5 },
+        { "sanctum", 807, 40 },
+        { "emerald-sanctum", 807, 40 },
+        { "lkh", 532, 10 },
+        { "kara10", 532, 10 },
+        { "kara-upper", 814, 40 },
+        { "kara40", 814, 40 },
+        { "stormwrought", 818, 20 },
+        { "swr", 818, 20 },
+        { "timbermaw", 819, 20 },
+        { "tmh", 819, 20 },
     };
 
     for (auto const& expected : raids)

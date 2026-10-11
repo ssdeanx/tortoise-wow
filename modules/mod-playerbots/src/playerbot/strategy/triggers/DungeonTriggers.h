@@ -337,11 +337,11 @@ namespace ai
         FrostProtectionPotionReadyTrigger(PlayerbotAI* ai) : ItemBuffReadyTrigger(ai, "frost protection potion ready", 13456, 17544) {}
     };
 
-    // ---- AQ raid protection-potion supply (map 509 Ruins / 531 Temple) ----
+    // ---- Raid protection-potion supply (per-map table) ----
     //
-    // The five Greater Protection Potions the AQ fights actually consume. Item
-    // ids verified against tw_world.item_template; the shared supply rule keeps
-    // a bot from ever running dry mid-raid:
+    // The Greater Protection Potions the raid fights actually consume. Item ids
+    // verified against tw_world.item_template; the shared supply rule keeps a
+    // bot from ever running dry mid-raid:
     //
     //   * LOW watermark  - when a stack drops below this, the supply action
     //                      tops it back up (bots always hold at least LOW).
@@ -358,16 +358,91 @@ namespace ai
     inline uint32 AhnQirajSupplyLowWatermark() { return 10; }
     inline uint32 AhnQirajSupplyTopUpTarget() { return 20; }
 
-    inline uint32 const* AhnQirajProtectionPotions(uint32& count)
+    // One row of the supply table: a map and the potion ids stocked on it. The
+    // id list is per MAP rather than global on purpose - a school a raid never
+    // casts is pure bag-space waste on a 40-man roster, and a school the raid
+    // does cast but that is not stocked makes every bot burn that resistance
+    // buff with nothing left to drink. So each row lists exactly the schools
+    // that map's damage actually uses.
+    struct RaidSupplyRow
     {
-        static uint32 const kItems[] = { 13461, 13457, 13456, 13458, 13459 };
-        count = sizeof(kItems) / sizeof(kItems[0]);
-        return kItems;
+        uint32 mapId;
+        uint32 potionIds[4];
+        uint32 count;
+    };
+
+    // The supply table, kept sorted by mapId so a future binary-search lookup
+    // (or a mid-table insert) does not first have to re-sort it.
+    //
+    //   45  Scarlet Citadel   - nature/shadow; fire is deliberately NOT stocked.
+    //   249 Onyxia's Lair     - fire only (the sole damage school in the lair).
+    //   309 Zul'Gurub         - nature/shadow/fire.
+    //   409 Molten Core       - fire/shadow/arcane.
+    //   469 Blackwing Lair    - fire/shadow/nature/frost; Chromaggus casts all
+    //                           four schools in the same fight, so a bot must
+    //                           hold all four stacks to survive it.
+    //   509 Ruins of Ahn'Qiraj - nature/arcane/fire/shadow. Frost is REMOVED
+    //                           here: AQ20 has no frost damage school anywhere
+    //                           in the instance, so the frost stack was dead
+    //                           weight on every bot.
+    //   531 Temple of Ahn'Qiraj - nature/arcane/shadow/frost. Frost stays: the
+    //                           High Priestess Vek'lor Blizzard (26607) is a
+    //                           frost-school cast.
+    //   533 Naxxramas         - frost/nature/shadow/fire.
+    //
+    // A map that is absent (including Karazhan 532, which is not wired to this
+    // rule) is deliberately unstocked: the lookup returns an empty list and
+    // both the trigger and the action then do nothing. That is the safe
+    // default - never a crash, never a wrong potion list.
+    inline RaidSupplyRow const* RaidSupplyTable(uint32& rows)
+    {
+        static RaidSupplyRow const kTable[] =
+        {
+            {  45, { 13458, 13459,       0, 0 }, 2 },
+            { 229, { 13457, 13458,       0, 0 }, 2 },
+            { 249, { 13457,       0,     0, 0 }, 1 },
+            { 309, { 13458, 13459, 13457, 0 }, 3 },
+            { 409, { 13457, 13459, 13461, 0 }, 3 },
+            { 469, { 13457, 13459, 13458, 13456 }, 4 },
+            { 509, { 13458, 13461, 13457, 13459 }, 4 },
+            { 531, { 13458, 13461, 13459, 13456 }, 4 },
+            { 532, { 13459, 13457,       0, 0 }, 2 },
+            { 800, { 13459, 13456,       0, 0 }, 2 },
+            { 807, { 13458, 13459,       0, 0 }, 2 },
+            { 814, { 13459, 13457, 13461, 0 }, 3 }
+        };
+
+        rows = sizeof(kTable) / sizeof(kTable[0]);
+        return kTable;
     }
 
-    // True when the bot is inside an AQ raid and any of the five Greater
-    // Protection Potions has dropped below the low watermark. Shared by the
-    // trigger (IsActive) and the action (isUseful) so they can never disagree.
+    // Potion ids stocked on the given map. count is set to 0 and NULL is
+    // returned for any map that is not in the table, so a caller can treat
+    // "no row" and "row with nothing" identically. Single source of truth for
+    // both the trigger and the action - they must never be able to disagree
+    // about which potions this map uses.
+    inline uint32 const* RaidSupplyPotions(uint32 mapId, uint32& count)
+    {
+        uint32 rows = 0;
+        RaidSupplyRow const* table = RaidSupplyTable(rows);
+
+        for (uint32 i = 0; i < rows; ++i)
+        {
+            if (table[i].mapId != mapId)
+                continue;
+
+            count = table[i].count;
+            return table[i].potionIds;
+        }
+
+        count = 0;
+        return NULL;
+    }
+
+    // True when the bot is inside a raid whose map is in the supply table and
+    // any of that map's stocked potions has dropped below the low watermark.
+    // Shared by the trigger (IsActive) and the action (isUseful) so they can
+    // never disagree.
     bool AhnQirajSuppliesLow(PlayerbotAI* ai);
 
     class AhnQirajSuppliesNeededTrigger : public Trigger

@@ -47,6 +47,19 @@ void RuinsOfAhnQirajDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>&
     triggers.push_back(new TriggerNode(
         "start ossirian fight",
         NextAction::array(0, new NextAction("enable ossirian fight strategy", 100.0f), NULL)));
+
+    // Same two school nodes as the noncombat list below, duplicated here on
+    // purpose: a noncombat trigger is only evaluated while the bot is out of
+    // combat, but the only fire/shadow sources in AQ20 (the Anubisath Guardians)
+    // are cast DURING combat, so the noncombat copies alone would never let a
+    // bot re-drink against them.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "shadow protection potion ready",
+        NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 }
 
 void RuinsOfAhnQirajDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -57,6 +70,20 @@ void RuinsOfAhnQirajDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode
     triggers.push_back(new TriggerNode(
         "ahnqiraj supplies needed",
         NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+
+    // Trash-wide school cover, wired here rather than on a boss strategy: the
+    // only confirmed fire/shadow sources in AQ20 are the Anubisath Guardians
+    // (15355, mob_anubisath_guardian, 13 spawns) which cast Meteor 24340
+    // (fire), Explode 25699 (fire) and Shadow Storm 26546 (shadow) - no AQ20
+    // boss does either school. The raid-level list covers every Guardian pack
+    // instead of the two boss fights that already have their own school.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
+
+    triggers.push_back(new TriggerNode(
+        "shadow protection potion ready",
+        NextAction::array(0, new NextAction("shadow protection potion", 100.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------

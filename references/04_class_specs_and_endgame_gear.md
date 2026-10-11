@@ -1114,23 +1114,21 @@ Restoration (20 points):
 > **Loadout Summary**: Corrupted Ashbringer (2H Sword), Lionheart Helm, Breastplate of Annihilation, Titanic Leggings, Kiss of the Spider, Slayer's Crest, Shroud of Dominion, and Libram of Fervor.
 
 ```lua
-.additem 12640 1   -- 01. Head: Lionheart Helm (Lionheart Helm)
-.additem 23053 1   -- 02. Neck: Stormrage's Talisman of Seething (Stormrage's Talisman of Seething)
-.additem 19394 1   -- 03. Shoulders: Drake Talon Pauldrons (Drake Talon Pauldrons)
-.additem 23045 1   -- 04. Back: Shroud of Dominion (Shroud of Dominion)
-.additem 21814 1   -- 05. Chest: Breastplate of Annihilation (Breastplate of Annihilation)
-.additem 21618 1   -- 06. Wrists: Hive Defiler Wristguards (Hive Defiler Wristguards)
-.additem 21581 1   -- 07. Hands: Gauntlets of Annihilation (Gauntlets of Annihilation)
-.additem 23219 1   -- 08. Waist: Girdle of the Mentor (Girdle of the Mentor)
-.additem 22385 1   -- 09. Legs: Titanic Leggings (Titanic Leggings)
-.additem 19387 1   -- 10. Feet: Chromatic Boots (Chromatic Boots)
-.additem 23025 1   -- 11. Ring 1: Seal of the Damned (Seal of the Damned)
-.additem 17063 1   -- 12. Ring 2: Band of Accuria (Band of Accuria)
-.additem 22954 1   -- 13. Trinket 1: Kiss of the Spider (Kiss of the Spider)
-.additem 23041 1   -- 14. Trinket 2: Slayer's Crest (Slayer's Crest)
-.additem 22691 1   -- 15. Two-Hand Weapon: Corrupted Ashbringer (Corrupted Ashbringer)
-                    -- 16. Off Hand: [Occupied by Two-Handed Weapon]
-.additem 23203 1   -- 17. Relic: Libram of Fervor (Libram of Fervor)
+.additem 12640 1
+.additem 23053 1
+.additem 19394 1
+.additem 23045 1
+.additem 21814 1
+.additem 21618 1
+.additem 21581 1
+.additem 23219 1
+.additem 22385 1
+.additem 19387 1
+.additem 23025 1
+.additem 17063 1
+.additem 22954 1
+.additem 23041 1
+.additem 22691 1
 .repairitems
 ```
 

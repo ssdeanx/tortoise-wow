@@ -76,6 +76,43 @@ namespace DcEventDoorRegistry
             case 5000008:  // GO_DOOR_MARIELLA
             case 5000009:  // GO_DOOR_RIGHT_WING
             case 5000010:  // GO_DOOR_ABBENDIS
+            // Karazhan Crypt (map 800) encounter doors: controlled entirely by
+            // instance script and boss deaths (instance_karazhan_crypt.cpp).
+            case 177312:   // Tomb of the Unrepentant (opens on Marrowspike 91920 death)
+            case 2006634:  // Pauper's Walk (opens on Alarus 91928 death)
+            // Stormwind Vault (map 35) encounter doors: controlled by instance_stormwind_vaults.cpp
+            case 3000275:  // GO_RAT_DOOR_ONE
+            case 3000276:  // GO_RAT_DOOR_TWO
+            case 4000509:  // GO_VAULT_DOOR (opens after Bride, Tham'Grarr, Aszosh, Damian fall)
+            // Hateforge Quarry (map 808) forge gates & barrier doors
+            case 2006101:  // HQ Slag Barrier Gate
+            case 2006102:  // HQ Workshop Door
+            // Timbermaw Hold (map 819) barrier of Ursol
+            case 300606:   // Barrier of Ursol
+            // Stormwrought Ruins (map 818) secret door to Ighal'for
+            case 2006138:  // GO_SECRET_DOOR (opened by 4 secret switches)
+            // Naxxramas (map 533) encounter doors & gates (instance_naxxramas.cpp)
+            case 181126:   // GO_ARAC_ANUB_DOOR
+            case 181195:   // GO_ARAC_ANUB_GATE
+            case 181235:   // GO_ARAC_FAER_WEB
+            case 194022:   // GO_ARAC_FAER_DOOR
+            case 181197:   // GO_ARAC_MAEX_INNER_DOOR
+            case 181209:   // GO_ARAC_MAEX_OUTER_DOOR
+            case 181200:   // GO_PLAG_NOTH_ENTRY_DOOR
+            case 181201:   // GO_PLAG_NOTH_EXIT_DOOR
+            case 181202:   // GO_PLAG_HEIG_ENTRY_DOOR
+            case 181203:   // GO_PLAG_HEIG_EXIT_DOOR
+            case 181496:   // GO_PLAG_HEIG_OLD_EXIT_DOOR
+            case 181241:   // GO_PLAG_LOAT_DOOR
+            case 181124:   // GO_MILI_GOTH_ENTRY_GATE
+            case 181125:   // GO_MILI_GOTH_EXIT_GATE
+            case 181170:   // GO_MILI_GOTH_COMBAT_GATE
+            case 181119:   // GO_MILI_HORSEMEN_DOOR
+            case 181123:   // GO_CONS_PATH_EXIT_DOOR
+            case 181120:   // GO_CONS_GLUT_EXIT_DOOR
+            case 181121:   // GO_CONS_THAD_DOOR
+            case 181225:   // GO_KELTHUZAD_WATERFALL_DOOR
+            case 181228:   // GO_KELTHUZAD_DOOR
                 return true;
             default:
                 return false;
@@ -403,6 +440,20 @@ namespace DcEventDoorRegistry
             // via map-429 events 9 and 10; this one has no event because it sits
             // off the West boss path — the exemption is its only opener.
             case 179549:  // Dire Maul North — Door (lock 1562, Crescent Key)
+
+            // --- Blackrock Spire (map 229) ------------------------------
+            // Lock 1079 — Seal of Ascension (12344) or lockpicking. Traversal
+            // gate separating Hall of Binding from UBRS proper.
+            case 164725:  // UBRS Door
+
+            // --- Karazhan Crypt (map 800) --------------------------------
+            // Requires Karazhan Crypt Key (51356).
+            case 107045:  // Karazhan Crypt Gate (door template)
+            case 177203:  // Karazhan Crypt Gate (scripted gate GO)
+
+            // --- Stormwind Vault (map 35) ---------------------------------
+            case 177215:  // SWV Cell Door Lower
+            case 177216:  // SWV Cell Door Upper
 
             // --- Blackrock Depths (map 230) ------------------------------
             // Lock 680 — the Shadowforge Key (11000), or lockpicking 250. The

@@ -200,15 +200,17 @@ namespace ai
         uint32 negativeSpellId;
     };
 
-    // AQ raid protection-potion supply. When the bot is inside Ruins (509) or
-    // Temple (531) of Ahn'Qiraj and any of the five Greater Protection Potions
-    // has dropped below the shared low watermark, this tops every low stack back
-    // up to the shared target (see AhnQirajSuppliesLow / the watermark + item
-    // list in DungeonTriggers.h). Each refill hands the bot at least
-    // (target - watermark) MORE than it was short, which is the server owner's
-    // "give 10+ more than the amount needed on raid entry" rule; the supply
-    // therefore both fills an empty bot on entry and keeps it stocked for the
-    // whole raid without a human.
+    // Raid protection-potion supply, generic across every raid in the per-map
+    // table in DungeonTriggers.h. When the bot is on a stocked raid map (AQ20
+    // 509, AQ40 531, Molten Core 409, Blackwing Lair 469, Naxxramas 533,
+    // Zul'Gurub 309, Onyxia's Lair 249, Scarlet Citadel 45) and any potion that
+    // map actually uses has dropped below the shared low watermark, this tops
+    // every low stack back up to the shared target. A map with no table row -
+    // Karazhan 532 included - is deliberately unstocked, so this grants nothing
+    // there. Each refill hands the bot at least (target - watermark) MORE than
+    // it was short, which is the server owner's "give 10+ more than the amount
+    // needed on raid entry" rule; the supply therefore both fills an empty bot
+    // on entry and keeps it stocked for the whole raid without a human.
     class GiveAhnQirajSuppliesAction : public Action
     {
     public:

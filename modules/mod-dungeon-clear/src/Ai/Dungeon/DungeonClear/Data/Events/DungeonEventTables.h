@@ -81,6 +81,16 @@ void RegisterZulGurubRoster(std::vector<BossRosterPatch>& t);
 // MoltenCoreEvents.cpp.
 void RegisterMoltenCoreEvents(std::vector<DungeonEvent>& out);
 void RegisterMoltenCoreRoster(std::vector<BossRosterPatch>& t);
+// Lower Karazhan Halls (map 532): the summon-only Lord Blackwald II objective
+// (no spawn row, summoned once the Dark Rider Champion is DONE) which also
+// clears the Champion's leftover 61203 apprentices. See
+// LowerKarazhanHallsEvents.cpp.
+void RegisterLowerKarazhanHallsEvents(std::vector<DungeonEvent>& out);
+void RegisterLowerKarazhanHallsRoster(std::vector<BossRosterPatch>& t);
+// Karazhan Crypt (map 800): summon-only Alarus objective (no spawn row, summoned
+// once all 6 Necrotic Runes in Andreon's wing are active). See KarazhanCryptEvents.cpp.
+void RegisterKarazhanCryptEvents(std::vector<DungeonEvent>& out);
+void RegisterKarazhanCryptRoster(std::vector<BossRosterPatch>& t);
 // Blackwing Lair (map 469): Razorgore egg phase defense, Suppression Room
 // gauntlet push, Broodlord Lashlayer gate, Chromaggus gate lever, and
 // Nefarian throne gossip & drakonid wave hold. See BlackwingLairEvents.cpp.
@@ -95,9 +105,33 @@ void RegisterOnyxiasLairRoster(std::vector<BossRosterPatch>& t);
 // AhnQirajEvents.cpp.
 void RegisterAhnQirajEvents(std::vector<DungeonEvent>& out);
 void RegisterAhnQirajRoster(std::vector<BossRosterPatch>& t);
+// Naxxramas (map 533): 40-man classic raid encounter orchestration, mid-fight add priorities,
+// and room-aggro pre-clears. See NaxxramasEvents.cpp.
+void RegisterNaxxramasEvents(std::vector<DungeonEvent>& out);
 // Scarlet Citadel (map 45): custom 40-man Scarlet Crusade raid fortress. See ScarletCitadelEvents.cpp.
 void RegisterScarletCitadelEvents(std::vector<DungeonEvent>& out);
 void RegisterScarletCitadelRoster(std::vector<BossRosterPatch>& t);
+// Blackrock Spire (map 229): 10-man UBRS Hall of Binding rune clears, Emberseer
+// altar ritual, and Stadium gauntlet. See BlackrockSpireEvents.cpp.
+void RegisterBlackrockSpireEvents(std::vector<DungeonEvent>& out);
+void RegisterBlackrockSpireRoster(std::vector<BossRosterPatch>& t);
+// Emerald Sanctum (map 807): custom 40-man raid fortress (Erennius & Solnius).
+// See EmeraldSanctumEvents.cpp.
+void RegisterEmeraldSanctumEvents(std::vector<DungeonEvent>& out);
+void RegisterEmeraldSanctumRoster(std::vector<BossRosterPatch>& t);
+// Stormwind Vault (map 35): custom 5-man dungeon. See StormwindVaultEvents.cpp.
+void RegisterStormwindVaultEvents(std::vector<DungeonEvent>& out);
+// Hateforge Quarry (map 808): custom 5-man dungeon. See HateforgeQuarryEvents.cpp.
+void RegisterHateforgeQuarryEvents(std::vector<DungeonEvent>& out);
+// Tower of Karazhan / Upper Karazhan (map 814): custom 40-man / 10-man raid. See TowerOfKarazhanEvents.cpp.
+void RegisterTowerOfKarazhanEvents(std::vector<DungeonEvent>& out);
+void RegisterTowerOfKarazhanRoster(std::vector<BossRosterPatch>& t);
+// Timbermaw Hold (map 819): custom 20-man raid. See TimbermawHoldEvents.cpp.
+void RegisterTimbermawHoldEvents(std::vector<DungeonEvent>& out);
+void RegisterTimbermawHoldRoster(std::vector<BossRosterPatch>& t);
+// Stormwrought Ruins (map 818): custom 20-man raid. See StormwroughtRuinsEvents.cpp.
+void RegisterStormwroughtRuinsEvents(std::vector<DungeonEvent>& out);
+void RegisterStormwroughtRuinsRoster(std::vector<BossRosterPatch>& t);
 // Hellfire Ramparts (map 543) final-approach gate — see HellfireRampartsEvents.cpp
 // for the measurements. Exposed so t/TestRampartsLedgeProbe can assert against the
 // real navmesh that the zone-in platform lies outside the gate; the numbers are
@@ -191,6 +225,8 @@ void RegisterAzjolNerubRoster(std::vector<BossRosterPatch>& t);
 void RegisterDireMaulWings(std::unordered_map<uint32, DungeonWingLayout>& store);
 void RegisterScarletMonasteryWings(std::unordered_map<uint32, DungeonWingLayout>& store);
 void RegisterMaraudonWings(std::unordered_map<uint32, DungeonWingLayout>& store);
+void RegisterBlackrockSpireWings(std::unordered_map<uint32, DungeonWingLayout>& store);
+void RegisterStratholmeWings(std::unordered_map<uint32, DungeonWingLayout>& store);
 
 // --- anchor routes (one appender per dungeon that hand-authors a route) ---
 // Waypoint anchors StridedPathfinder walks INSTEAD of asking the navmesh

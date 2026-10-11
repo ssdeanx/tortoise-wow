@@ -5,6 +5,7 @@
 
 #include "DcTestDungeonRegistry.h"
 
+#include <cstring>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
@@ -67,17 +68,23 @@ namespace DcTestDungeonRegistry
             { "maraudon",        "Maraudon",                      349,  1019.69f,  -458.31f,  -43.43f, 0.310f, 48, "" },
             { "st",              "The Temple of Atal'Hakkar",     109,  -319.24f,    99.90f, -131.85f, 3.190f, 52, "" },
             { "brd",             "Blackrock Depths",              230,   456.93f,    34.09f,  -68.09f, 4.712f, 54, "" },
-            { "brs",             "Blackrock Spire",               229,    78.51f,  -225.04f,   49.84f, 5.100f, 58, "" },
+            { "brs",             "Blackrock Spire",               229,    78.51f,  -225.04f,   49.84f, 5.100f, 60, "", 0, 10 },
+            { "ubrs",            "Upper Blackrock Spire",         229,    78.51f,  -225.04f,   49.84f, 5.100f, 60, "Upper", 0, 10 },
+            { "lbrs",            "Lower Blackrock Spire",         229,    78.51f,  -225.04f,   49.84f, 5.100f, 60, "Lower", 0, 5 },
             // --- Turtle WoW custom dungeons (entrances = tw_world areatrigger_teleport,
             //     2026-09-05). Level = strongest boss of the roster in dc_roster.txt (turtle_world
             //     2026-09-05), capped at 60 where the bosses are 61-62. None of these has a compiled boss list - they run on the
             //     roster file alone, so do NOT put one on the ladder before its order
             //     block exists (an empty roster reads as an instant clear).
             { "crescent",        "The Crescent Grove",            802,   579.13f,    90.70f,  276.11f, 3.400f, 38, "" },
-            { "stormwrought",    "Stormwrought Ruins",            818, -5632.67f, -4393.33f,  249.98f, 3.182f, 38, "" },
+            { "stormwrought",    "Stormwrought Ruins",            818, -5632.67f, -4393.33f,  249.98f, 3.182f, 60, "", 0, 20 },
+            { "swr",             "Stormwrought Ruins",            818, -5632.67f, -4393.33f,  249.98f, 3.182f, 60, "", 0, 20 },
+            { "timbermaw",       "Timbermaw Hold",                819, -8133.95f, -3450.47f,  224.75f, 0.311f, 60, "", 0, 20 },
+            { "tmh",             "Timbermaw Hold",                819, -8133.95f, -3450.47f,  224.75f, 0.311f, 60, "", 0, 20 },
             { "gilneas",         "Gilneas City",                  815, -1100.00f,  2237.75f,  182.86f, 2.600f, 49, "" },
             { "hateforge",       "Hateforge Quarry",              808, -8173.90f, -3120.60f,  199.80f, 4.700f, 57, "" },
             { "kara-crypt",      "Karazhan Crypt",                800, -11068.10f, -1806.40f,  52.70f, 1.500f, 60, "" },
+            { "crypt",           "Karazhan Crypt",                800, -11068.10f, -1806.40f,  52.70f, 1.500f, 60, "" },
             { "sw-vault",        "Stormwind Vault",                35,    -0.91f,    40.57f,  -24.23f, 1.520f, 60, "" },
             // Turtle's own Black Morass shares map 269 with the TBC dungeon of the same
             // name (row further down, level 70). Distinct token; Find() by map id is
@@ -99,6 +106,18 @@ namespace DcTestDungeonRegistry
             // Turtle custom raid: Scarlet Citadel (map 45, 40-man fortress).
             // Entrance from areatrigger_teleport target / .tele ScarletCitadel
             { "scarlet-citadel", "Scarlet Citadel",                 45,    32.55f,    13.30f,    16.87f, 6.280f, 63, "", 0, 40 },
+            // Turtle custom raid: Emerald Sanctum (map 807, 40-man raid).
+            // Entrance from .tele sanctumraid / areatrigger 5017
+            { "sanctum",         "Emerald Sanctum",                807,  2765.20f,  2976.20f,    26.65f, 3.620f, 60, "", 0, 40 },
+            { "emerald-sanctum", "Emerald Sanctum",                807,  2765.20f,  2976.20f,    26.65f, 3.620f, 60, "", 0, 40 },
+            // Turtle custom raid: Lower Karazhan Halls (map 532, 10-man raid).
+            // Entrance from .tele kara / areatrigger 5018
+            { "lkh",             "Lower Karazhan Halls",           532, -11099.80f, -1996.33f,   49.85f, 0.600f, 60, "", 0, 10 },
+            { "kara10",          "Lower Karazhan Halls",           532, -11099.80f, -1996.33f,   49.85f, 0.600f, 60, "", 0, 10 },
+            // Turtle custom raid: Upper Karazhan (map 814, 40-man raid).
+            // Entrance from .tele karaforty
+            { "kara-upper",      "Karazhan (Upper)",               814, -11048.20f, -1985.84f,  101.57f, 2.200f, 60, "", 0, 40 },
+            { "kara40",          "Karazhan (Upper)",               814, -11048.20f, -1985.84f,  101.57f, 2.200f, 60, "", 0, 40 },
             // --- The Burning Crusade --------------------------------------
             { "ramparts",        "Hellfire Ramparts",             543, -1355.24f,  1641.12f,   68.25f, 0.669f, 62, "", 70 },
             { "blood-furnace",   "The Blood Furnace",             542,    -4.00f,    14.64f,  -44.80f, 4.887f, 63, "", 70 },
@@ -146,7 +165,7 @@ namespace DcTestDungeonRegistry
             if (tokenOrMapId == row.token)
                 return &row;
 
-        // Numeric fallback — only unambiguous for maps with a single row.
+        // Numeric fallback — only unambiguous for maps with a single row or identical wings.
         char* end = nullptr;
         unsigned long const asMap = std::strtoul(tokenOrMapId.c_str(), &end, 10);
         if (!end || *end != '\0' || asMap == 0)
@@ -157,7 +176,10 @@ namespace DcTestDungeonRegistry
             if (row.mapId == asMap)
             {
                 if (hit)
-                    return nullptr;  // wing-split map: demand a wing token
+                {
+                    if (std::strcmp(hit->wing, row.wing) != 0)
+                        return nullptr;  // wing-split map: demand a wing token
+                }
                 hit = &row;
             }
         return hit;

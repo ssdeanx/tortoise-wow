@@ -75,6 +75,15 @@ void ZulGurubDungeonStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigge
         NextAction::array(0, new NextAction("attack entry::11831,30", 55.0f), NULL)));
 }
 
+void ZulGurubDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
+{
+    // Restock the protection potions out of combat. Zul'Gurub (map 309) stocks
+    // nature/shadow/fire - the three schools its trash and bosses actually cast.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
+}
+
 // ---------------------------------------------------------------------------
 // Jeklik: the P1 bat waves are the only adds; the P2 Inferno bombs are walked
 // out of. Great Heal is a 4 s interruptible cast (no class rotation
@@ -91,6 +100,11 @@ void JeklikFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "jeklik inferno",
         NextAction::array(0, new NextAction("move away from hazard", 100.0f), NULL)));
+
+    // Throw Liquid Fire 23970 / Explosion 24024 are fire.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
 }
 
 void JeklikFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -131,6 +145,11 @@ void VenoxisFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "nature protection potion ready",
         NextAction::array(0, new NextAction("nature protection potion", 100.0f), NULL)));
+
+    // Holy Fire 23860 is fire.
+    triggers.push_back(new TriggerNode(
+        "fire protection potion ready",
+        NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
 }
 
 void VenoxisFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

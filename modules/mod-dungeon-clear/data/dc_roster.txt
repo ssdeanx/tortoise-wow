@@ -43,7 +43,12 @@ drop 4842     # Earthcaller Halmgar      Razorfen Kraul      30%
 drop 6228     # Dark Iron Ambassador     Gnomeregan          30%
 drop 6488     # Fallen Champion          Scarlet Monastery    2%
 drop 9218     # Spirestone Battle Lord   Blackrock Spire     15%
+drop 9596     # Bannok Grimaxe            Blackrock Spire     25%
+drop 10376    # Crystal Fang              Blackrock Spire     20%
 drop 10558    # Hearthsinger Forresten   Stratholme          25%
+drop 10393    # Skul                      Stratholme          20%
+drop 10809    # Stonespine                Stratholme          25%
+drop 11498    # Tsu'zee                   Dire Maul West      30%
 drop 12237    # Meshlok the Harvester    Maraudon            30%
 # NOT dropped: Lady Anacondra (3671, Wailing Caverns). She is pooled at chance
 # 0, which is the even split across her four spawn spots - always present,
@@ -303,7 +308,12 @@ order 818 62548 2     # Oronok Torn-Heart          lvl 34  -5787,-4260
 order 818 62552 3     # Librarian Theodorus        lvl 35  -5910,-4304
 order 818 62549 4     # Duke Balor the IV          lvl 36  -5993,-4363
 order 818 62551 5     # Chieftain Stormsong        lvl 36  -6068,-4153
-order 818 62550 6     # Deathlord Tidebane         lvl 38  -6324,-4007 (end boss)
+order 818 62550 6     # Deathlord Tidebane         lvl 38  -6324,-4007
+order 818 62652 7     # Subjugator Halthas         lvl 38  -6646,-4009
+order 818 62661 8     # Eldermaw the Primordial    lvl 38  -5798,-3742
+order 818 62664 9     # Mycellakos                 lvl 38  -5966,-3835
+order 818 62665 10    # Lady Drazare               lvl 38  -5642,-3968
+order 818 62671 11    # Ighal'for (end boss)       lvl 38  -5494,-3968
 
 # --- Gilneas City (map 815), entrance -1100,2238,183 --------------------------
 # Regent-Lord Mortimer and Regent-Lady Celia Harlow stand together (a pair).
@@ -326,15 +336,17 @@ order 808 60734 4     # Hatereaver Annihilator     lvl 55  -7991,-3582
 order 808 60737 5     # Har'gesh Doomcaller        lvl 57  -8307,-3742 (end boss)
 
 # --- Karazhan Crypt (map 800), entrance -11068,-1806,53 -----------------------
-# Alarus (the end boss) is summoned by the Crypt Watcher trigger
-# (trigger_summon_alarus) and has no spawn row; needs an event before it can
-# be an objective. Bosses are level 61-62 - the party is capped at 60.
+# Alarus is summon-only with no spawn row, summoned by trigger_summon_alarus
+# once all 6 Necrotic Runes in Andreon's wing are active; handled as a roster
+# objective at key 1 (slot 2). Defeating Alarus opens door 2006634 to Pauper's Walk.
+# Marrowspike (slot 5) opens door 177312 to Hivaxxis (slot 6).
 order 800 91919 1     # Commander Andreon          lvl 61  -11064,-1542
-order 800 91917 2     # Corpsemuncher              lvl 62  -11224,-1407
-order 800 92935 3     # Guard Captain Gort         lvl 62  -11217,-1697
-order 800 91929 4     # Hivaxxis                   lvl 62  -11255,-1745
-order 800 91916 5     # Archlich Enkhraz           lvl 62  -11188,-1792
-order 800 91920 6     # Marrowspike                lvl 62  -11215,-1800
+# slot 2 (key 1) = Alarus objective (6 Necrotic Runes, opens door 2006634)
+order 800 91917 3     # Corpsemuncher              lvl 62  -11224,-1407
+order 800 92935 4     # Guard Captain Gort         lvl 62  -11217,-1697
+order 800 91920 5     # Marrowspike                lvl 62  -11215,-1800 (opens door 177312 to Hivaxxis)
+order 800 91929 6     # Hivaxxis                   lvl 62  -11255,-1745
+order 800 91916 7     # Archlich Enkhraz           lvl 62  -11188,-1792 (end boss)
 
 # --- Stormwind Vault (map 35), entrance -1,41,-24 -----------------------------
 order 35 80851 1      # Volkan Cruelblade          lvl 62  -13,52
@@ -443,3 +455,152 @@ order 531 15509 6     # Princess Huhuran
 order 531 15275 7     # Emperor Vek'lor (Twin Emperors)
 order 531 15517 8     # Ouro
 order 531 15727 9     # C'Thun (end boss)
+
+# --- Naxxramas (map 533) -----------------------------------------------------
+order 533 15956 1     # Anub'Rekhan          (spider wing)
+order 533 15953 2     # Grand Widow Faerlina
+order 533 15952 3     # Maexxna
+order 533 15954 4     # Noth the Plaguebringer (plague wing)
+order 533 15936 5     # Heigan the Unclean
+order 533 16011 6     # Loatheb
+order 533 16061 7     # Instructor Razuvious  (deathknight wing)
+order 533 16060 8     # Gothik the Harvester
+order 533 16062 9     # Highlord Mograine     (Four Horsemen)
+order 533 16063 10    # Sir Zeliek
+order 533 16064 11    # Thane Korth'azz
+order 533 16065 12    # Lady Blaumeux
+order 533 16028 13    # Patchwerk             (abomination wing)
+order 533 15931 14    # Grobbulus
+order 533 15932 15    # Gluth
+order 533 15928 16    # Thaddius
+order 533 15989 17    # Sapphiron             (frostwyrm lair)
+order 533 15990 18    # Kel'Thuzad (end boss)
+
+# --- Scarlet Citadel (map 45) ------------------------------------------------
+order 45 2000000 1    # Sacred Fist Daelus
+order 45 2000001 2    # Grand Sorcerer Ardaeus
+order 45 2000002 3    # High Inquisitor Mariella
+order 45 2000004 4    # Brother Eric Vesper
+order 45 2000003 5    # High General Abbendis (end boss)
+
+# --- Blackrock Spire / UBRS & LBRS (map 229) ---------------------------------
+# UBRS (10-man, orders 1-6)
+order 229 9816 1      # Pyroguard Emberseer
+order 229 10264 2     # Solakar Flamewreath
+order 229 10899 3     # Goraluk Anvilcrack
+order 229 10429 4     # Warchief Rend Blackhand
+order 229 10430 5     # The Beast
+order 229 10363 6     # General Drakkisath (end boss)
+# LBRS (5-man, orders 7-15)
+order 229 9196 7      # Highlord Omokk
+order 229 9236 8      # Shadow Hunter Vosh'gajin
+order 229 9237 9      # War Master Voone
+order 229 10596 10    # Mother Smolderweb
+order 229 10584 11    # Urok Doomhowl
+order 229 9736 12     # Quartermaster Zigris
+order 229 10220 13    # Halycon
+order 229 10268 14    # Gizrul the Slavener
+order 229 9568 15     # Overlord Wyrmthalak (end boss)
+
+# --- Lower Karazhan Halls (map 532) ------------------------------------------
+order 532 61221 1     # Brood Queen Araxxna
+order 532 61204 2     # Dark Rider Champion
+order 532 61223 4     # Clawlord Howlfang
+order 532 61224 5     # Grizikil
+order 532 61225 6     # Moroes (end boss)
+
+# --- Emerald Sanctum (map 807) -----------------------------------------------
+order 807 60747 1     # Erennius
+order 807 60748 2     # Solnius (end boss)
+
+# --- Stratholme (map 329) ----------------------------------------------------
+# Scarlet / Live Wing (orders 1-5)
+order 329 10808 1     # Timmy the Cruel
+order 329 11032 2     # Malor the Zealous
+order 329 10997 3     # Cannon Master Willey
+order 329 10811 4     # Archivist Galford
+order 329 10812 5     # Grand Crusader Dathrohan (Balnazzar 10813, end boss)
+# Undead / Baron Wing (orders 6-11)
+order 329 10436 6     # Baroness Anastari
+order 329 10437 7     # Nerub'enkan
+order 329 10438 8     # Maleki the Pallid
+order 329 10435 9     # Magistrate Barthilas
+order 329 10439 10    # Ramstein the Gorger
+order 329 10440 11    # Baron Rivendare (end boss)
+
+# --- Scholomance (map 289) ---------------------------------------------------
+order 289 14861 1     # Blood Steward of Kirtonos
+order 289 10506 2     # Kirtonos the Herald
+order 289 10503 3     # Jandice Barov
+order 289 11622 4     # Rattlegore (drops Viewing Room Key)
+order 289 10504 5     # Lord Alexei Barov
+order 289 10433 6     # Marduk Blackpool
+order 289 10432 7     # Vectus
+order 289 10508 8     # Ras Frostwhisper
+order 289 10505 9     # Instructor Malicia
+order 289 11261 10    # Doctor Theolen Krastinov
+order 289 10901 11    # Lorekeeper Polkelt
+order 289 10507 12    # The Ravenian
+order 289 1853 13     # Darkmaster Gandling (end boss)
+
+# --- Dire Maul (map 429) -----------------------------------------------------
+# East Wing (DME, orders 1-5)
+order 429 14354 1     # Pusillin
+order 429 14326 2     # Lethtendris
+order 429 13280 3     # Hydrospawn
+order 429 11490 4     # Zevrim Thornhoof
+order 429 11492 5     # Alzzin the Wildshaper (end boss)
+# West Wing (DMW, orders 6-10)
+order 429 11489 6     # Tendris Warpwood
+order 429 11488 7     # Illyanna Ravenoak
+order 429 11487 8     # Magister Kalendris
+order 429 11496 9     # Immol'thar (requires 5 pylons)
+order 429 11486 10    # Prince Tortheldrin (end boss)
+# North Wing (DMN Tribute, orders 11-17)
+order 429 14321 11    # Guard Mol'dar
+order 429 14322 12    # Stomper Kreeg
+order 429 14323 13    # Guard Fengus
+order 429 14324 14    # Guard Slip'kik
+order 429 14325 15    # Captain Kromcrush
+order 429 14328 16    # Cho'Rush the Observer
+order 429 11501 17    # King Gordok (end boss)
+
+# --- Tower of Karazhan (map 814) ----------------------------------------------
+order 814 59967 1     # King's Council (Chess)
+order 814 59981 2     # Sanv Tas'dal
+order 814 59991 3     # Kruul
+order 814 61939 4     # Keeper Gnarlmoon
+order 814 61946 5     # Ley-Watcher Incantagos
+order 814 61951 6     # Anomalus
+order 814 61958 7     # Echo of Medivh (end boss)
+
+# --- Karazhan Crypt (map 813) ------------------------------------------------
+order 813 92935 1     # Guard Captain Gort
+order 813 91920 2     # Hivaxxis
+order 813 91928 3     # Alarus (end boss)
+
+# --- Black Morass (map 269) --------------------------------------------------
+order 269 50117 1     # Chronormu
+order 269 50080 2     # Commander Gerastrasz (end boss)
+
+# --- Timbermaw Hold (map 819) ------------------------------------------------
+# The Withermaw Furbolg citadel, 20-player raid added in patch 1.18.1.
+# 9 live spawned encounters; Ursol (62947) and Peroth'arn (60686) are unspawned
+# on this fork and deliberately left off the objective roster to prevent stalled runs.
+order 819 62934 1     # Karrsh the Sentinel
+order 819 62936 2     # Rotgrowl
+order 819 62937 3     # Kodiak
+order 819 62935 4     # Ormanos the Cracked
+order 819 62938 5     # Archdruid Kronn
+order 819 2139  6     # Loktanag the Vile
+order 819 62946 7     # Trioch the Devourer
+order 819 62940 8     # Selenaxx Foulheart
+order 819 62941 9     # Chieftain Partath (end boss)
+
+# --- Frostmane Hollow (map 822) ----------------------------------------------
+# Frostmane Troll cavern dungeon (Dun Morogh).
+order 822 63129 1     # Kan'za the Seer
+order 822 63133 2     # Tan'sha the Sleek
+order 822 63131 3     # Battlemaster Ubukaz
+order 822 63132 4     # Handler Oboka
+order 822 63130 5     # Hailar the Frigid (end boss)

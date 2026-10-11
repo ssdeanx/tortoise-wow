@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU AGPL v3 license, you may redistribute it
- * and/or modify it under version 3 of the License, or (at your option), any later version.
+ * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU
+ * AGPL v3 license, you may redistribute it and/or modify it under version 3 of
+ * the License, or (at your option), any later version.
  */
 
 #include "Ai/Dungeon/DungeonClear/Data/Events/DungeonEventTables.h"
 #include "Ai/Dungeon/DungeonClear/Data/Events/DungeonRosterBuilders.h"
 
+#include "Ai/Dungeon/DungeonClear/Util/DcTargeting.h"
 #include "Creature.h"
 #include "InstanceScript.h"
 #include "Player.h"
 #include "Playerbots.h"
-#include "Ai/Dungeon/DungeonClear/Util/DcTargeting.h"
 
 // --- Molten Core (map 409) -------------------------------------------------
 // Five groups of rows, each following an existing dungeon precedent:
@@ -101,442 +102,539 @@
 // forced eruptions); Sulfuron's 4 Flamewaker Priests pulled out and
 // interrupted; Geddon patrols like Lucifron.
 
-namespace
-{
-    constexpr uint32 MC_MAP = 409;
+namespace {
+constexpr uint32 MC_MAP = 409;
 
-    // Instance data (molten_core.h:37-64) and the shared DONE value
-    // (ScriptedInstance.h:13-19).
-    constexpr uint32 MC_DONE = 3;
-    constexpr uint32 MC_TYPE_SULFURON = 0;
-    constexpr uint32 MC_TYPE_GEDDON = 1;
-    constexpr uint32 MC_TYPE_SHAZZRAH = 2;
-    constexpr uint32 MC_TYPE_GOLEMAGG = 3;
-    constexpr uint32 MC_TYPE_GARR = 4;
-    constexpr uint32 MC_TYPE_MAGMADAR = 5;
-    constexpr uint32 MC_TYPE_GEHENNAS = 6;
-    constexpr uint32 MC_RUNE_ACTIVE_0 = 16;  // TypeRuneActive0..6 = 16..22
+// Instance data (molten_core.h:37-64) and the shared DONE value
+// (ScriptedInstance.h:13-19).
+constexpr uint32 MC_DONE = 3;
+constexpr uint32 MC_TYPE_SULFURON = 0;
+constexpr uint32 MC_TYPE_GEDDON = 1;
+constexpr uint32 MC_TYPE_SHAZZRAH = 2;
+constexpr uint32 MC_TYPE_GOLEMAGG = 3;
+constexpr uint32 MC_TYPE_GARR = 4;
+constexpr uint32 MC_TYPE_MAGMADAR = 5;
+constexpr uint32 MC_TYPE_GEHENNAS = 6;
+constexpr uint32 MC_RUNE_ACTIVE_0 = 16; // TypeRuneActive0..6 = 16..22
 
-    constexpr uint32 MC_LUCIFRON = 12118;
-    constexpr uint32 MC_CORE_HOUND = 11671;
-    constexpr uint32 MC_DOMO = 12018;
-    constexpr uint32 MC_RAGNAROS = 11502;
-    constexpr uint32 MC_DOMO_ELITE = 11664;
-    constexpr uint32 MC_DOMO_HEALER = 11663;
+constexpr uint32 MC_LUCIFRON = 12118;
+constexpr uint32 MC_CORE_HOUND = 11671;
+constexpr uint32 MC_DOMO = 12018;
+constexpr uint32 MC_RAGNAROS = 11502;
+constexpr uint32 MC_DOMO_ELITE = 11664;
+constexpr uint32 MC_DOMO_HEALER = 11663;
 
-    // --- event ids (per map) -------------------------------------------------
-    constexpr uint32 MC_EVENT_PACK_A = 1;
-    constexpr uint32 MC_EVENT_PACK_B = 2;
-    constexpr uint32 MC_EVENT_PACK_C = 3;
-    constexpr uint32 MC_EVENT_PACK_D = 4;
-    constexpr uint32 MC_EVENT_PACK_E = 5;
-    constexpr uint32 MC_EVENT_RUNE_0 = 6;   // .. 12
-    constexpr uint32 MC_EVENT_DOMO = 13;
-    constexpr uint32 MC_EVENT_RAGNAROS = 14;
-    constexpr uint32 MC_EVENT_BRIDGE = 15;
-    constexpr uint32 MC_EVENT_LUCI_HOLD = 16;
+// Boss & Add entries for encounter orchestration
+constexpr uint32 MC_FLAMEWAKER_PROTECTOR = 12119;
+constexpr uint32 MC_GEHENNAS_BOSS        = 12259;
+constexpr uint32 MC_FLAMEWAKER           = 11661;
+constexpr uint32 MC_GARR_BOSS            = 12057;
+constexpr uint32 MC_FIRESWORN            = 12099;
+constexpr uint32 MC_SULFURON_BOSS        = 12098;
+constexpr uint32 MC_FLAMEWAKER_PRIEST    = 11662;
+constexpr uint32 MC_GOLEMAGG_BOSS        = 11988;
+constexpr uint32 MC_CORE_RAGER           = 11672;
+constexpr uint32 MC_SON_OF_FLAME         = 12143;
 
-    // --- clear-path keys (see DcBossEntries1121.h) ---------------------------
-    constexpr uint32 MC_BRIDGE_ORDER = 5;    // between Smoldaris (key 4) and Thaurissan (key 6)
-    constexpr uint32 MC_DOMO_ORDER = 13;     // after Golemagg (key 12)
-    constexpr uint32 MC_RAGNAROS_ORDER = 14; // last
+// --- event ids (per map) -------------------------------------------------
+constexpr uint32 MC_EVENT_PACK_A         = 1;
+constexpr uint32 MC_EVENT_PACK_B         = 2;
+constexpr uint32 MC_EVENT_PACK_C         = 3;
+constexpr uint32 MC_EVENT_PACK_D         = 4;
+constexpr uint32 MC_EVENT_PACK_E         = 5;
+constexpr uint32 MC_EVENT_RUNE_0         = 6; // .. 12
+constexpr uint32 MC_EVENT_DOMO           = 13;
+constexpr uint32 MC_EVENT_RAGNAROS       = 14;
+constexpr uint32 MC_EVENT_BRIDGE         = 15;
+constexpr uint32 MC_EVENT_LUCI_HOLD      = 16;
+constexpr uint32 MC_EVENT_ROOM_PRECLEAR  = 17;
+constexpr uint32 MC_EVENT_LUCIFRON_ADDS  = 18;
+constexpr uint32 MC_EVENT_GEHENNAS_ADDS  = 19;
+constexpr uint32 MC_EVENT_GARR_ADDS      = 20;
+constexpr uint32 MC_EVENT_SULFURON_ADDS  = 21;
+constexpr uint32 MC_EVENT_GOLEMAGG_ADDS  = 22;
 
-    // --- Core Hound packs (spawn clusters from tw_world) ---------------------
-    struct McPack
-    {
-        float x;
-        float y;
-        float z;
-    };
+// --- clear-path keys (see DcBossEntries1121.h) ---------------------------
+constexpr uint32 MC_LUCIFRON_ORDER  = 0;  // order 1
+constexpr uint32 MC_BRIDGE_ORDER    = 5;  // between Smoldaris (key 4) and Thaurissan (key 6)
+constexpr uint32 MC_GEHENNAS_ORDER  = 7;  // order 8
+constexpr uint32 MC_GARR_ORDER      = 8;  // order 9
+constexpr uint32 MC_SULFURON_ORDER  = 11; // order 12
+constexpr uint32 MC_GOLEMAGG_ORDER  = 12; // order 13
+constexpr uint32 MC_DOMO_ORDER      = 13; // after Golemagg (key 12)
+constexpr uint32 MC_RAGNAROS_ORDER  = 14; // last
 
-    constexpr McPack MC_PACK_A = { 993.0f, -972.0f, -181.0f };
-    constexpr McPack MC_PACK_B = { 1035.0f, -962.0f, -180.0f };
-    constexpr McPack MC_PACK_C = { 1078.0f, -973.0f, -184.0f };
-    constexpr McPack MC_PACK_D = { 1088.0f, -1020.0f, -186.5f };
-    constexpr McPack MC_PACK_E = { 1114.0f, -990.0f, -186.0f };
+// --- Core Hound packs (spawn clusters from tw_world) ---------------------
+struct McPack {
+  float x;
+  float y;
+  float z;
+};
 
-    // Live-hound scan around the pack centre (a pack is ~20yd across).
-    constexpr float MC_PACK_LIVE_RADIUS = 35.0f;
-    constexpr float MC_PACK_ZBAND = 15.0f;
-    // The ClearRadius the event drives: the pack's own footprint ONLY.
-    constexpr float MC_PACK_CLEAR_RADIUS = 30.0f;
-    constexpr float MC_PACK_CLEAR_ZBAND = 18.0f;
-    // Proximity gate: the tank has to be at the pack (no arrival step).
-    constexpr float MC_PACK_APPROACH = 70.0f;    // Patrol window: Lucifron must be at least this far from the pack centre.
-    // Fighting a pack with him close is an auto wipe, so the margin over his own
-    // aggro + social-chain reach (~45yd worst case) is deliberate. 65yd also
-    // produces the clean ALTERNATION the corridor wants, measured against his
-    // 39 waypoints:
-    //   * packs A (993,-972) and B (1035,-962) open while he is on the EAST leg
-    //     (A 133yd / B 99yd away) and are shut while he is at the west end
-    //     (A ~15yd / B ~35yd);
-    //   * packs C (1078,-973), D (1088,-1020) and E (1114,-990) open while he
-    //     is at the WEST end (79/107/118yd) and are shut while he is east
-    //     (C ~60yd at the east cap - the tightest of the five, a ~15-20s
-    //     window; a full raid kills a pack well inside it).
-    constexpr float MC_PATROL_SAFE = 65.0f;
-    constexpr uint32 MC_PACK_TIMEOUT = 300000;  // a 5-elite pack, generous
+constexpr McPack MC_PACK_A = {993.0f, -972.0f, -181.0f};
+constexpr McPack MC_PACK_B = {1035.0f, -962.0f, -180.0f};
+constexpr McPack MC_PACK_C = {1078.0f, -973.0f, -184.0f};
+constexpr McPack MC_PACK_D = {1088.0f, -1020.0f, -186.5f};
+constexpr McPack MC_PACK_E = {1114.0f, -990.0f, -186.0f};
 
-    // "Clear the packs before Lucifron" hold (see the McLucifronClearFirst
-    // predicate). His home (his spawn, tw_world) and the radius inside which
-    // the tank counts as committed to his approach - the two pre-Lucifron
-    // packs sit 15-31yd from it.
-    constexpr float MC_LUCIFRON_HOME_X = 1024.4f;
-    constexpr float MC_LUCIFRON_HOME_Y = -973.3f;
-    constexpr float MC_LUCIFRON_HOME_Z = -181.5f;
-    constexpr float MC_LUCIFRON_HOLD_RANGE = 60.0f;
-    constexpr uint32 MC_HOLD_WAIT_MS = 5000;
+// Live-hound scan around the pack centre (a pack is ~20yd across).
+constexpr float MC_PACK_LIVE_RADIUS = 35.0f;
+constexpr float MC_PACK_ZBAND = 15.0f;
+// The ClearRadius the event drives: the pack's own footprint ONLY.
+constexpr float MC_PACK_CLEAR_RADIUS = 30.0f;
+constexpr float MC_PACK_CLEAR_ZBAND = 18.0f;
+// Proximity gate: the tank has to be at the pack (no arrival step).
+constexpr float MC_PACK_APPROACH =
+    70.0f; // Patrol window: Lucifron must be at least this far from the pack
+           // centre.
+// Fighting a pack with him close is an auto wipe, so the margin over his own
+// aggro + social-chain reach (~45yd worst case) is deliberate. 65yd also
+// produces the clean ALTERNATION the corridor wants, measured against his
+// 39 waypoints:
+//   * packs A (993,-972) and B (1035,-962) open while he is on the EAST leg
+//     (A 133yd / B 99yd away) and are shut while he is at the west end
+//     (A ~15yd / B ~35yd);
+//   * packs C (1078,-973), D (1088,-1020) and E (1114,-990) open while he
+//     is at the WEST end (79/107/118yd) and are shut while he is east
+//     (C ~60yd at the east cap - the tightest of the five, a ~15-20s
+//     window; a full raid kills a pack well inside it).
+constexpr float MC_PATROL_SAFE = 65.0f;
+constexpr uint32 MC_PACK_TIMEOUT = 300000; // a 5-elite pack, generous
 
-    // --- runes (GOs 176951-957; instance_molten_core.cpp:556-658) ------------
-    struct McRune
-    {
-        float x;
-        float y;
-        float z;
-        uint32 runeData;  // TypeRuneActiveN
-        uint32 bossData;  // TYPE_* of the boss whose death opens the rune
-    };
+// "Clear the packs before Lucifron" hold (see the McLucifronClearFirst
+// predicate). His home (his spawn, tw_world) and the radius inside which
+// the tank counts as committed to his approach - the two pre-Lucifron
+// packs sit 15-31yd from it.
+constexpr float MC_LUCIFRON_HOME_X = 1024.4f;
+constexpr float MC_LUCIFRON_HOME_Y = -973.3f;
+constexpr float MC_LUCIFRON_HOME_Z = -181.5f;
+constexpr float MC_LUCIFRON_HOLD_RANGE = 60.0f;
+constexpr uint32 MC_HOLD_WAIT_MS = 5000;
 
-    constexpr McRune MC_RUNES[7] = {
-        { 602.0f, -1175.0f, -196.0f, MC_RUNE_ACTIVE_0 + 0, MC_TYPE_SULFURON },
-        { 749.0f, -985.0f, -178.0f, MC_RUNE_ACTIVE_0 + 1, MC_TYPE_GEDDON },
-        { 584.0f, -807.0f, -205.0f, MC_RUNE_ACTIVE_0 + 2, MC_TYPE_SHAZZRAH },
-        { 796.0f, -974.0f, -208.0f, MC_RUNE_ACTIVE_0 + 3, MC_TYPE_GOLEMAGG },
-        { 694.0f, -496.0f, -214.0f, MC_RUNE_ACTIVE_0 + 4, MC_TYPE_GARR },
-        { 1132.0f, -1017.0f, -186.0f, MC_RUNE_ACTIVE_0 + 5, MC_TYPE_MAGMADAR },
-        { 897.0f, -552.0f, -204.0f, MC_RUNE_ACTIVE_0 + 6, MC_TYPE_GEHENNAS },
-    };
+// --- runes (GOs 176951-957; instance_molten_core.cpp:556-658) ------------
+struct McRune {
+  float x;
+  float y;
+  float z;
+  uint32 runeData; // TypeRuneActiveN
+  uint32 bossData; // TYPE_* of the boss whose death opens the rune
+};
 
-    constexpr float MC_RUNE_ARRIVE_RADIUS = 12.0f;
-    constexpr uint32 MC_RUNE_TIMEOUT = 300000;
+constexpr McRune MC_RUNES[7] = {
+    {602.0f, -1175.0f, -196.0f, MC_RUNE_ACTIVE_0 + 0, MC_TYPE_SULFURON},
+    {749.0f, -985.0f, -178.0f, MC_RUNE_ACTIVE_0 + 1, MC_TYPE_GEDDON},
+    {584.0f, -807.0f, -205.0f, MC_RUNE_ACTIVE_0 + 2, MC_TYPE_SHAZZRAH},
+    {796.0f, -974.0f, -208.0f, MC_RUNE_ACTIVE_0 + 3, MC_TYPE_GOLEMAGG},
+    {694.0f, -496.0f, -214.0f, MC_RUNE_ACTIVE_0 + 4, MC_TYPE_GARR},
+    {1132.0f, -1017.0f, -186.0f, MC_RUNE_ACTIVE_0 + 5, MC_TYPE_MAGMADAR},
+    {897.0f, -552.0f, -204.0f, MC_RUNE_ACTIVE_0 + 6, MC_TYPE_GEHENNAS},
+};
 
-    // --- Domo / Ragnaros / the bridge ----------------------------------------
-    constexpr float MC_DOMO_X = 758.089f;
-    constexpr float MC_DOMO_Y = -1176.71f;
-    constexpr float MC_DOMO_Z = -118.640f;
-    constexpr float MC_DOMO_ADD_SEARCH = 70.0f;
-    constexpr uint32 MC_DOMO_SPAWN_TIMEOUT = 300000;
+constexpr float MC_RUNE_ARRIVE_RADIUS = 12.0f;
+constexpr uint32 MC_RUNE_TIMEOUT = 300000;
 
-    constexpr float MC_RAGNAROS_X = 847.1f;
-    constexpr float MC_RAGNAROS_Y = -816.2f;
-    constexpr float MC_RAGNAROS_Z = -229.8f;
-    constexpr float MC_GOSSIP_SEARCH = 40.0f;
-    constexpr uint32 MC_GOSSIP_TIMEOUT = 120000;  // wait out the Domo-copy spawn
-    constexpr uint32 MC_RAGNAROS_SPAWN_TIMEOUT = 300000;
-    constexpr float MC_RAGNAROS_ENGAGE_SEARCH = 150.0f;
+// --- Domo / Ragnaros / the bridge ----------------------------------------
+constexpr float MC_DOMO_X = 758.089f;
+constexpr float MC_DOMO_Y = -1176.71f;
+constexpr float MC_DOMO_Z = -118.640f;
+constexpr float MC_DOMO_ADD_SEARCH = 70.0f;
+constexpr uint32 MC_DOMO_SPAWN_TIMEOUT = 300000;
 
-    // The navmesh break (mesh-probed): north lip -> south island landing.
-    constexpr float MC_BRIDGE_X = 1035.2f;
-    constexpr float MC_BRIDGE_Y = -1274.8f;
-    constexpr float MC_BRIDGE_Z = -195.3f;
-    constexpr float MC_BRIDGE_LAND_X = 1035.0f;
-    constexpr float MC_BRIDGE_LAND_Y = -1280.0f;
-    constexpr float MC_BRIDGE_LAND_Z = -196.3f;
-    constexpr float MC_BRIDGE_RADIUS = 10.0f;
+constexpr float MC_RAGNAROS_X = 847.1f;
+constexpr float MC_RAGNAROS_Y = -816.2f;
+constexpr float MC_RAGNAROS_Z = -229.8f;
+constexpr float MC_GOSSIP_SEARCH = 40.0f;
+constexpr uint32 MC_GOSSIP_TIMEOUT = 120000; // wait out the Domo-copy spawn
+constexpr uint32 MC_RAGNAROS_SPAWN_TIMEOUT = 300000;
+constexpr float MC_RAGNAROS_ENGAGE_SEARCH = 150.0f;
 
-    // --- predicates -----------------------------------------------------------
+// The navmesh break (mesh-probed): north lip -> south island landing.
+constexpr float MC_BRIDGE_X = 1035.2f;
+constexpr float MC_BRIDGE_Y = -1274.8f;
+constexpr float MC_BRIDGE_Z = -195.3f;
+constexpr float MC_BRIDGE_LAND_X = 1035.0f;
+constexpr float MC_BRIDGE_LAND_Y = -1280.0f;
+constexpr float MC_BRIDGE_LAND_Z = -196.3f;
+constexpr float MC_BRIDGE_RADIUS = 10.0f;
 
-    // A pack clear is due when the tank is at the pack, the pack still has live
-    // hounds, the previous pack in the owner's sequence is fully dead, and
-    // Lucifron is away on the far side of his loop. Proximity-gated inside the
-    // predicate (this event has no arrival step) - vetted in
-    // t/TestEventRegistry.cpp's near-gate whitelist.
-    //
-    // The owner's sequence is strict: "you have to clear two trash packs before
-    // luci. you pull 1 while luci is away, and once they are all dead, you pull
-    // the 2nd while away. kill all at sametime." Pack B therefore waits on pack
-    // A having no live hounds left. (The ordinary pull machinery may still
-    // choose its own nearest-first target when pull mode owns the tick - both
-    // paths end in one pack at a time, in a window, dragged to a camp.)
-    bool McPackWindow(Player* bot, AiObjectContext* context, McPack const& pack,
-                      McPack const* prerequisite)
-    {
-        if (!bot)
-            return false;
+// --- predicates -----------------------------------------------------------
 
-        if (bot->GetDistance(pack.x, pack.y, pack.z) > MC_PACK_APPROACH)
-            return false;
+// A pack clear is due when the tank is at the pack, the pack still has live
+// hounds, the previous pack in the owner's sequence is fully dead, and
+// Lucifron is away on the far side of his loop. Proximity-gated inside the
+// predicate (this event has no arrival step) - vetted in
+// t/TestEventRegistry.cpp's near-gate whitelist.
+//
+// The owner's sequence is strict: "you have to clear two trash packs before
+// luci. you pull 1 while luci is away, and once they are all dead, you pull
+// the 2nd while away. kill all at sametime." Pack B therefore waits on pack
+// A having no live hounds left. (The ordinary pull machinery may still
+// choose its own nearest-first target when pull mode owns the tick - both
+// paths end in one pack at a time, in a window, dragged to a camp.)
+bool McPackWindow(Player *bot, AiObjectContext *context, McPack const &pack,
+                  McPack const *prerequisite) {
+  if (!bot)
+    return false;
 
-        std::vector<uint32> const hounds{ MC_CORE_HOUND };
-        if (!DcTargeting::NearestHostileNearPoint(bot, context, pack.x, pack.y, pack.z,
-                                                  MC_PACK_LIVE_RADIUS, MC_PACK_ZBAND,
-                                                  &hounds))
-            return false;
+  if (bot->GetDistance(pack.x, pack.y, pack.z) > MC_PACK_APPROACH)
+    return false;
 
-        if (prerequisite &&
-            DcTargeting::NearestHostileNearPoint(bot, context,
-                                                 prerequisite->x, prerequisite->y,
-                                                 prerequisite->z,
-                                                 MC_PACK_LIVE_RADIUS, MC_PACK_ZBAND,
-                                                 &hounds))
-            return false;  // the previous pack still has live hounds
+  std::vector<uint32> const hounds{MC_CORE_HOUND};
+  if (!DcTargeting::NearestHostileNearPoint(bot, context, pack.x, pack.y,
+                                            pack.z, MC_PACK_LIVE_RADIUS,
+                                            MC_PACK_ZBAND, &hounds))
+    return false;
 
-        // Dead or far away -> the window is open. He is a waypoint patroller
-        // (movement_type 2) whose route runs straight through these packs.
-        if (Creature* lucifron = DcTargeting::FindLiveCreatureOnMap(bot, MC_LUCIFRON))
-        {
-            if (lucifron->GetDistance(pack.x, pack.y, pack.z) < MC_PATROL_SAFE)
-                return false;
-        }
+  if (prerequisite &&
+      DcTargeting::NearestHostileNearPoint(
+          bot, context, prerequisite->x, prerequisite->y, prerequisite->z,
+          MC_PACK_LIVE_RADIUS, MC_PACK_ZBAND, &hounds))
+    return false; // the previous pack still has live hounds
 
-        return true;
-    }
+  // Dead or far away -> the window is open. He is a waypoint patroller
+  // (movement_type 2) whose route runs straight through these packs.
+  if (Creature *lucifron =
+          DcTargeting::FindLiveCreatureOnMap(bot, MC_LUCIFRON)) {
+    if (lucifron->GetDistance(pack.x, pack.y, pack.z) < MC_PATROL_SAFE)
+      return false;
+  }
 
-    bool McPackWindowA(Player* bot, AiObjectContext* context) { return McPackWindow(bot, context, MC_PACK_A, nullptr); }
-    bool McPackWindowB(Player* bot, AiObjectContext* context) { return McPackWindow(bot, context, MC_PACK_B, &MC_PACK_A); }
-    bool McPackWindowC(Player* bot, AiObjectContext* context) { return McPackWindow(bot, context, MC_PACK_C, nullptr); }
-    bool McPackWindowD(Player* bot, AiObjectContext* context) { return McPackWindow(bot, context, MC_PACK_D, nullptr); }
-    bool McPackWindowE(Player* bot, AiObjectContext* context) { return McPackWindow(bot, context, MC_PACK_E, nullptr); }
-
-    // "CLEAR THE TWO PACKS BEFORE LUCIFRON" (owner rule). Due while Lucifron is
-    // alive, the tank is committed to his approach (within MC_LUCIFRON_HOLD_RANGE
-    // of his home), at least one pre-Lucifron pack still has live hounds, and
-    // NEITHER pack can be worked right now (he is inside the patrol-safe radius
-    // of both) - i.e. the party is waiting him out. The event is a Wait (the
-    // drive's default hold), so it PREEMPTS the at-boss engage (31 > 30) and the
-    // tank holds instead of pulling him with the packs still up ("if the dogs are
-    // too close all will pull"). When he patrols away a pack window opens, the
-    // pack event (registered earlier, checked first) takes the tick, and the
-    // clear proceeds. Proximity-gated inside the predicate - whitelisted in
-    // t/TestEventRegistry.cpp.
-    bool McLucifronClearFirst(Player* bot, AiObjectContext* context)
-    {
-        if (!bot)
-            return false;
-
-        Creature* lucifron = DcTargeting::FindLiveCreatureOnMap(bot, MC_LUCIFRON);
-        if (!lucifron)
-            return false;  // dead -> no hold
-
-        // Approach zone: within approach range of Pack A, Pack B, or Lucifron's home.
-        bool const inApproach =
-            bot->GetDistance(MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z) <= MC_PACK_APPROACH ||
-            bot->GetDistance(MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z) <= MC_PACK_APPROACH ||
-            bot->GetDistance(MC_LUCIFRON_HOME_X, MC_LUCIFRON_HOME_Y, MC_LUCIFRON_HOME_Z) <= 90.0f;
-
-        if (!inApproach)
-            return false;
-
-        std::vector<uint32> const hounds{ MC_CORE_HOUND };
-        bool const packAAlive =
-            DcTargeting::NearestHostileNearPoint(bot, context, MC_PACK_A.x, MC_PACK_A.y,
-                                                 MC_PACK_A.z, MC_PACK_LIVE_RADIUS,
-                                                 MC_PACK_ZBAND, &hounds) != nullptr;
-        bool const packBAlive =
-            DcTargeting::NearestHostileNearPoint(bot, context, MC_PACK_B.x, MC_PACK_B.y,
-                                                 MC_PACK_B.z, MC_PACK_LIVE_RADIUS,
-                                                 MC_PACK_ZBAND, &hounds) != nullptr;
-        if (!packAAlive && !packBAlive)
-            return false;  // both packs cleared -> no hold
-
-        bool const windowA =
-            lucifron->GetDistance(MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z) >= MC_PATROL_SAFE;
-        bool const windowB =
-            lucifron->GetDistance(MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z) >= MC_PATROL_SAFE;
-
-        // Strict alternation: Pack A must be cleared before Pack B.
-        if (packAAlive)
-            return !windowA;  // If window A is open, let Pack A event drive; if closed, hold!
-
-        // Pack A is cleared; if Pack B is alive, hold until window B is open.
-        return !windowB;
-    }
-
-    // A rune safety net is due when its boss is DONE and the rune is not yet
-    // doused. The event's MoveTo is the arrival step, so no proximity gate is
-    // needed (it may walk the tank to a missed rune from anywhere).
-    bool McRuneUndoused(Player* bot, McRune const& rune)
-    {
-        if (!bot)
-            return false;
-
-        InstanceScript* inst = DcTargeting::GetInstanceScript(bot);
-        if (!inst)
-            return false;
-
-        if (inst->GetData(rune.runeData) == MC_DONE)
-            return false;  // already doused
-        return inst->GetData(rune.bossData) == MC_DONE;
-    }
-
-    bool McRune0(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[0]); }
-    bool McRune1(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[1]); }
-    bool McRune2(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[2]); }
-    bool McRune3(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[3]); }
-    bool McRune4(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[4]); }
-    bool McRune5(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[5]); }
-    bool McRune6(Player* bot, AiObjectContext* /*context*/) { return McRuneUndoused(bot, MC_RUNES[6]); }
+  return true;
 }
 
-void RegisterMoltenCoreEvents(std::vector<DungeonEvent>& out)
-{
-    // 1. Core Hound packs (see the header comment). Tight ClearRadius,
-    //    hounds only, one pack at a time, patrol-window gated.
-    //
-    //    NO PanelBeforeBoss here on purpose: panelGatesBossEntry is also read
-    //    by DcTargeting::HasPendingSummonEvent / IsHoldingForSummonEvent, and
-    //    tagging these rows with Lucifron/Magmadar would make the dynamic pull
-    //    stand down within 80yd of their anchors for as long as a pack event is
-    //    pending. The packs are cleared by this event or the ordinary pull, not
-    //    by a boss summon.
-    struct PackRow
-    {
-        uint32 id;
-        McPack const* pack;
-        EventCondition condition;
-        char const* name;
-    };
-    static PackRow const packs[] = {
-        { MC_EVENT_PACK_A, &MC_PACK_A, &McPackWindowA, "Clear Core Hound pack A (Lucifron's patrol area, west - pre-Lucifron)" },
-        { MC_EVENT_PACK_B, &MC_PACK_B, &McPackWindowB, "Clear Core Hound pack B (Lucifron's patrol area, his home - pre-Lucifron)" },
-        { MC_EVENT_PACK_C, &MC_PACK_C, &McPackWindowC, "Clear Core Hound pack C (Magmadar corridor, east)" },
-        { MC_EVENT_PACK_D, &MC_PACK_D, &McPackWindowD, "Clear Core Hound pack D (Magmadar corridor, south)" },
-        { MC_EVENT_PACK_E, &MC_PACK_E, &McPackWindowE, "Clear Core Hound pack E (Magmadar's approach)" },
-    };
-    for (PackRow const& p : packs)
-    {
-        out.push_back(EventBuilder(MC_MAP, p.id, p.name)
-                          .Conditional(p.condition)
-                          .Repeatable()
-                          .ClearRadius(p.pack->x, p.pack->y, p.pack->z,
-                                       MC_PACK_CLEAR_RADIUS, MC_PACK_CLEAR_ZBAND)
-                              .OnlyEntries({ MC_CORE_HOUND })
-                          .Timeout(MC_PACK_TIMEOUT)
-                          .Build());
-    }
+bool McPackWindowA(Player *bot, AiObjectContext *context) {
+  return McPackWindow(bot, context, MC_PACK_A, nullptr);
+}
+bool McPackWindowB(Player *bot, AiObjectContext *context) {
+  return McPackWindow(bot, context, MC_PACK_B, &MC_PACK_A);
+}
+bool McPackWindowC(Player *bot, AiObjectContext *context) {
+  return McPackWindow(bot, context, MC_PACK_C, nullptr);
+}
+bool McPackWindowD(Player *bot, AiObjectContext *context) {
+  return McPackWindow(bot, context, MC_PACK_D, nullptr);
+}
+bool McPackWindowE(Player *bot, AiObjectContext *context) {
+  return McPackWindow(bot, context, MC_PACK_E, nullptr);
+}
 
-    // 2. Rune-chain safety nets (one per rune; walk + hold until doused).
-    struct RuneRow
-    {
-        uint32 id;
-        uint32 index;
-        EventCondition condition;
-    };
-    static RuneRow const runes[] = {
-        { MC_EVENT_RUNE_0, 0, &McRune0 },
-        { MC_EVENT_RUNE_0 + 1, 1, &McRune1 },
-        { MC_EVENT_RUNE_0 + 2, 2, &McRune2 },
-        { MC_EVENT_RUNE_0 + 3, 3, &McRune3 },
-        { MC_EVENT_RUNE_0 + 4, 4, &McRune4 },
-        { MC_EVENT_RUNE_0 + 5, 5, &McRune5 },
-        { MC_EVENT_RUNE_0 + 6, 6, &McRune6 },
-    };
-    for (RuneRow const& r : runes)
-    {
-        McRune const& rune = MC_RUNES[r.index];
-        out.push_back(EventBuilder(MC_MAP, r.id, "Douse the rune (safety net)")
-                          .Conditional(r.condition)
-                          .Repeatable()
-                          // Group under the Domo objective in the panel. Safe to
-                          // tag with the synthetic entry: the two runtime
-                          // consumers of panelGatesBossEntry
-                          // (HasPendingSummonEvent via advance/engage) guard on
-                          // kind == Boss, and an objective never reaches them.
-                          .PanelBeforeBoss(BossRosterRegistry::ObjectiveEntry(2))
-                          .MoveToHoldUntilInstanceData(rune.x, rune.y, rune.z,
-                                                       MC_RUNE_ARRIVE_RADIUS,
-                                                       rune.runeData, MC_DONE)
-                          .Timeout(MC_RUNE_TIMEOUT)
-                          .Build());
-    }
+// "CLEAR THE TWO PACKS BEFORE LUCIFRON" (owner rule). Due while Lucifron is
+// alive, the tank is committed to his approach (within MC_LUCIFRON_HOLD_RANGE
+// of his home), at least one pre-Lucifron pack still has live hounds, and
+// NEITHER pack can be worked right now (he is inside the patrol-safe radius
+// of both) - i.e. the party is waiting him out. The event is a Wait (the
+// drive's default hold), so it PREEMPTS the at-boss engage (31 > 30) and the
+// tank holds instead of pulling him with the packs still up ("if the dogs are
+// too close all will pull"). When he patrols away a pack window opens, the
+// pack event (registered earlier, checked first) takes the tick, and the
+// clear proceeds. Proximity-gated inside the predicate - whitelisted in
+// t/TestEventRegistry.cpp.
+bool McLucifronClearFirst(Player *bot, AiObjectContext *context) {
+  if (!bot)
+    return false;
 
-    // 3. Majordomo Executus: wait for the summon, then gate on both add
-    //    entries being gone. He goes FRIENDLY, he never dies - the objective
-    //    latches on the event completing, never on his death.
-    out.push_back(EventBuilder(MC_MAP, MC_EVENT_DOMO, "Majordomo Executus (defeat his 8 adds)")
-                      .Anchored(MC_DOMO_ORDER)
-                      .Persistent()
-                      .WaitForSpawn(MC_DOMO, /*wantAlive*/ true)
-                          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
-                      .KillCreature(MC_DOMO_ELITE, /*count*/ 1, MC_DOMO_ADD_SEARCH)
-                          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
-                      .KillCreature(MC_DOMO_HEALER, /*count*/ 1, MC_DOMO_ADD_SEARCH)
-                          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
-                      .Build());
+  Creature *lucifron = DcTargeting::FindLiveCreatureOnMap(bot, MC_LUCIFRON);
+  if (!lucifron)
+    return false; // dead -> no hold
 
-    // 4. Ragnaros: gossip the friendly Domo copy (option 1003), wait for the
-    //    summon, then engage and kill.
-    out.push_back(EventBuilder(MC_MAP, MC_EVENT_RAGNAROS, "Summon and kill Ragnaros (Domo gossip)")
-                      .Anchored(MC_RAGNAROS_ORDER)
-                      .Persistent()
-                      .Gossip(MC_DOMO, /*option*/ 1003, MC_GOSSIP_SEARCH)
-                          // The friendly Domo COPY appears ~28s after his
-                          // surrender (and the party walks ~370yd to get here),
-                          // so give the approach room well past the 30s default.
-                          .Timeout(MC_GOSSIP_TIMEOUT)
-                      .WaitForSpawn(MC_RAGNAROS, /*wantAlive*/ true)
-                          .Timeout(MC_RAGNAROS_SPAWN_TIMEOUT)
-                      .KillCreatureEngage(MC_RAGNAROS, /*count*/ 1, MC_RAGNAROS_ENGAGE_SEARCH)
-                          .Timeout(MC_RAGNAROS_SPAWN_TIMEOUT)
-                      .Build());
+  // Approach zone: within approach range of Pack A, Pack B, or Lucifron's home.
+  bool const inApproach =
+      bot->GetDistance(MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z) <=
+          MC_PACK_APPROACH ||
+      bot->GetDistance(MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z) <=
+          MC_PACK_APPROACH ||
+      bot->GetDistance(MC_LUCIFRON_HOME_X, MC_LUCIFRON_HOME_Y,
+                       MC_LUCIFRON_HOME_Z) <= 90.0f;
 
-    // 5. Shadowforge Descent: teleport the party across the navmesh break
-    //    into Thaurissan's pocket (one-way; see the header comment).
-    out.push_back(EventBuilder(MC_MAP, MC_EVENT_BRIDGE, "Shadowforge Descent (bridge to Thaurissan)")
-                      .Anchored(MC_BRIDGE_ORDER)
-                      .Persistent()
-                      .TeleportParty(MC_BRIDGE_X, MC_BRIDGE_Y, MC_BRIDGE_Z,
-                                     MC_BRIDGE_LAND_X, MC_BRIDGE_LAND_Y, MC_BRIDGE_LAND_Z,
-                                     MC_BRIDGE_RADIUS)
-                      .Build());
+  if (!inApproach)
+    return false;
 
-    // 6. "Clear the two packs before Lucifron" hold (see McLucifronClearFirst).
-    //    Registered LAST so the pack events (earlier ids) always win the tick
-    //    when a window is open - their conditions are mutually exclusive, so this
-    //    only ever runs while both packs are waiting him out. The Wait step is
-    //    the hold: the drive's default StopBot keeps the tank planted, and the
-    //    event's relevance (31) preempts the at-boss engage (30).
-    out.push_back(EventBuilder(MC_MAP, MC_EVENT_LUCI_HOLD, "Hold: clear the two Core Hound packs before Lucifron")
-                      .Conditional(&McLucifronClearFirst)
+  std::vector<uint32> const hounds{MC_CORE_HOUND};
+  bool const packAAlive =
+      DcTargeting::NearestHostileNearPoint(
+          bot, context, MC_PACK_A.x, MC_PACK_A.y, MC_PACK_A.z,
+          MC_PACK_LIVE_RADIUS, MC_PACK_ZBAND, &hounds) != nullptr;
+  bool const packBAlive =
+      DcTargeting::NearestHostileNearPoint(
+          bot, context, MC_PACK_B.x, MC_PACK_B.y, MC_PACK_B.z,
+          MC_PACK_LIVE_RADIUS, MC_PACK_ZBAND, &hounds) != nullptr;
+  if (!packAAlive && !packBAlive)
+    return false; // both packs cleared -> no hold
+
+  bool const windowA = lucifron->GetDistance(MC_PACK_A.x, MC_PACK_A.y,
+                                             MC_PACK_A.z) >= MC_PATROL_SAFE;
+  bool const windowB = lucifron->GetDistance(MC_PACK_B.x, MC_PACK_B.y,
+                                             MC_PACK_B.z) >= MC_PATROL_SAFE;
+
+  // Strict alternation: Pack A must be cleared before Pack B.
+  if (packAAlive)
+    return !windowA; // If window A is open, let Pack A event drive; if closed,
+                     // hold!
+
+  // Pack A is cleared; if Pack B is alive, hold until window B is open.
+  return !windowB;
+}
+
+// A rune safety net is due when its boss is DONE and the rune is not yet
+// doused. The event's MoveTo is the arrival step, so no proximity gate is
+// needed (it may walk the tank to a missed rune from anywhere).
+bool McRuneUndoused(Player *bot, McRune const &rune) {
+  if (!bot)
+    return false;
+
+  InstanceScript *inst = DcTargeting::GetInstanceScript(bot);
+  if (!inst)
+    return false;
+
+  if (inst->GetData(rune.runeData) == MC_DONE)
+    return false; // already doused
+  return inst->GetData(rune.bossData) == MC_DONE;
+}
+
+bool McRune0(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[0]);
+}
+bool McRune1(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[1]);
+}
+bool McRune2(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[2]);
+}
+bool McRune3(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[3]);
+}
+bool McRune4(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[4]);
+}
+bool McRune5(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[5]);
+}
+bool McRune6(Player *bot, AiObjectContext * /*context*/) {
+  return McRuneUndoused(bot, MC_RUNES[6]);
+}
+} // namespace
+
+void RegisterMoltenCoreEvents(std::vector<DungeonEvent> &out) {
+  // 1. Core Hound packs (see the header comment). Tight ClearRadius,
+  //    hounds only, one pack at a time, patrol-window gated.
+  //
+  //    NO PanelBeforeBoss here on purpose: panelGatesBossEntry is also read
+  //    by DcTargeting::HasPendingSummonEvent / IsHoldingForSummonEvent, and
+  //    tagging these rows with Lucifron/Magmadar would make the dynamic pull
+  //    stand down within 80yd of their anchors for as long as a pack event is
+  //    pending. The packs are cleared by this event or the ordinary pull, not
+  //    by a boss summon.
+  struct PackRow {
+    uint32 id;
+    McPack const *pack;
+    EventCondition condition;
+    char const *name;
+  };
+  static PackRow const packs[] = {
+      {MC_EVENT_PACK_A, &MC_PACK_A, &McPackWindowA,
+       "Clear Core Hound pack A (Lucifron's patrol area, west - pre-Lucifron)"},
+      {MC_EVENT_PACK_B, &MC_PACK_B, &McPackWindowB,
+       "Clear Core Hound pack B (Lucifron's patrol area, his home - "
+       "pre-Lucifron)"},
+      {MC_EVENT_PACK_C, &MC_PACK_C, &McPackWindowC,
+       "Clear Core Hound pack C (Magmadar corridor, east)"},
+      {MC_EVENT_PACK_D, &MC_PACK_D, &McPackWindowD,
+       "Clear Core Hound pack D (Magmadar corridor, south)"},
+      {MC_EVENT_PACK_E, &MC_PACK_E, &McPackWindowE,
+       "Clear Core Hound pack E (Magmadar's approach)"},
+  };
+  for (PackRow const &p : packs) {
+    out.push_back(EventBuilder(MC_MAP, p.id, p.name)
+                      .Conditional(p.condition)
                       .Repeatable()
-                      .Wait(MC_HOLD_WAIT_MS)
+                      .ClearRadius(p.pack->x, p.pack->y, p.pack->z,
+                                   MC_PACK_CLEAR_RADIUS, MC_PACK_CLEAR_ZBAND)
+                      .OnlyEntries({MC_CORE_HOUND})
+                      .Timeout(MC_PACK_TIMEOUT)
                       .Build());
+  }
+
+  // 2. Rune-chain safety nets (one per rune; walk + hold until doused).
+  struct RuneRow {
+    uint32 id;
+    uint32 index;
+    EventCondition condition;
+  };
+  static RuneRow const runes[] = {
+      {MC_EVENT_RUNE_0, 0, &McRune0},     {MC_EVENT_RUNE_0 + 1, 1, &McRune1},
+      {MC_EVENT_RUNE_0 + 2, 2, &McRune2}, {MC_EVENT_RUNE_0 + 3, 3, &McRune3},
+      {MC_EVENT_RUNE_0 + 4, 4, &McRune4}, {MC_EVENT_RUNE_0 + 5, 5, &McRune5},
+      {MC_EVENT_RUNE_0 + 6, 6, &McRune6},
+  };
+  for (RuneRow const &r : runes) {
+    McRune const &rune = MC_RUNES[r.index];
+    out.push_back(EventBuilder(MC_MAP, r.id, "Douse the rune (safety net)")
+                      .Conditional(r.condition)
+                      .Repeatable()
+                      // Group under the Domo objective in the panel. Safe to
+                      // tag with the synthetic entry: the two runtime
+                      // consumers of panelGatesBossEntry
+                      // (HasPendingSummonEvent via advance/engage) guard on
+                      // kind == Boss, and an objective never reaches them.
+                      .PanelBeforeBoss(BossRosterRegistry::ObjectiveEntry(2))
+                      .MoveToHoldUntilInstanceData(rune.x, rune.y, rune.z,
+                                                   MC_RUNE_ARRIVE_RADIUS,
+                                                   rune.runeData, MC_DONE)
+                      .Timeout(MC_RUNE_TIMEOUT)
+                      .Build());
+  }
+
+  // 3. Majordomo Executus: wait for the summon, then gate on both add
+  //    entries being gone. He goes FRIENDLY, he never dies - the objective
+  //    latches on the event completing, never on his death.
+  out.push_back(
+      EventBuilder(MC_MAP, MC_EVENT_DOMO,
+                   "Majordomo Executus (defeat his 8 adds)")
+          .Anchored(MC_DOMO_ORDER)
+          .Persistent()
+          .WaitForSpawn(MC_DOMO, /*wantAlive*/ true)
+          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
+          .KillCreature(MC_DOMO_ELITE, /*count*/ 1, MC_DOMO_ADD_SEARCH)
+          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
+          .KillCreature(MC_DOMO_HEALER, /*count*/ 1, MC_DOMO_ADD_SEARCH)
+          .Timeout(MC_DOMO_SPAWN_TIMEOUT)
+          .Build());
+
+  // 4. Ragnaros: gossip the friendly Domo copy (option 1003), wait for the
+  //    summon, then engage and kill.
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_RAGNAROS,
+                             "Summon and kill Ragnaros (Domo gossip)")
+                    .Anchored(MC_RAGNAROS_ORDER)
+                    .Persistent()
+                    .Gossip(MC_DOMO, /*option*/ 1003, MC_GOSSIP_SEARCH)
+                    // The friendly Domo COPY appears ~28s after his
+                    // surrender (and the party walks ~370yd to get here),
+                    // so give the approach room well past the 30s default.
+                    .Timeout(MC_GOSSIP_TIMEOUT)
+                    .WaitForSpawn(MC_RAGNAROS, /*wantAlive*/ true)
+                    .Timeout(MC_RAGNAROS_SPAWN_TIMEOUT)
+                    .KillCreatureEngage(MC_SON_OF_FLAME, /*count*/ 0, 100.0f)
+                    .KillCreatureEngage(MC_RAGNAROS, /*count*/ 1,
+                                        MC_RAGNAROS_ENGAGE_SEARCH)
+                    .Timeout(MC_RAGNAROS_SPAWN_TIMEOUT)
+                    .Build());
+
+  // 5. Shadowforge Descent: teleport the party across the navmesh break
+  //    into Thaurissan's pocket (one-way; see the header comment).
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_BRIDGE,
+                             "Shadowforge Descent (bridge to Thaurissan)")
+                    .Anchored(MC_BRIDGE_ORDER)
+                    .Persistent()
+                    .TeleportParty(MC_BRIDGE_X, MC_BRIDGE_Y, MC_BRIDGE_Z,
+                                   MC_BRIDGE_LAND_X, MC_BRIDGE_LAND_Y,
+                                   MC_BRIDGE_LAND_Z, MC_BRIDGE_RADIUS)
+                    .Build());
+
+  // 6. "Clear the two packs before Lucifron" hold (see McLucifronClearFirst).
+  //    Registered LAST so the pack events (earlier ids) always win the tick
+  //    when a window is open - their conditions are mutually exclusive, so this
+  //    only ever runs while both packs are waiting him out. The Wait step is
+  //    the hold: the drive's default StopBot keeps the tank planted, and the
+  //    event's relevance (31) preempts the at-boss engage (30).
+  out.push_back(
+      EventBuilder(MC_MAP, MC_EVENT_LUCI_HOLD,
+                   "Hold: clear the two Core Hound packs before Lucifron")
+          .Conditional(&McLucifronClearFirst)
+          .Repeatable()
+          .Wait(MC_HOLD_WAIT_MS)
+          .Build());
+
+  // 7. Generic room-aggro pre-clear for Lucifron, Gehennas, Garr, Sulfuron, Golemagg
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_ROOM_PRECLEAR,
+                             "Clear the room before the room-aggro boss (Molten Core)")
+                    .Conditional(&DcRoomAggroPreClearCondition)
+                    .KillCreature(/*room trash*/ 0)
+                    .Build());
+
+  // 8. Lucifron: prioritize Flamewaker Protectors (mind control)
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_LUCIFRON_ADDS, "Lucifron & Flamewaker Protectors")
+                    .Anchored(MC_LUCIFRON_ORDER)
+                    .KillCreatureEngage(MC_FLAMEWAKER_PROTECTOR, /*count*/ 0, 80.0f)
+                    .KillCreatureEngage(MC_LUCIFRON, /*count*/ 1, 80.0f)
+                    .Timeout(300000)
+                    .Build());
+
+  // 9. Gehennas: prioritize Flamewakers (fist of ragnaros stun)
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_GEHENNAS_ADDS, "Gehennas & Flamewakers")
+                    .Anchored(MC_GEHENNAS_ORDER)
+                    .KillCreatureEngage(MC_FLAMEWAKER, /*count*/ 0, 80.0f)
+                    .KillCreatureEngage(MC_GEHENNAS_BOSS, /*count*/ 1, 80.0f)
+                    .Timeout(300000)
+                    .Build());
+
+  // 10. Garr: prioritize Firesworn adds
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_GARR_ADDS, "Garr & Firesworn")
+                    .Anchored(MC_GARR_ORDER)
+                    .KillCreatureEngage(MC_FIRESWORN, /*count*/ 0, 80.0f)
+                    .KillCreatureEngage(MC_GARR_BOSS, /*count*/ 1, 80.0f)
+                    .Timeout(400000)
+                    .Build());
+
+  // 11. Sulfuron Harbinger: prioritize Flamewaker Priests (healers)
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_SULFURON_ADDS, "Sulfuron Harbinger & Flamewaker Priests")
+                    .Anchored(MC_SULFURON_ORDER)
+                    .KillCreatureEngage(MC_FLAMEWAKER_PRIEST, /*count*/ 0, 80.0f)
+                    .KillCreatureEngage(MC_SULFURON_BOSS, /*count*/ 1, 80.0f)
+                    .Timeout(300000)
+                    .Build());
+
+  // 12. Golemagg the Incinerator: prioritize Core Ragers
+  out.push_back(EventBuilder(MC_MAP, MC_EVENT_GOLEMAGG_ADDS, "Golemagg & Core Ragers")
+                    .Anchored(MC_GOLEMAGG_ORDER)
+                    .KillCreatureEngage(MC_CORE_RAGER, /*count*/ 0, 80.0f)
+                    .KillCreatureEngage(MC_GOLEMAGG_BOSS, /*count*/ 1, 80.0f)
+                    .Timeout(400000)
+                    .Build());
 }
 
 // --- roster patch ---------------------------------------------------------
-void RegisterMoltenCoreRoster(std::vector<BossRosterPatch>& t)
-{
-    using namespace DcRoster;
+void RegisterMoltenCoreRoster(std::vector<BossRosterPatch> &t) {
+  using namespace DcRoster;
 
-    // The 2 Flamewaker Protectors (12119) are Lucifron's ADDS. The curated
-    // credit list carries 12119 with no order row, so without this they are
-    // numbered past the authored block and routed as a boss leg of their own
-    // (and the Lucifron fight already covers them). Drop them.
-    {
-        BossRosterPatch p;
-        p.mapId = MC_MAP;
-        p.remove = { 12119 };
-        t.push_back(std::move(p));
-    }
+  // The 2 Flamewaker Protectors (12119) are Lucifron's ADDS. The curated
+  // credit list carries 12119 with no order row, so without this they are
+  // numbered past the authored block and routed as a boss leg of their own
+  // (and the Lucifron fight already covers them). Drop them.
+  {
+    BossRosterPatch p;
+    p.mapId = MC_MAP;
+    p.remove = {12119};
+    t.push_back(std::move(p));
+  }
 
-    // Three travel objectives (see the events above):
-    //  * the Shadowforge Descent bridge - order key 5, between the Twin Golems
-    //    and Thaurissan;
-    //  * Majordomo (key 13) and Ragnaros (key 14) - both summon-only, no spawn
-    //    rows, so neither can ever be credited by BossSpawnIndex.
-    {
-        BossRosterPatch p;
-        p.mapId = MC_MAP;
-        p.add = {
-            MakeObjective(BossRosterRegistry::ObjectiveEntry(1), MC_BRIDGE_ORDER,
-                          MC_MAP, "Shadowforge Descent (Thaurissan bridge)",
-                          MC_BRIDGE_X, MC_BRIDGE_Y, MC_BRIDGE_Z,
-                          /*arriveRadius*/ 8.0f, /*gateEntry*/ 0,
-                          /*hook*/ 0, /*eventId*/ MC_EVENT_BRIDGE,
-                          /*orderOverride*/ MC_BRIDGE_ORDER),
-            MakeObjective(BossRosterRegistry::ObjectiveEntry(2), MC_DOMO_ORDER,
-                          MC_MAP, "Majordomo Executus",
-                          MC_DOMO_X, MC_DOMO_Y, MC_DOMO_Z,
-                          /*arriveRadius*/ 12.0f, /*gateEntry*/ 0,
-                          /*hook*/ 0, /*eventId*/ MC_EVENT_DOMO,
-                          /*orderOverride*/ MC_DOMO_ORDER),
-            MakeObjective(BossRosterRegistry::ObjectiveEntry(3), MC_RAGNAROS_ORDER,
-                          MC_MAP, "Ragnaros (Domo gossip)",
-                          MC_RAGNAROS_X, MC_RAGNAROS_Y, MC_RAGNAROS_Z,
-                          /*arriveRadius*/ 12.0f, /*gateEntry*/ 0,
-                          /*hook*/ 0, /*eventId*/ MC_EVENT_RAGNAROS,
-                          /*orderOverride*/ MC_RAGNAROS_ORDER),
-        };
-        t.push_back(std::move(p));
-    }
+  // Three travel objectives (see the events above):
+  //  * the Shadowforge Descent bridge - order key 5, between the Twin Golems
+  //    and Thaurissan;
+  //  * Majordomo (key 13) and Ragnaros (key 14) - both summon-only, no spawn
+  //    rows, so neither can ever be credited by BossSpawnIndex.
+  {
+    BossRosterPatch p;
+    p.mapId = MC_MAP;
+    p.add = {
+        MakeObjective(BossRosterRegistry::ObjectiveEntry(1), MC_BRIDGE_ORDER,
+                      MC_MAP, "Shadowforge Descent (Thaurissan bridge)",
+                      MC_BRIDGE_X, MC_BRIDGE_Y, MC_BRIDGE_Z,
+                      /*arriveRadius*/ 8.0f, /*gateEntry*/ 0,
+                      /*hook*/ 0, /*eventId*/ MC_EVENT_BRIDGE,
+                      /*orderOverride*/ MC_BRIDGE_ORDER),
+        MakeObjective(BossRosterRegistry::ObjectiveEntry(2), MC_DOMO_ORDER,
+                      MC_MAP, "Majordomo Executus", MC_DOMO_X, MC_DOMO_Y,
+                      MC_DOMO_Z,
+                      /*arriveRadius*/ 12.0f, /*gateEntry*/ 0,
+                      /*hook*/ 0, /*eventId*/ MC_EVENT_DOMO,
+                      /*orderOverride*/ MC_DOMO_ORDER),
+        MakeObjective(BossRosterRegistry::ObjectiveEntry(3), MC_RAGNAROS_ORDER,
+                      MC_MAP, "Ragnaros (Domo gossip)", MC_RAGNAROS_X,
+                      MC_RAGNAROS_Y, MC_RAGNAROS_Z,
+                      /*arriveRadius*/ 12.0f, /*gateEntry*/ 0,
+                      /*hook*/ 0, /*eventId*/ MC_EVENT_RAGNAROS,
+                      /*orderOverride*/ MC_RAGNAROS_ORDER),
+    };
+    t.push_back(std::move(p));
+  }
 }

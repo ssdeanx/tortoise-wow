@@ -60,6 +60,8 @@
 #include "generic/TempleOfAhnQirajDungeonStrategies.h"
 #include "generic/ZulGurubDungeonStrategies.h"
 #include "generic/ScarletCitadelDungeonStrategies.h"
+#include "generic/BlackrockSpireDungeonStrategies.h"
+#include "generic/EmeraldSanctumDungeonStrategies.h"
 
 namespace ai
 {
@@ -178,8 +180,27 @@ namespace ai
             creators["temple of ahnqiraj"] = [](PlayerbotAI* ai) { return new TempleOfAhnQirajDungeonStrategy(ai); };
             creators["zul'gurub"] = [](PlayerbotAI* ai) { return new ZulGurubDungeonStrategy(ai); };
             creators["scarlet citadel"] = [](PlayerbotAI* ai) { return new ScarletCitadelDungeonStrategy(ai); };
+            creators["blackrock spire"] = [](PlayerbotAI* ai) { return new BlackrockSpireDungeonStrategy(ai); };
+            creators["emerald sanctum"] = [](PlayerbotAI* ai) { return new EmeraldSanctumDungeonStrategy(ai); };
 
             // Dungeon Boss Strategies
+            // Blackrock Spire Boss Strategies
+            creators["pyroguard emberseer"] = [](PlayerbotAI* ai) { return new PyroguardEmberseerFightStrategy(ai); };
+            creators["rend blackhand"] = [](PlayerbotAI* ai) { return new RendBlackhandFightStrategy(ai); };
+            creators["the beast"] = [](PlayerbotAI* ai) { return new TheBeastFightStrategy(ai); };
+            creators["general drakkisath"] = [](PlayerbotAI* ai) { return new GeneralDrakkisathFightStrategy(ai); };
+
+            // Emerald Sanctum Boss Strategies
+            creators["erennius"] = [](PlayerbotAI* ai) { return new ErenniusFightStrategy(ai); };
+            creators["solnius"] = [](PlayerbotAI* ai) { return new SolniusFightStrategy(ai); };
+
+            // Lower Karazhan Halls Boss Strategies
+            creators["araxxna"] = [](PlayerbotAI* ai) { return new AraxxnaFightStrategy(ai); };
+            creators["howlfang"] = [](PlayerbotAI* ai) { return new HowlfangFightStrategy(ai); };
+            creators["lord blackwald"] = [](PlayerbotAI* ai) { return new LordBlackwaldFightStrategy(ai); };
+            creators["grizikil"] = [](PlayerbotAI* ai) { return new GrizikilFightStrategy(ai); };
+            creators["lkh moroes"] = [](PlayerbotAI* ai) { return new LkhMoroesFightStrategy(ai); };
+
             creators["onyxia"] = [](PlayerbotAI* ai) { return new OnyxiaFightStrategy(ai); };
             creators["daelus"] = [](PlayerbotAI* ai) { return new DaelusFightStrategy(ai); };
             creators["ardaeus"] = [](PlayerbotAI* ai) { return new ArdaeusFightStrategy(ai); };

@@ -14,10 +14,10 @@
 - Finding specific command syntax, item IDs, or macro snippets requires scrolling through excessive architectural and debugging commentary.
 
 ### Requirements
-- **High Command Density**: Maximize actual commands, arguments, and practical usage examples.
-- **Minimal Fluff / Commentary**: Eliminate academic C++ packet flow discussions, theoretical tables, and redundant metadata. Keep essential warnings/caveats strictly as concise inline `-- NOTE:` comments.
-- **Table-Free Design**: Replace markdown tables with structured, categorized command blocks using `-- comments`.
-- **Enterprise-Grade Copy-Paste Usability**: All commands formatted for direct use in the WoW chat bar (`/m` macros, console, or CLI).
+- **100% Data & Command Completeness (CRITICAL)**: Do NOT remove or omit any commands, subcommands, arguments, item entry IDs, spell IDs, teleport tokens, talent distributions, or configuration parameters. Every single entry present in the current reference files must be retained.
+- **Table-Free Design**: All data currently residing in markdown tables must be extracted and transformed directly into copy-pasteable command blocks with `-- comments`.
+- **Minimal Fluff / Commentary**: Eliminate academic C++ packet flow discussions, compiler conditionals, and redundant verbiage while retaining all actionable command arguments, flags, and critical operational caveats as inline `-- comments`.
+- **Enterprise-Grade Copy-Paste Usability**: All commands formatted for immediate execution in the WoW chat bar (`/m` macros, console, or CLI).
 
 ---
 

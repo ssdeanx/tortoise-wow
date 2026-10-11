@@ -90,6 +90,13 @@ void MoltenCoreDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& t
     triggers.push_back(new TriggerNode(
         "fire protection potion ready",
         NextAction::array(0, new NextAction("fire protection potion", 100.0f), NULL)));
+
+    // Restock the protection potions out of combat. Molten Core (map 409)
+    // stocks fire/shadow/arcane - the three damage schools the instance
+    // actually uses, so no bot ever runs dry mid-raid.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +356,12 @@ void ShazzrahFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers
             "shazzrah too close",
             NextAction::array(0, new NextAction("move away from shazzrah", 100.0f), NULL)));
     }
+
+    // Arcane Explosion 19712 / Shazzrah's Curse 19713 / Deaden Magic 19714 /
+    // Counterspell 19715 are arcane.
+    triggers.push_back(new TriggerNode(
+        "arcane protection potion ready",
+        NextAction::array(0, new NextAction("arcane protection potion", 100.0f), NULL)));
 }
 
 void ShazzrahFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)
@@ -586,6 +599,11 @@ void ThaurissanFightStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigge
     triggers.push_back(new TriggerNode(
         "attackers entry::57642",
         NextAction::array(0, new NextAction("attack entry::57642", 55.0f), NULL)));
+
+    // Arcane Rupture 52722 / Arcane Barrage 52723 are arcane.
+    triggers.push_back(new TriggerNode(
+        "arcane protection potion ready",
+        NextAction::array(0, new NextAction("arcane protection potion", 100.0f), NULL)));
 }
 
 void ThaurissanFightStrategy::InitNonCombatTriggers(std::list<TriggerNode*>& triggers)

@@ -106,10 +106,30 @@ namespace
     // path slot), matching the Zul'Farrak objective convention.
     constexpr uint32 ZG_ARLOKK_ORDER = 5;
 
+    // Additional boss, add, and totem entries
+    constexpr uint32 ZG_THEKAL = 14599;
+    constexpr uint32 ZG_ZEALOT_LORKHAN = 11347;
+    constexpr uint32 ZG_ZEALOT_ZATH = 11348;
+    constexpr uint32 ZG_OHGAN = 14988;
+    constexpr uint32 ZG_JINDO = 11380;
+    constexpr uint32 ZG_BRAINWASH_TOTEM = 14986;
+    constexpr uint32 ZG_HEALING_WARD = 14987;
+    constexpr uint32 ZG_SHADE_OF_JINDO = 14983;
+    constexpr uint32 ZG_HAKKAR = 14834;
+    constexpr uint32 ZG_SON_OF_HAKKAR = 11357;
+
+    // Clear-path order slots (key = order - 1)
+    constexpr uint32 ZG_THEKAL_ORDER = 4;
+    constexpr uint32 ZG_JINDO_ORDER = 6;
+    constexpr uint32 ZG_HAKKAR_ORDER = 7;
+
     // Event ids on map 309.
     constexpr uint32 ZG_EVENT_ROOM_PRECLEAR = 1;
     constexpr uint32 ZG_EVENT_MANDOKIR = 2;
     constexpr uint32 ZG_EVENT_ARLOKK = 3;
+    constexpr uint32 ZG_EVENT_THEKAL = 4;
+    constexpr uint32 ZG_EVENT_JINDO = 5;
+    constexpr uint32 ZG_EVENT_HAKKAR = 6;
 }
 
 void RegisterZulGurubEvents(std::vector<DungeonEvent>& out)
@@ -119,11 +139,12 @@ void RegisterZulGurubEvents(std::vector<DungeonEvent>& out)
                       .KillCreature(/*room trash*/ 0)
                       .Build());
 
-    out.push_back(EventBuilder(309, ZG_EVENT_MANDOKIR, "Kill the Vilebranch Speaker (Mandokir gate)")
+    out.push_back(EventBuilder(309, ZG_EVENT_MANDOKIR, "Kill the Vilebranch Speaker and Ohgan (Mandokir gate & raptor)")
                       .Conditional(&ZgMandokirSpeakerAlive)
                       .Repeatable()
                       .PanelBeforeBoss(/*Bloodlord Mandokir*/ 11382)
                       .KillCreatureEngage(/*Vilebranch Speaker*/ 11391, 1, ZG_SPEAKER_SEARCH)
+                      .KillCreatureEngage(/*Ohgan raptor*/ ZG_OHGAN, /*count*/ 0, 80.0f)
                       .Timeout(ZG_SPEAKER_TIMEOUT)
                       .Build());
 
@@ -135,6 +156,33 @@ void RegisterZulGurubEvents(std::vector<DungeonEvent>& out)
                       .WaitForSpawn(ZG_ARLOKK, /*alive*/ true)
                           .Timeout(ZG_ARLOKK_SPAWN_TIMEOUT)
                       .KillCreatureEngage(ZG_ARLOKK, /*count*/ 1, ZG_ARLOKK_ENGAGE_SEARCH)
+                      .Build());
+
+    // High Priest Thekal (order key 4) - prioritize Zealot Lor'Khan (healer) & Zealot Zath
+    out.push_back(EventBuilder(309, ZG_EVENT_THEKAL, "High Priest Thekal & Zealots")
+                      .Anchored(ZG_THEKAL_ORDER)
+                      .KillCreatureEngage(ZG_ZEALOT_LORKHAN, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(ZG_ZEALOT_ZATH, /*count*/ 0, 80.0f)
+                      .KillCreatureEngage(ZG_THEKAL, /*count*/ 1, 80.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // Jin'do the Hexxer (order key 6) - prioritize Healing Ward & Brain Wash Totem
+    out.push_back(EventBuilder(309, ZG_EVENT_JINDO, "Jin'do the Hexxer & Totems")
+                      .Anchored(ZG_JINDO_ORDER)
+                      .KillCreatureEngage(ZG_HEALING_WARD, /*count*/ 0, 60.0f)
+                      .KillCreatureEngage(ZG_BRAINWASH_TOTEM, /*count*/ 0, 60.0f)
+                      .KillCreatureEngage(ZG_SHADE_OF_JINDO, /*count*/ 0, 60.0f)
+                      .KillCreatureEngage(ZG_JINDO, /*count*/ 1, 60.0f)
+                      .Timeout(300000)
+                      .Build());
+
+    // Hakkar the Soulflayer (end boss, order key 7) - prioritize Son of Hakkar adds
+    out.push_back(EventBuilder(309, ZG_EVENT_HAKKAR, "Hakkar the Soulflayer")
+                      .Anchored(ZG_HAKKAR_ORDER)
+                      .KillCreatureEngage(ZG_SON_OF_HAKKAR, /*count*/ 0, 100.0f)
+                      .KillCreatureEngage(ZG_HAKKAR, /*count*/ 1, 100.0f)
+                      .Timeout(600000)
                       .Build());
 }
 

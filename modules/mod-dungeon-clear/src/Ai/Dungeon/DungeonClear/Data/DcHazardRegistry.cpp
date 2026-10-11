@@ -158,7 +158,7 @@ namespace
     // at all (it lands wherever a random member was standing), so the live
     // predicates are the whole defence, exactly as for the ground pools.
 
-    constexpr std::array<DcHazardEmitter, 9> kEmitters = {{
+    constexpr std::array<DcHazardEmitter, 11> kEmitters = {{
         //                    radius  zBand  vacate  hold  slack
         { 552, 20869, /*Arcatraz Sentinel  (fought)      */ 22.0f, 12.0f,  0.0f, 2.0f, 6.0f },
         { 552, 21761, /*Destroyed Sentinel (leave once)  */ 15.0f, 12.0f, 15.0f, 2.0f, 6.0f },
@@ -170,6 +170,10 @@ namespace
         {  45, 2000016, /*Mariella Void Zone (leave once)*/ 10.0f,  6.0f,  8.0f, 2.0f, 6.0f },
         {  45, 2000018, /*Mariella Kill Zone (leave once)*/ 10.0f,  6.0f,  8.0f, 2.0f, 6.0f },
         {  45,   16363, /*Daelus Poison Cloud(leave once)*/ 10.0f,  6.0f,  8.0f, 2.0f, 6.0f },
+        // Tower of Karazhan (814) hazards:
+        { 814,   59996, /*Anomalus Unstable Zone (vacate)*/ 10.0f,  6.0f,  8.0f, 2.0f, 6.0f },
+        // Naxxramas (533) hazards:
+        { 533,   16363, /*Grobbulus Poison Cloud (vacate)*/ 12.0f,  6.0f,  8.0f, 2.0f, 6.0f },
     }};
 
     // ---- the ground-pool table ------------------------------------------
@@ -267,7 +271,7 @@ namespace
     // spawn ledge is z ~675, the pit floor is z ~648 and the lower kingdom is
     // z ~289. A pool dropped on one of those decks must not fence off the deck
     // below it, and 6yd is comfortably inside the smallest of those gaps (27yd).
-    constexpr std::array<DcGroundHazard, 6> kGroundHazards = {{
+    constexpr std::array<DcGroundHazard, 12> kGroundHazards = {{
         //                   radius  zBand  vacate  hold  slack
         // Cloud of Disease — the pool a dying Diseased Ghoul (10495) leaves.
         { 289, 17742, 8.0f, 6.0f, 5.0f, 2.0f, 6.0f },
@@ -279,6 +283,15 @@ namespace
         // Onyxia's Lair (map 249) Heated Ground - East (22191) & West (22197) during Deep Breath.
         { 249, 22191, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f },
         { 249, 22197, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f },
+        // Molten Core (map 409) Gehennas Rain of Fire (19717)
+        { 409, 19717, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f },
+        // Lower Karazhan Halls (map 532) Grizikil Rain of Fire (57093)
+        { 532, 57093, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f },
+        // Naxxramas (map 533) hazards:
+        { 533, 28158, 12.0f, 6.0f, 8.0f, 2.0f, 6.0f }, // Grobbulus Poison Cloud
+        { 533, 28863,  8.0f, 6.0f, 6.0f, 2.0f, 6.0f }, // Four Horsemen Void Zone
+        { 533, 29350, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f }, // Heigan Plague Cloud
+        { 533, 29371, 10.0f, 6.0f, 8.0f, 2.0f, 6.0f }, // Heigan Eruption
     }};
 
     // ---- the trap table --------------------------------------------------
@@ -333,7 +346,7 @@ namespace
     // Guard (17461 normal, SmartAI on-death SetData 2) or Porung (20923 heroic,
     // boss_porung::JustDied) cancels the scout's whole scheduler — waves and
     // arrows together. See ShatteredHallsEvents.cpp, which sequences exactly that.
-    constexpr std::array<DcTrapHazard, 4> kTrapHazards = {{
+    constexpr std::array<DcTrapHazard, 6> kTrapHazards = {{
         //                   radius  zBand  vacate  hold  slack
         // Blaze — the 60s fire patch a flame arrow leaves on the gauntlet floor.
         { 540, 181915, 5.0f, 6.0f, 3.5f, 2.0f, 6.0f },
@@ -343,6 +356,10 @@ namespace
         // Onyxia's Lair (map 249) Lava Traps / heated floor cracks (177984 and 177985).
         { 249, 177984, 5.0f, 6.0f, 3.5f, 2.0f, 6.0f },
         { 249, 177985, 5.0f, 6.0f, 3.5f, 2.0f, 6.0f },
+        // Molten Core (map 409) Magmadar Lava Bomb (177704)
+        { 409, 177704, 8.0f, 6.0f, 6.0f, 2.0f, 6.0f },
+        // Zul'Gurub (map 309) Jeklik Inferno Bomb (177764)
+        { 309, 177764, 8.0f, 6.0f, 6.0f, 2.0f, 6.0f },
     }};
 }
 

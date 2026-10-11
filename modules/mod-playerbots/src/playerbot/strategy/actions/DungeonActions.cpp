@@ -799,9 +799,9 @@ bool FollowChargedAllyAction::isUseful()
 
 bool GiveAhnQirajSuppliesAction::isUseful()
 {
-    // Only fires when the bot is actually low on a stack inside an AQ raid;
-    // shares the exact rule with AhnQirajSuppliesNeededTrigger so the action
-    // can never disagree with the trigger that queues it.
+    // Only fires when the bot is actually low on a stack on a map that is in the
+    // per-map supply table; shares the exact rule with AhnQirajSuppliesNeeded-
+    // Trigger so the action can never disagree with the trigger that queues it.
     return AhnQirajSuppliesLow(ai);
 }
 
@@ -810,8 +810,14 @@ bool GiveAhnQirajSuppliesAction::Execute(Event& event)
     if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported())
         return false;
 
+    // The SAME per-map lookup the trigger gates on - not a private copy of the
+    // list. That shared source is the whole reason the trigger and the action
+    // cannot drift apart and hand out potions this map does not use.
     uint32 count = 0;
-    uint32 const* items = AhnQirajProtectionPotions(count);
+    uint32 const* items = RaidSupplyPotions(bot->GetMapId(), count);
+    if (!items || count == 0) // map is not stocked: grant nothing, quietly
+        return false;
+
     uint32 const low = AhnQirajSupplyLowWatermark();
     uint32 const target = AhnQirajSupplyTopUpTarget();
 
@@ -824,6 +830,18 @@ bool GiveAhnQirajSuppliesAction::Execute(Event& event)
         if (have >= low)
             continue;
 
+        // Uncapped on purpose. These potions stack to 10, so a top-up from an
+        // empty bag asks for 20 and therefore needs TWO free bag slots per
+        // school - up to 8 slots on a four-school raid like Blackwing Lair, and
+        // that is real inventory pressure across a 40-man roster. Capping the
+        // grant at one stack would avoid the multi-slot request, but it breaks
+        // the owner's stated rule: every refill must hand over
+        // (target - low) MORE than the amount the bot was short, and a cap of
+        // 10 would hand a bot that came in empty exactly what it needed and
+        // nothing more. Bag pressure is handled by the CanStoreNewItem check
+        // below instead, which degrades to "no refill" rather than to a
+        // half-filled stack, and by the per-item continue, so a bag with one
+        // free slot still tops up one school before failing on the next.
         uint32 give = target - have;
 
         // Native bag-space check BEFORE creating the item, exactly like the

@@ -12,6 +12,7 @@ namespace ai
 
     private:
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
     };
 
     // Shared Naxxramas boss-fight lifecycle: potions + consumables enabled for

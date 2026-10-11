@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("checkegglogs")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c03377d4627cd653b5ac3d66efb9a6f0a6c74707")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff33731ce4e646c864293835e0e40d3ff2f01d52")]
 [assembly: System.Reflection.AssemblyProductAttribute("checkegglogs")]
 [assembly: System.Reflection.AssemblyTitleAttribute("checkegglogs")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

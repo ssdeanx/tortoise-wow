@@ -12,6 +12,7 @@ namespace ai
 
     private:
         void InitCombatTriggers(std::list<TriggerNode*>& triggers) override;
+        void InitNonCombatTriggers(std::list<TriggerNode*>& triggers) override;
     };
 
     // Onyxia (10184) fight: fire fight with a phase transition to airborne

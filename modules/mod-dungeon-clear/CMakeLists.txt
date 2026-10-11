@@ -17,12 +17,20 @@ AC_ADD_SCRIPT("${CMAKE_CURRENT_LIST_DIR}/src")
 
 AC_ADD_CONFIG_FILE("${CMAKE_CURRENT_LIST_DIR}/conf/mod_dungeon_clear.conf.dist")
 
-# New files added: Data/Events/AhnQirajEvents.cpp (Ruins 509 + Temple 531 of
+# New files added: Data/Events/KarazhanCryptEvents.cpp (Karazhan Crypt map 800
+#   Alarus 6-rune summon event & roster objective),
+#   Data/Events/AhnQirajEvents.cpp (Ruins 509 + Temple 531 of
 #   Ahn'Qiraj: native Rajaxx officer chain, composite Bug Trio, spawnless Ouro
 #   Spawner objective, Twins link, C'thun Eye phase, Ossirian crystals),
 #   Data/Events/ScarletCitadelEvents.cpp (Scarlet Citadel map 45 events & roster),
+#   Data/Events/StormwindVaultEvents.cpp (Stormwind Vault map 35 events & rat door gates),
+#   Data/Events/HateforgeQuarryEvents.cpp (Hateforge Quarry map 808 events & slag door gates),
+#   Data/Events/TowerOfKarazhanEvents.cpp (Tower of Karazhan map 814 events & 7-boss roster),
+#   Data/Events/TimbermawHoldEvents.cpp (Timbermaw Hold map 819 events & 9-boss roster),
+#   Data/Events/StormwroughtRuinsEvents.cpp (Stormwrought Ruins map 818 events & 11-boss roster),
 #   Data/Events/OnyxiasLairEvents.cpp (Onyxia's Lair map 249 events & roster),
 #   Data/Events/BlackwingLairEvents.cpp (Blackwing Lair map 469 events & roster),
+#   Data/Events/NaxxramasEvents.cpp (Naxxramas map 533 events & 18-boss roster),
 #   Value/DungeonClearGroundHazardsValue.{h,cpp} (live
 #   persistent-area-aura ground pools — DynamicObjects, not creatures — near the
 #   bot; the DcHazard half that covers Scholomance's Cloud of Disease),

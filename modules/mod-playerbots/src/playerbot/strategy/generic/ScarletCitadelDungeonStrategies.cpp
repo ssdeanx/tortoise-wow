@@ -56,6 +56,12 @@ void ScarletCitadelDungeonStrategy::InitNonCombatTriggers(std::list<TriggerNode*
     triggers.push_back(new TriggerNode(
         "start abbendis fight",
         NextAction::array(0, new NextAction("enable abbendis fight strategy", 100.0f), NULL)));
+
+    // Restock the protection potions out of combat. Scarlet Citadel (map 45)
+    // stocks nature/shadow only - fire is deliberately not stocked.
+    triggers.push_back(new TriggerNode(
+        "ahnqiraj supplies needed",
+        NextAction::array(0, new NextAction("give ahnqiraj supplies", 90.0f), NULL)));
 }
 
 // ---------------------------------------------------------------------------
