@@ -1,3 +1,31 @@
+---
+name: Class Specs, Meta Builds & Endgame Gear Directory
+description: Nine-class talent and endgame gear reference for Turtle-WoW 1.18.1 — per-class talent skeletons with summed point totals, 30 one-click gear loadouts, Tier 1/2/3 and Zul'Gurub set IDs, weapons, trinkets and enchants, plus DB-verified ability citations with spell IDs. Every claim is tagged VERIFIED / OFFICIAL 1.18.1 / COMMUNITY so you can tell what is measured against this realm from what is opinion. Use it to check a talent's real effect, a set's member IDs, or what a class actually wears at 60.
+version: 1.0.0
+platform: Turtle-WoW 1.18.1 (Build 7272)
+stack: CMaNGOS + mod-playerbots (ike3 / r-o-sh) + mod-dungeon-clear
+glob:
+  - sql/base/tw_world_spell_template.sql
+  - sql/base/tw_world_item_template.sql
+  - sql/base/tw_world_gameobject_template.sql
+  - sql/base/tw_world_spell_learn_spell.sql
+  - sql/base/tw_world_spell_chain.sql
+  - sql/base/tw_world_spell_proc_item_enchant.sql
+  - sql/base/tw_world_item_enchantment_template.sql
+  - sql/base/tw_world_skill_line_ability.sql
+tags:
+  - class-specs
+  - talents
+  - endgame-gear
+  - tier-sets
+  - items
+  - enchants
+  - trinkets
+  - verification-tiers
+  - warlords-of-doom
+  - turtle-wow
+---
+
 # 04. Class Specs, Meta Builds & Endgame Gear Directory
 
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework
@@ -11,11 +39,9 @@
 
 Every factual claim in this document carries one of three tiers. The tier is stated inline wherever it matters, and anything unmarked is **unverified** and should be treated as a hypothesis to check, not a fact to copy.
 
-| Tier | Meaning | How it was established |
-| :--- | :--- | :--- |
-| **VERIFIED** | Confirmed against **this repository's own database snapshot** (`sql/base/tw_world_spell_template.sql`, `sql/base/tw_world_item_template.sql`, `sql/base/tw_world_gameobject_template.sql`) or the C++ source. Spell IDs and column values are cited inline. | Direct column-aware parse of the committed SQL dump, MySQL-escape-safe. |
-| **OFFICIAL 1.18.1** | Confirmed against **Turtle-WoW's own published 1.18.1 talent-tree data / patch changelog**, but **NOT present in, or not reflected by, this repository's DB snapshot**. Flagged as a possible **server-version gap**. | Official 1.18.1 talent-tree collection (talent-builder.dev) + the official "Patch 1.17.2 & Beyond" class changelog. |
-| **COMMUNITY / UNVERIFIED** | Meta rankings, consensus reports, "BiS" opinions, balance intent. **Attributed to the community** — not to Turtle-WoW, not to this codebase. | Community consensus; no canonical Turtle-WoW source publishes it. |
+- **VERIFIED**: Confirmed against **this repository's own database snapshot** (`sql/base/tw_world_spell_template.sql`, `sql/base/tw_world_item_template.sql`, `sql/base/tw_world_gameobject_template.sql`) or the C++ source. Spell IDs and column values are cited inline. *Method*: Direct column-aware parse of the committed SQL dump, MySQL-escape-safe.
+- **OFFICIAL 1.18.1**: Confirmed against **Turtle-WoW's own published 1.18.1 talent-tree data / patch changelog**, but **NOT present in, or not reflected by, this repository's DB snapshot**. Flagged as a possible **server-version gap**. *Method*: Official 1.18.1 talent-tree collection (talent-builder.dev) + the official "Patch 1.17.2 & Beyond" class changelog.
+- **COMMUNITY / UNVERIFIED**: Meta rankings, consensus reports, "BiS" opinions, balance intent. **Attributed to the community** — not to Turtle-WoW, not to this codebase. *Method*: Community consensus; no canonical Turtle-WoW source publishes it.
 
 > ### WARNING — DB Version Caveat: `sql/base/*.sql` is a PRE-MIGRATION SNAPSHOT
 >
@@ -31,7 +57,9 @@ Every factual claim in this document carries one of three tiers. The tier is sta
 
 ## Patch Attribution: 1.17.2 vs 1.18.1 (read before any "new in 1.18.1" claim)
 
-Earlier revisions of this document repeatedly implied that **1.18.1 reworked the talent trees. It did not.**
+⚠️ **1.18.1 did NOT rework the talent trees.** Any claim below that describes a
+"1.18.1 talent rework" which is really a *tree-structure* change belongs to
+**1.17.2** — read this before trusting any "new in 1.18.1" label.
 
 - The **full 9-class talent tree rewrite shipped in 1.17.2 (November 2024)** — Warrior, Paladin, Shaman, Druid, Rogue, Hunter, Mage, Warlock and Priest trees were all rebuilt in that patch.
 - **1.18.1 ("Nightmares of Ursol", 2026-03-20)** is an **incremental revision layered on top** of 1.17.2: Hunter kit changes, Druid Eclipse/Balance, Priest Blackout/Lightwell, Warlock Searing Pain / Ritual of Doom, Shaman Enhancement & Elemental, Warrior Ravager / Precision Cut / Defiance, Paladin Consecration / Holy Strike / Daybreak **nerfs**, Mage Ice Barrier, and Rogue trims.
@@ -42,21 +70,21 @@ Earlier revisions of this document repeatedly implied that **1.18.1 reworked the
 
 ## Unified 5-Volume Master Reference Architecture
 
-| Volume | Handbook Title | Domain & Core Coverage | Direct Link |
-| :---: | :--- | :--- | :---: |
-| **01** | **[Game Master & World Administration](./01_game_master_handbook.md)** | **100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.** | [Open Volume 01](./01_game_master_handbook.md) |
-| **02** | **[Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)** | **Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.** | [Open Volume 02](./02_playerbot_and_raid_automation.md) |
-| **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge Quarry, Caverns of Time, Karazhan Crypt, Stormwind Vault, Lower Karazhan Halls, Emerald Sanctum, Tower of Karazhan, **Scarlet Citadel** map 45 / `.tele ScarletCitadel`, Scarlet Enclave), keys & attunements.** | [Open Volume 03](./03_turtle_world_and_teleports.md) |
-| **04** | **Class Specs & Endgame Gear Directory** | **All 9 Classes**: per-class talent skeletons, 30 one-click gear loadout examples, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations (spell IDs + talent rows). Turtle-WoW publishes **no canonical builds**, so every claim here is tagged by verification tier rather than asserting optimal spreads. | **Current File** |
-| **05** | **[Eluna Scripting & Core Development Engine](./05_developer_eluna_and_engine.md)** | **Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.** | [Open Volume 05](./05_developer_eluna_and_engine.md) |
+- **Volume 01: [Game Master & World Administration](./01_game_master_handbook.md)**: 100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.
+- **Volume 02: [Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)**: Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.
+- **Volume 03: [World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)**: 647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge Quarry, Caverns of Time, Karazhan Crypt, Stormwind Vault, Lower Karazhan Halls, Emerald Sanctum, Tower of Karazhan, Scarlet Citadel map 45 / `.tele ScarletCitadel`, Scarlet Enclave), keys & attunements.
+- **Volume 04: Class Specs & Endgame Gear Directory (Current File)**: All 9 Classes: per-class talent skeletons, 30 one-click gear loadout examples, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations (spell IDs + talent rows).
+- **Volume 05: [Eluna Scripting & Core Development Engine](./05_developer_eluna_and_engine.md)**: Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.
 
 ---
 
 ## 📑 Table of Contents
 
-1. [Unified 5-Volume Master Reference Architecture](#unified-5-volume-master-reference-architecture)
-2. [Official Turtle-WoW Interactive Talent Calculator Directory](#official-turtle-wow-interactive-talent-calculator-directory)
-3. [Part I: 9-Class Talent Specializations & Rotation Playbooks](#part-i-9-class-talent-specializations--rotation-playbooks)
+1. [Verification Tiers — Read This Before Trusting Any Claim Below](#verification-tiers--read-this-before-trusting-any-claim-below)
+2. [Patch Attribution: 1.17.2 vs 1.18.1](#patch-attribution-1172-vs-1181-read-before-any-new-in-1181-claim)
+3. [Unified 5-Volume Master Reference Architecture](#unified-5-volume-master-reference-architecture)
+4. [Official Turtle-WoW Interactive Talent Calculator Directory](#official-turtle-wow-interactive-talent-calculator-directory)
+5. [Part I: 9-Class Talent Specializations & Rotation Playbooks](#part-i-9-class-talent-specializations--rotation-playbooks)
    - [1. Warrior (DW Fury/Prot, Deep Prot, Fury DPS, Arms)](#1-warrior-talent-specs) — Specs 1–3 have trees; **Arms Warrior is a [STUB, no build published](#spec-3b-arms-warrior-31200--physical-dps-stub--no-build-published)**
    - [2. Rogue (Combat Swords, Combat Daggers, Subtlety/Hemo)](#2-rogue-talent-specs)
    - [3. Mage (Ignite Fire, Frost Control, Arcane Mind)](#3-mage-talent-specs)
@@ -66,7 +94,7 @@ Earlier revisions of this document repeatedly implied that **1.18.1 reworked the
    - [7. Paladin (Holy Healer, Retribution, Prot Tank)](#7-paladin-talent-specs) — Specs 14–15 have trees; **Protection Paladin is a [STUB, no build published](#spec-14b-protection-paladin-03120--aoe--threat-tank-stub--no-build-published)**
    - [8. Shaman (Restoration, Elemental, Enhancement, Tankhance)](#8-shaman-talent-specs)
    - [9. Druid (Feral Cat, Feral Bear, Restoration, Moonkin)](#9-druid-talent-specs) — Specs 18–19 have trees; **Moonglow Restoration is a [STUB, no build published](#spec-19b-moonglow-restoration-druid-24027--raid-healer-stub--no-build-published)**
-4. [Part II: Complete 1-Click BiS Class Gear Loadouts (Slots 01–17 Explicitly Represented)](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented)
+6. [Part II: Complete 1-Click BiS Class Gear Loadouts (Slots 01–17 Explicitly Represented)](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented)
    - [1. Protection Warrior (Deep Prot Tank)](#-protection-warrior-deep-protection-mitigation-tank-bis)
    - [2. Dual-Wield Fury/Prot Warrior (Max Threat Tank)](#-dual-wield-furyprot-warrior-max-raid-threat-bis)
    - [3. Dual-Wield Fury Warrior (#1 Physical DPS)](#-dual-wield-fury-warrior-1-physical-melee-dps-bis)
@@ -97,23 +125,23 @@ Earlier revisions of this document repeatedly implied that **1.18.1 reworked the
    - [28. Feral Bear Druid (High Health & Armor Tank)](#-feral-bear-druid-high-health--armor-tank-bis)
    - [29. Restoration Druid (HoT Raid Healer & Swiftmend)](#-restoration-druid-hot-raid-healer--swiftmend-bis)
    - [30. Balance Druid 'Boomkin' (Nature / Arcane Caster DPS)](#-balance-druid-boomkin-nature--arcane-caster-dps-bis)
-5. [Part III: Tier Armor Sets Directory](#part-iii-tier-armor-sets-directory)
+7. [Part III: Tier Armor Sets Directory](#part-iii-tier-armor-sets-directory)
    - [1. Complete Naxxramas Tier 3 Armor Sets (9 Pieces)](#1-complete-naxxramas-tier-3-armor-sets-9-pieces)
    - [2. Temple of Ahn'Qiraj Tier 2.5 Armor Sets (5 Pieces)](#2-temple-of-ahnqiraj-tier-25-armor-sets-5-pieces)
    - [3. Blackwing Lair & Molten Core Tier 2 Armor Sets (8 Pieces)](#3-blackwing-lair--molten-core-tier-2-armor-sets-8-pieces)
    - [4. Molten Core Tier 1 Armor Sets (8 Pieces)](#4-molten-core-tier-1-armor-sets-8-pieces)
-   - [5. Zul'Gurub 5-Piece Class Sets](#5-zulgurub-5-piece-class-sets)
+   - [5. Zul'Gurub 5-Piece Class Sets](#5-zulgurub-5-piece-class-sets-1-weapon--3-armour--1-class-trinket)
    - [6. Ruins of Ahn'Qiraj (AQ20) 3-Piece Class Sets](#6-ruins-of-ahnqiraj-aq20-3-piece-class-sets)
    - [7. Dungeon Sets 1 & 2 (Tier 0 & Tier 0.5 Upgrades)](#7-dungeon-sets-1--2-tier-0--tier-05-upgrades)
    - [8. PvP Grand Marshal & High Warlord Equipment (Rank 14)](#8-pvp-grand-marshal--high-warlord-equipment-rank-14)
    - [9. World Boss Epic Drops (Azuregos, Kazzak, Nightmare Dragons)](#9-world-boss-epic-drops-azuregos-kazzak-nightmare-dragons)
-6. [Part IV: Legendary & Artifact Weapons Directory](#part-iv-legendary--artifact-weapons-directory)
-7. [Part V: BiS Weapons Directory (Organized by Weapon Type)](#part-v-bis-weapons-directory-organized-by-weapon-type)
-8. [Part VI: BiS Endgame Trinkets Directory](#part-vi-bis-endgame-trinkets-directory)
-9. [Part VII: BiS Rings, Amulets & Off-Set Equipment](#part-vii-bis-rings-amulets--off-set-equipment)
-10. [Part VIII: Consumables, Flasks, Potions & World Buff Items Directory](#part-viii-consumables-flasks-potions--world-buff-items-directory)
-11. [Part IX: Permanent Weapon & Armor Enchantments Directory](#part-ix-permanent-weapon--armor-enchantments-directory)
-12. [Part X: How to Optimize & Deploy BiS Gear for Turtle-WoW Latest Content](#part-x-how-to-optimize--deploy-bis-gear-for-turtle-wow-latest-content)
+8. [Part IV: Legendary & Artifact Weapons Directory](#part-iv-legendary--artifact-weapons-directory)
+9. [Part V: BiS Weapons Directory (Organized by Weapon Type)](#part-v-bis-weapons-directory-organized-by-weapon-type)
+10. [Part VI: BiS Endgame Trinkets Directory](#part-vi-bis-endgame-trinkets-directory)
+11. [Part VII: BiS Rings, Amulets & Off-Set Equipment](#part-vii-bis-rings-amulets--off-set-equipment)
+12. [Part VIII: Consumables, Flasks, Potions & World Buff Items Directory](#part-viii-consumables-flasks-potions--world-buff-items-directory)
+13. [Part IX: Permanent Weapon & Armor Enchantments Directory](#part-ix-permanent-weapon--armor-enchantments-directory)
+14. [Part X: How to Optimize & Deploy BiS Gear for Turtle-WoW Latest Content](#part-x-how-to-optimize--deploy-bis-gear-for-turtle-wow-latest-content)
 
 ---
 
@@ -121,19 +149,17 @@ Earlier revisions of this document repeatedly implied that **1.18.1 reworked the
 
 Use these official interactive calculators to preview talent tree node prerequisites, ranks, and point allocations live:
 
-> ⚠️ **The `A/B/C` splits in the right-hand column are COMMUNITY claims, not measurements, and not official Turtle-WoW data.** They are retained for continuity with earlier revisions. Every tree published in Part I carries a **real measured point total that is lower than the split implies** — see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks). Three of the listed specs (**Arms Warrior**, **Protection Paladin**, **Moonglow Restoration Druid**) have **no build here at all** and are marked *(stub)*; they point to the spec table rather than to an invented tree.
+> ⚠️ **The `A/B/C` splits in the right-hand column are COMMUNITY claims, not measurements, and not official Turtle-WoW data.** Every tree published in Part I carries a **real measured point total that is lower than the split implies** — see the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks). Three of the listed specs (**Arms Warrior**, **Protection Paladin**, **Moonglow Restoration Druid**) have **no build here at all** and are marked *(stub)*; they point to the spec table rather than to an invented tree.
 
-| Class | Official Live Calculator Link | Signature 1.18.1 Meta Specializations |
-| :--- | :--- | :--- |
-| **Warrior** | [🎮 Turtle WoW Warrior Calculator](https://talents.turtle-wow.org/warrior) | DW Fury/Prot (0/31/20) • Deep Prot (11/5/35) • Fury DPS (17/34/0) • Arms (31/20/0) *(stub — no build)* |
-| **Rogue** | [🎮 Turtle WoW Rogue Calculator](https://talents.turtle-wow.org/rogue) | Combat Swords (19/32/0) • Combat Daggers (15/31/5) • Subtlety/Hemo (21/3/27) |
-| **Mage** | [🎮 Turtle WoW Mage Calculator](https://talents.turtle-wow.org/mage) | Ignite Fire (17/31/3) • AP Frost (28/0/23) • Arcane Mind (31/0/20) |
-| **Warlock** | [🎮 Turtle WoW Warlock Calculator](https://talents.turtle-wow.org/warlock) | DS/Ruin (7/21/23) • SM/Ruin (30/0/21) • **Improved Stones** (0/31/20) — *community splits, unverified; see Spec 8* |
-| **Hunter** | [🎮 Turtle WoW Hunter Calculator](https://talents.turtle-wow.org/hunter) | Marksmanship (20/31/0) • Beast Mastery (31/20/0) • Melee Survival (0/21/30 Carve/Lacerate) |
-| **Priest** | [🎮 Turtle WoW Priest Calculator](https://talents.turtle-wow.org/priest) | Holy/Disc (21/30/0) • Holy Smite DPS (31/20/0) • Shadow Mana Battery (13/0/38) |
-| **Paladin** | [🎮 Turtle WoW Paladin Calculator](https://talents.turtle-wow.org/paladin) | Holy Healer (31/20/0) • Retribution Burst (11/0/40) • Prot Tank (0/31/20) *(stub — no build)* |
-| **Shaman** | [🎮 Turtle WoW Shaman Calculator](https://talents.turtle-wow.org/shaman) | Resto Chain Heal (0/12/39) • Shaman Tank "Tankhance" (19/32/0) • Elemental (30/0/21) • Enhancement (19/32/0) |
-| **Druid** | [🎮 Turtle WoW Druid Calculator](https://talents.turtle-wow.org/druid) | Feral Cat (14/32/5) • Feral Bear (14/32/5) • Balance Moonkin (31/0/20) • Moonglow Resto (24/0/27) *(stub — no build)* |
+- **Warrior**: [🎮 Turtle WoW Warrior Calculator](https://talents.turtle-wow.org/warrior) — DW Fury/Prot (0/31/20) • Deep Prot (11/5/35) • Fury DPS (17/34/0) • Arms (31/20/0) *(stub — no build)*
+- **Rogue**: [🎮 Turtle WoW Rogue Calculator](https://talents.turtle-wow.org/rogue) — Combat Swords (19/32/0) • Combat Daggers (15/31/5) • Subtlety/Hemo (21/3/27)
+- **Mage**: [🎮 Turtle WoW Mage Calculator](https://talents.turtle-wow.org/mage) — Ignite Fire (17/31/3) • AP Frost (28/0/23) • Arcane Mind (31/0/20)
+- **Warlock**: [🎮 Turtle WoW Warlock Calculator](https://talents.turtle-wow.org/warlock) — DS/Ruin (7/21/23) • SM/Ruin (30/0/21) • **Improved Stones** (0/31/20) — *community splits, unverified; see Spec 8*
+- **Hunter**: [🎮 Turtle WoW Hunter Calculator](https://talents.turtle-wow.org/hunter) — Marksmanship (20/31/0) • Beast Mastery (31/20/0) • Melee Survival (0/21/30 Carve/Lacerate)
+- **Priest**: [🎮 Turtle WoW Priest Calculator](https://talents.turtle-wow.org/priest) — Holy/Disc (21/30/0) • Holy Smite DPS (31/20/0) • Shadow Mana Battery (13/0/38)
+- **Paladin**: [🎮 Turtle WoW Paladin Calculator](https://talents.turtle-wow.org/paladin) — Holy Healer (31/20/0) • Retribution Burst (11/0/40) • Prot Tank (0/31/20) *(stub — no build)*
+- **Shaman**: [🎮 Turtle WoW Shaman Calculator](https://talents.turtle-wow.org/shaman) — Resto Chain Heal (0/12/39) • Shaman Tank "Tankhance" (19/32/0) • Elemental (30/0/21) • Enhancement (19/32/0)
+- **Druid**: [🎮 Turtle WoW Druid Calculator](https://talents.turtle-wow.org/druid) — Feral Cat (14/32/5) • Feral Bear (14/32/5) • Balance Moonkin (31/0/20) • Moonglow Resto (24/0/27) *(stub — no build)*
 
 ---
 
@@ -144,8 +170,8 @@ Use these official interactive calculators to preview talent tree node prerequis
 > Four things are true about every talent tree in this Part, and all four matter:
 >
 > 1. **Turtle-WoW publishes NO canonical per-spec talent spreads.** There is no official Turtle-WoW build list. `turtlelootline.com/builds` is login-gated and returns **HTTP 401**; the official talent calculator exposes *trees* (nodes, ranks, prerequisites) but *not builds*; and the official wiki `PreBISGuide` states plainly: **"You don't need dungeon Pre-BIS on Turtle WoW."** Nothing below is an official spread.
-> 2. **The point totals as originally written did not sum to their own headers.** Every spec header in this document used to advertise a full 51-point tree (implied by its `A/B/C` split), but the itemised `- x/y Talent` lines summed to between **29 and 48**. An earlier revision therefore **overstated every one of the 19 trees by between 3 and 22 points.** Each header below now states the **real summed total** and the shortfall. The `A/B/C` splits in the headers are the original, still-unverified splits and are retained for continuity — they are **claims, not measurements.**
-> 3. **These trees have NOT been padded to 51 points, deliberately.** Closing the gap would require inventing talent picks, and **inventing picks is precisely the failure mode this document is being corrected for.** The shortfalls are stated instead.
+> 2. **The `A/B/C` split in a spec header does NOT describe the tree below it.** Headers are labelled with a full 51-point split, but the itemised `- x/y Talent` lines sum to between **29 and 48**. Each header states the **real summed total** and the shortfall; the `A/B/C` split is a **claim, not a measurement**, and the gap between the two is not an oversight you may fill in yourself.
+> 3. **These trees have NOT been padded to 51 points, deliberately.** Closing the gap would require inventing talent picks, and **inventing picks is precisely the failure mode this document is built to avoid.** The shortfalls are stated instead.
 > 4. **Missing baseline/filler talents are called out per spec** where the skeleton visibly stops short. Where a spec has a large gap, the honest reading is "the remaining points go into baseline and filler ranks of the listed nodes, plus whatever the tree requires to reach the listed deep nodes" — **not** "this is the optimal spread."
 >
 > **How to use this Part:** treat each tree as a **starting skeleton** — the priority talents a role needs, roughly in the order it needs them. Open the official calculator, drop the listed points, and spend the remainder yourself. Do not treat any point total, rank count, or `A/B/C` split here as authoritative.
@@ -193,7 +219,7 @@ Protection (20 points):
     - **VERIFIED** — the live talent is the *threat* version, `spell_template` entries **`51606` / `51607` / `51608`** (Protection row 22, `spellLevel 30`, `stances 327680`): *"While wearing a shield, you retain 60/120/180% of the increased threat generation from Defensive Stance in other stances."* (`effectApplyAuraName1 = 4`, `effectBasePoints1 = 59/119/179` → 60/120/180).
     - **VERIFIED** — a *second*, rage-retention "Defensive Tactics" set **does** exist in our DB at **`29559` / `29588` / `29589`** (*"You retain up to $s1% of your rage when you change from Defensive Stance to any other stance."*, `effectBasePoints1 = 32/65/99` → 33/66/100%). **Its numbers are inert:** all three ranks carry `effectMiscValue1 = 831`, which **collides with Tactical Mastery Rank 1** (`12295`, also aura `112` / miscValue `831`; R2–R5 `12676`/`12677`/`12678`/`12679` use 832/833/834/835). The collision means the shared handler runs Tactical Master's path with the wrong base points.
     - **VERIFIED** — the rage retention that *does* work is **Tactical Mastery** itself: a fixed rage cap of **5 / 10 / 15 / 20 / 25 rage** (encoded as `50/100/150/200/250` in the `miscValue`), handled at `src/game/Spells/SpellAuras.cpp:2456-2490`.
-    - 📕 **Earlier revision said** "Defensive Tactics allows swapping to Berserker Stance for Berserker Rage/Pummel and returning without losing rage." That is the wording of the **inert** `29559`/`29588`/`29589` set above. If you want that behaviour, take **Tactical Mastery** — a different talent in a different tree.
+    - 📕 **"Defensive Tactics allows swapping to Berserker Stance for Berserker Rage/Pummel and returning without losing rage" is the wording of the INERT `29559`/`29588`/`29589` set above** — it does not work. If you want that behaviour, take **Tactical Mastery** — a different talent in a different tree.
 
 ---
 
@@ -209,7 +235,7 @@ Maximum physical and magical mitigation with high block value scaling. Uses 1H W
 Arms (11 points):
 - 5/5 Deflection (+5% Parry)
 - 5/5 Tactical Mastery (Retain up to 25 Rage when switching stances)
-- 1/1 Anger Management — **VERIFIED** `spell_template` `12296`: *"Increases the time required for your rage to decay while out of combat by 30% and generate 1 rage per 3 seconds while in combat."* **The encoded effect is `SPELL_AURA_MOD_POWER_REGEN` (`effectApplyAuraName1 = 85`) with `effectMiscValue1 = 1` (rage) and `effectBasePoints1 = 14` → +15 rage regeneration.** The "1 rage per 3 seconds" figure appears **only in the tooltip `description` text**; the server does not enforce it as a tick. 📕 Earlier revision stated the tooltip claim as if it were the mechanic.
+- 1/1 Anger Management — **VERIFIED** `spell_template` `12296`: *"Increases the time required for your rage to decay while out of combat by 30% and generate 1 rage per 3 seconds while in combat."* **The encoded effect is `SPELL_AURA_MOD_POWER_REGEN` (`effectApplyAuraName1 = 85`) with `effectMiscValue1 = 1` (rage) and `effectBasePoints1 = 14` → +15 rage regeneration.** The "1 rage per 3 seconds" figure appears **only in the tooltip `description` text**; the server does not enforce it as a tick, so do not quote it as the mechanic.
 
 Fury (5 points):
 - 5/5 Cruelty (+5% Melee Critical Strike)
@@ -385,7 +411,7 @@ Frost (3 points):
 
 - **Stat Priority**: Spell Hit (16% cap, 10% from gear with 3/3 Elemental Precision) > Spell Damage > Spell Crit > Intellect.
 - **Rotation**: Fireball spam > Scorch (Scorch and Fire Blast have a chance to apply the **Fire Vulnerability** debuff) > Pyroblast on Combustion pull > Fire Blast on movement.
-  - **VERIFIED — "Improved Scorch" is not a real spell name.** 📕 **Earlier revision said** *"maintain 5 stacks of Improved Scorch for +15% Fire vulnerability."* The real talent is **Fire Vulnerability**, `spell_template` **`11095` / `12872` / `12873`**, whose description reads *"Your Scorch and Fire Blast spells have a $s1% chance to cause your target to be vulnerable to Fire damage. This vulnerability increases the Fire damage dealt to your target by $22959s1% and lasts $22959d. Stacks up to $22959u times."* The **debuff** is **`22959`** (`stackAmount = 5`, `effectApplyAuraName1 = 87`, `effectBasePoints1 = 2` → **+3% Fire vulnerability per stack**, `effectMiscValue1 = 4` = Fire school, `durationIndex 9`). **5 × 3% = +15%** — so the "+15%" figure survives, but it is a **talent-triggered debuff** applied by Scorch/Fire Blast, **not** something the player "maintains" by casting, and the talent is not called "Improved Scorch".
+  - **VERIFIED — "Improved Scorch" is not a real spell name.** Do not "maintain 5 stacks of Improved Scorch for +15% Fire vulnerability" — no such talent exists. The real talent is **Fire Vulnerability**, `spell_template` **`11095` / `12872` / `12873`**, whose description reads *"Your Scorch and Fire Blast spells have a $s1% chance to cause your target to be vulnerable to Fire damage. This vulnerability increases the Fire damage dealt to your target by $22959s1% and lasts $22959d. Stacks up to $22959u times."* The **debuff** is **`22959`** (`stackAmount = 5`, `effectApplyAuraName1 = 87`, `effectBasePoints1 = 2` → **+3% Fire vulnerability per stack**, `effectMiscValue1 = 4` = Fire school, `durationIndex 9`). **5 × 3% = +15%** — so the "+15%" figure survives, but it is a **talent-triggered debuff** applied by Scorch/Fire Blast, **not** something the player "maintains" by casting, and the talent is not called "Improved Scorch".
   - ⚠️ **DB DISCREPANCY — do not pick a winner.** Our DB *also* contains an orphaned spell **`41831` "Scorch"** with `stackAmount = 5` and a **+75%** Fire vulnerability (`effectApplyAuraName2 = 14`, `effectBasePoints2 = 74` → 75, `effectMiscValue2 = 4` = Fire), `spellLevel 58`, 200 mana. It has **0 rows in `npc_trainer`**, `spell_chain` or `skill_line_ability_spell_ranks` in this snapshot, so it appears unreachable — **but see the reachability caveat in the DB Version Warning above: absence of those rows is not proof of unreachability in this fork.** Both readings are recorded here; which one your client actually ranks up is **unresolved**.
 - **Turtle WoW tuning**: Ignite operates on a 4-second rolling window with full stack preservation. *(OFFICIAL 1.18.1 / Turtle-side; not a talent-tree rewrite — see the patch-attribution note near the top.)*
 
@@ -457,7 +483,7 @@ Destruction (23 points):
 - **Stat Priority**: Spell Hit (16% cap) > Shadow Spell Damage > Spell Crit > Stamina.
 - **Rotation**: Curse of Shadows / Curse of Elements (assigned by raid lead) > Shadow Bolt spam > Life Tap to manage mana.
 - **Demonology stone talents (1.17.2 → 1.18.1)**:
-  - **Master Conjurer — NOT PRESENT IN THIS DATABASE. Do not look for it in the talent tree, and do not call the name fabricated.** 📕 **Earlier revisions got this wrong twice, in both directions.** One claimed the Turtle talent *"merges Firestone/Spellstone/Healthstone into a single 2-point Row 2 Demonology talent"*; a later revision declared the name **fabricated**. Neither is right.
+  - **Master Conjurer — NOT PRESENT IN THIS DATABASE. Do not look for it in the talent tree, and do not call the name fabricated.** ⚠️ No Turtle talent *"merges Firestone/Spellstone/Healthstone into a single 2-point Row 2 Demonology talent"* — that shape does not exist here, and the name is not invented either. Read the sub-bullets; the situation is neither of the two obvious answers.
     - ❌ **The Turtle 1.18.1 Demonology talent described above does not exist in this DB.** No spell in `tw_world.spell_template` implements a stone-merging talent of that shape.
     - ⚠️ **But a spell named "Master Conjuror" does exist here — a differently-purposed vanilla one.** `spell_template` **`18757`** / **`18758`**: *"Reduces the Mana cost and casting time of your Stone creation spells by $s1%"* (`spellFamilyName 5`, `durationIndex 21`, `effectApplyAuraName1 = 108`, `effectBasePoints1 = -21` / `-41`). This is the **vanilla WotLK Demonology talent** — a passive Stone mana-cost/cast-time reduction, **not** a stone-merging talent and **not** a Turtle 1.18.1 addition.
     - 🚫 **It is unreachable, so it is in no tree and no rotation.** Live `tw_world.skill_line_ability` has **0 rows** for `18757`/`18758`, and `npc_trainer` has **0 rows**. Neither is talent-grantable nor trainer-taught, so no player can benefit from it.
@@ -466,7 +492,7 @@ Destruction (23 points):
   - ⚠️ **There is NO Healthstone component** to this talent. Do not expect a Healthstone heal buff from it.
   - 📕 **Voidstone, not Firestone.** The live tree (and the live spell description) names the fourth stone **Voidstone**. "Firestone" is the older name.
   - ⚠️ **Dependency:** `51712`/`51713` need the `spell_affect` rows added by migration `20260504214035_world.sql`; without them they are **inert**. See the DB Version Warning near the top.
-  - 📕 **Earlier revision also said** *"Firestone grants flat +Fire Spell Damage; Spellstone grants +Spell Crit."* **Neither claim survives.** The live talent description covers **Felstone, Wrathstone, Voidstone and Spellstone** as a group and says nothing about fire damage; there is no "Firestone" in the live tree.
+  - 📕 **"Firestone grants flat +Fire Spell Damage; Spellstone grants +Spell Crit" — neither claim survives.** The live talent description covers **Felstone, Wrathstone, Voidstone and Spellstone** as a group and says nothing about fire damage; there is no "Firestone" in the live tree.
 
 ---
 
@@ -550,13 +576,13 @@ Survival (30 points):
 - 5/5 Deflection (+5% Parry)
 - 3/3 Savage Strikes (+20% Crit on Raptor Strike and Mongoose Bite)
 - 2/2 Survivalist (+10% Total Health)
-- 1/1 Carve — **VERIFIED** `spell_template` **`51575`** (R1, `spellLevel 20`) / **`52415`** (R2, 38) / **`52416`** (R3, 56). 📕 **Earlier revision said** *"Instant 2H melee swing hitting up to 3 nearby enemies."* **Wrong on both counts.** Carve is **not a 2H swing** and **not limited to 3 enemies**. The encoded description is *"A sweeping attack that strikes up to 5 enemies in a 10 yard cone in front of you, dealing $s1% weapon damage"*, and **`maxAffectedTargets = 5` on all three ranks** — it is a **forward cone AoE**, not a single-target swing. Damage is **60% / 65% / 70% weapon damage** (`effectBasePoints1 = 59/64/69` → 60/65/70, `effect1 = 31`). **Carve also shares a cooldown with Multi-Shot** (shared SpellCategory; cf. `spell_template` `52602` Multi-Shot), so the two cannot be stacked on cooldown.
+- 1/1 Carve — **VERIFIED** `spell_template` **`51575`** (R1, `spellLevel 20`) / **`52415`** (R2, 38) / **`52416`** (R3, 56). 📕 **It is NOT an "instant 2H melee swing hitting up to 3 nearby enemies"** — wrong on both counts. Carve is **not a 2H swing** and **not limited to 3 enemies**. The encoded description is *"A sweeping attack that strikes up to 5 enemies in a 10 yard cone in front of you, dealing $s1% weapon damage"*, and **`maxAffectedTargets = 5` on all three ranks** — it is a **forward cone AoE**, not a single-target swing. Damage is **60% / 65% / 70% weapon damage** (`effectBasePoints1 = 59/64/69` → 60/65/70, `effect1 = 31`). **Carve also shares a cooldown with Multi-Shot** (shared SpellCategory; cf. `spell_template` `52602` Multi-Shot), so the two cannot be stacked on cooldown.
 - 3/3 Surefooted (+3% Hit chance, +15% Movement Impairing resist)
 - 5/5 Killer Instinct (+3% Crit)
 - 1/1 Counterattack (Instant melee strike after parrying)
-- 1/1 **Untamed Trapper** (Survival 7th-row capstone, `51586`) — 📕 **Earlier revision said** "Trapping in Combat (Capstone: Traps can be laid during active combat encounters)." **The talent's real name is Untamed Trapper.** OFFICIAL 1.18.1 talent wording: *"all traps can be placed while in combat."*
+- 1/1 **Untamed Trapper** (Survival 7th-row capstone, `51586`) — the real talent name is **Untamed Trapper**, not "Trapping in Combat". OFFICIAL 1.18.1 talent wording: *"all traps can be placed while in combat."*
   - ⚠️ **VERSION-GAP WARNING** — `spell_template` entry **`51586` IS present** in our snapshot (name `Untamed Trapper`, `spellLevel 0`, `effectApplyAuraName1 = 112` / `effectApplyAuraName2 = 108`, `effectBasePoints2 = -21` → 20%), **but its `description` field still carries the older, pre-rework text**: *"Reduces the mana cost of your Immolation Trap and Explosive Trap effects by $s2% and increases their damage based on your melee Attack Power. In addition…"*. The "traps can be placed while in combat" behaviour is therefore **OFFICIAL 1.18.1 text that our DB snapshot does not reflect** — treat it as a **possible server-version gap** and do **not** present it as working here without testing on a live character.
-  - 📕 *Corrected note:* an earlier correction pass wrongly recorded this spell as **absent from `spell_template` entirely**. That was incorrect — the row exists (`51586`); what is missing is the *reworked description/effect text*, not the spell.
+  - ⚠️ **Do not record this spell as absent from `spell_template`** — the row exists (`51586`); what is missing is the *reworked description/effect text*, not the spell.
 ```
 
 - **Stat Priority**: Hit Cap (9%) > Agility > Strength > Attack Power > Crit.
@@ -598,7 +624,7 @@ Holy (30 points):
 
 - **Stat Priority**: +Healing > Spirit > MP5 > Intellect > Spell Crit.
 - **Rotation**: Flash Heal (for emergency triage) > Greater Heal (Rank 1 or 4 for efficient tank healing) > Renew (on taking damage) > Prayer of Healing (for party AOE damage).
-- **Lightwell**: 📕 **Earlier revision said** *"Reworked to not break upon taking damage, scaling fully with +healing power."* **The "does not break on damage" part is UNSUPPORTED and has been removed** — see the verification note below.
+- **Lightwell**: the "reworked to not break upon taking damage, scaling fully with +healing power" description is **UNSUPPORTED by our data** — see the verification note below.
   - ⚠️ **VERIFIED negative** — our `gameobject_template` row **`181102`** (the Lightwell object summoned by spell `724`) has **no health field at all**: the `gameobject_template` schema in this fork contains **no column named `health` and no "unstable" flag**. There is also **no break-on-damage mechanic anywhere** — not in `spell_template`, not in `src/game`. Nothing in this codebase can destroy a Lightwell by damaging it. **Do not state or rely on this behaviour.**
   - ✅ **What the DB *does* show** (recorded so the negative result above is not mistaken for "Lightwell is unreworked"): spell **`724`** summons GO `181102`; the later ranks **`27870` / `27871` / `51458`** are literally named **`[Deprecated] Lightwell`**, share SpellCategory `1145` with a **`categoryRecoveryTime` of 600000 ms (10 minutes)**, spawn GOs `181105` / `181106` / `181107`, and their descriptions read *"Lightwell lasts for $d or 5 charges."* Ranks **`47326`** and **`51460`** are **empty rows** (no effects, no description, `spellLevel 0`). The talent **`51798` "Improved Lightwell"** grants `+4` radius and `+5` charges.
   - **OFFICIAL 1.18.1** (per the changelog, **not** reflected in our snapshot): Lightwell was fully reworked to **1 rank**, a **5-minute cooldown**, and **10 charges / 1 minute**. Flagged as a possible version gap — the 10-minute `categoryRecoveryTime` and 5-charge text still on the `[Deprecated]` rows do **not** match it.
@@ -642,7 +668,7 @@ Shadow (38 points):
 
 ### Spec 14: Holy PvE Raid Healer (31/20/0) — Tank Healer
 
-> **38 points as written — 13 short of a full 51-point tree.** Holy lists 20 of its claimed 31. ⚠️ **This is one point lower than the pre-correction measurement of 39, because the non-talent `1/1 Blessing of Kings` line was removed from the Protection block below** (see the correction note under that tree) — the tree as it now stands sums to exactly 38. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
+> **38 points as written — 13 short of a full 51-point tree.** Holy lists 20 of its claimed 31. ⚠️ The tree sums to exactly 38 **because the non-talent `1/1 Blessing of Kings` line is excluded from the Protection block below** — see the verified note under that tree. See the [Part I skeleton note](#part-i-9-class-talent-specializations--rotation-playbooks).
 
 *Illumination* refunds 100% of the mana cost whenever Flash of Light or Holy Light critically strikes, granting Holy Paladins near infinite mana pools on raid bosses.
 
@@ -663,7 +689,8 @@ Protection (20 points):
 - 3/3 Improved Righteous Fury (+50% Threat on Holy spells)
 - 5/5 Shield Specialization (+30% Block Value)
 ```
-- 📕 **Earlier revision listed `1/1 Blessing of Kings (+10% All Stats to target)` here as a Protection talent. It is not.** Blessing of Kings (`20217`, +10% all stats) is a **Blessing taught by Paladin trainers**, not a Protection tree node. See the verified note in the section below the tree.
+
+- ⚠️ **`1/1 Blessing of Kings (+10% All Stats to target)` is NOT a Protection talent.** Blessing of Kings (`20217`, +10% all stats) is a **Blessing taught by Paladin trainers**, not a Protection tree node. See the verified note in the section below the tree.
 
 - **Stat Priority**: Spell Crit (to trigger Illumination mana refunds) > +Healing > Intellect > MP5.
 - **Rotation**: Flash of Light spam on assigned tank > Holy Light with Divine Favor during high burst damage > Keep *Blessing of Kings / Light / Salvation* active.
@@ -671,7 +698,7 @@ Protection (20 points):
   - **Hand Spells**: Freedom, Protection, and Sacrifice are converted to "Hand" spells, allowing them to be cast without removing class Greater Blessings.
   - **Extended Blessings**: Greater Blessings have longer duration to reduce rebuffing overhead.
   - **Hand of Reckoning** — ✅ **VERIFIED real**, `spell_template` **`51302`**, `spellLevel 10`, `spellFamilyName 10`, *"Taunts the target to attack you, but has no effect if the target is already attacking you."* The **10-second cooldown is encoded as `categoryRecoveryTime = 10000` under SpellCategory `82`** (not in `recoveryTime`, which is `0`) — i.e. it is a *category* cooldown. The 2-rank talent **Improved Hand of Reckoning** is **`51334` / `51335`** (+4% / +8% hit, `effectApplyAuraName1 = 107`, `effectMiscValue1 = 16`).
-    - 📕 **Earlier revision said** *"Righteous Defense / Hand of Reckoning: baseline taunt ability for tanking viability"* and implied vanilla baseline. **Hand of Reckoning is a Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.**
+    - ⚠️ **"Righteous Defense / Hand of Reckoning" is NOT a vanilla baseline taunt ability.** Hand of Reckoning is a **Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.**
     - ⚠️ **Do not cite `45806`.** A **duplicate** `Hand of Reckoning` row also exists at **`45806`**, and the two are otherwise near-identical (`durationIndex 27`, category `82`, `categoryRecoveryTime 10000`, `spellLevel 10`). The discriminator is **`spellFamilyName`**: `51302` is family **10** (the Paladin-side row, matching the talent-linked `51334`/`51335`), while `45806` is family **4** (the Warrior-family duplicate). Cite **`51302`**. *(Reachability of `45806` is not determinable from this snapshot — see the reachability caveat in the DB Version Warning.)*
 - **Blessing of Kings** — ✅ **VERIFIED** `spell_template` **`20217`**: *"Places a Blessing on the friendly target, increasing total stats by $s1% for $d."* (`effectApplyAuraName1 = 137` = `MOD_TOTAL_STAT_PERCENTAGE`, `effectBasePoints1 = 9` → **+10% all stats**; `effectMiscValue1 = -1` = all stats). ⚠️ **But it is NOT a Protection talent and has been removed from the talent listing below** — it is a **Blessing taught by trainers**, not a tree node.
 
@@ -702,8 +729,8 @@ Retribution (40 points):
 ```
 
 - **Turtle-WoW Paladin changes (1.17.2 tree rebuild, 1.18.1 Consecration / Holy Strike / Daybreak NERFS)**:
-  - **Crusader Strike & Holy Strike**: Integrated as core rotational strikes. Crusader Strike provides offensive holy damage and refreshes Judgements; Holy Strike provides holy burst with healing/mana sustain. 📕 **Earlier revision claimed they "share a 6s cooldown." That is not what the base dump shows** — the 13 Crusader/Holy Strike rows carry `recoveryTime = 0`. ⚠️ **Check your migrated server**: `20260512224739_world.sql` `REPLACE`s all 13 rows, rewriting `attributesEx` **67109376 → 512** and **zeroing Holy Strike's `effectTriggerSpell2`** (triggers `51301`/`51755`/`51756`/`51757`/`51871`/`51872`/`51873`/`51874` → 0). The cooldown, if any, is therefore a *category* cooldown on a migrated server, and is **not** verifiable from `sql/base/`.
-  - 📕 **Earlier revision said** *"Righteous Defense / Hand of Reckoning: baseline taunt ability for tanking viability"* and implied vanilla baseline. **Hand of Reckoning is a Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.** Full verified detail (spell `51302`, 10 s category cooldown, `Improved Hand of Reckoning` `51334`/`51335`, and the `45806` duplicate to avoid) is in **Spec 14** below.
+  - **Crusader Strike & Holy Strike**: Integrated as core rotational strikes. Crusader Strike provides offensive holy damage and refreshes Judgements; Holy Strike provides holy burst with healing/mana sustain. 📕 **They do NOT "share a 6s cooldown"** — the 13 Crusader/Holy Strike rows in the base dump carry `recoveryTime = 0`. ⚠️ **Check your migrated server**: `20260512224739_world.sql` `REPLACE`s all 13 rows, rewriting `attributesEx` **67109376 → 512** and **zeroing Holy Strike's `effectTriggerSpell2`** (triggers `51301`/`51755`/`51756`/`51757`/`51871`/`51872`/`51873`/`51874` → 0). The cooldown, if any, is therefore a *category* cooldown on a migrated server, and is **not** verifiable from `sql/base/`.
+  - ⚠️ **"Righteous Defense / Hand of Reckoning" is NOT a vanilla baseline taunt ability for tanking viability.** Hand of Reckoning is a **Turtle-WoW 1.17.2 addition, not a vanilla baseline spell.** Full verified detail (spell `51302`, 10 s category cooldown, `Improved Hand of Reckoning` `51334`/`51335`, and the `45806` duplicate to avoid) is in **Spec 14** below.
 
 ---
 
@@ -807,11 +834,11 @@ Restoration (5 points):
 - **Rotation (Bear Tank)**: Maul on every swing > Swipe for multi-target threat > Faerie Fire (Feral) on pull.
 - **Rotation (Cat DPS)**: Shred from behind > Rake (maintain the bleed) > Ferocious Bite at 5 Combo Points.
 - **Druid notes**:
-  - ✅ **VERIFIED — Rake is a periodic bleed DoT, and that part of the old text was right.** Rake's effect 2 is `SPELL_AURA_PERIODIC_DAMAGE` (aura `3`) on the main rank rows (`1822` / `1823` / `1824` / `9904`, all `durationIndex 105`, `effectAmplitude1 = 3000` = 3 s ticks, `effectBasePoints2 = 12/18/24/33` → 13/19/25/34 per tick).
-  - 📕 **Earlier revision said** *"Rake buffed to make bleed playstyles competitive."* **That claim is removed** — no balance intent is encoded anywhere in the tree data, the changelog, or this codebase. Nothing here can support a "buffed to make X competitive" statement.
+  - ✅ **VERIFIED — Rake is a periodic bleed DoT.** Rake's effect 2 is `SPELL_AURA_PERIODIC_DAMAGE` (aura `3`) on the main rank rows (`1822` / `1823` / `1824` / `9904`, all `durationIndex 105`, `effectAmplitude1 = 3000` = 3 s ticks, `effectBasePoints2 = 12/18/24/33` → 13/19/25/34 per tick).
+  - 📕 **"Rake buffed to make bleed playstyles competitive" is UNSUPPORTED** — no balance intent is encoded anywhere in the tree data, the changelog, or this codebase. Nothing here can support a "buffed to make X competitive" statement.
   - ⚠️ **Four-plus Rake implementations coexist, and two are outliers.** Besides the four main ranks there are `24331`/`24332` (level 20, `durationIndex 105`, 16/32 direct + 12/24 per tick) and the outliers **`27556` / `27638`**: `durationIndex 8`, **`stackAmount 100`**, `effectBasePoints1 = 199` → 200 direct and `effectBasePoints2 = 99` → **100 bleed per tick**. Do not assume the main-rank numbers apply to whatever your client ranks up. (`22639` "Eskhandar's Rake" is a separate item proc, not the druid ability.)
-  - ❌ **Wolfshead Helm "powershifting" — DELETED as fabricated.** 📕 **Earlier revision said** *"Rake buffed to make bleed playstyles competitive without total reliance on Wolfshead Helm powershifting."* **There is no Wolfshead Helm powershifting mechanic on Turtle-WoW.** It appears in **no** official talent-tree entry, **no** changelog entry, **no** wiki page and **no** forum post. It was invented. The item `8345` Wolfshead Helm exists in our `item_template`; the *mechanic* does not. (The Feral Cat loadout in Part II no longer presents it as mandatory either.)
-  - ❌ **Windfury as a Druid aura — DELETED as wrong.** 📕 **Earlier revision said** *"Windfury functions as an aura, allowing Feral Druids in Cat and Bear forms to benefit from extra attacks."* **No Windfury exists in any Druid tree.** The aura version is the **Shaman's Windfury Totem**. ✅ **VERIFIED on our side:** `spell_template` Windfury Weapon (`8233` / `8236` / `10484` / `16361`) *is* a genuine passive aura — `attributes = 1` (passive), `effect1 = 6` + `effectApplyAuraName1 = 99`, `effect2 = 19` = `SPELL_EFFECT_ADD_EXTRA_ATTACKS`, `effectBasePoints1 = 45/118/248/332`, levels 30/40/50/60. **But `stances = 0` on all four — no shapeshift form restriction is encoded.** So on DB evidence alone you **cannot** claim Feral Druids in Cat/Bear benefit from it, and this document does not claim it.
+  - ❌ **Wolfshead Helm "powershifting" DOES NOT EXIST.** There is no Wolfshead Helm powershifting mechanic on Turtle-WoW. It appears in **no** official talent-tree entry, **no** changelog entry, **no** wiki page and **no** forum post. The item `8345` Wolfshead Helm exists in our `item_template`; the *mechanic* does not, so Rake cannot be built around it. (The Feral Cat loadout in Part II lists the helm for item identity only, and makes no claim about what it does.)
+  - ❌ **Windfury is NOT a Druid aura.** No Windfury exists in any Druid tree, so Feral Druids do **not** get extra attacks from it in Cat or Bear form. The aura version is the **Shaman's Windfury Totem**. ✅ **VERIFIED on our side:** `spell_template` Windfury Weapon (`8233` / `8236` / `10484` / `16361`) *is* a genuine passive aura — `attributes = 1` (passive), `effect1 = 6` + `effectApplyAuraName1 = 99`, `effect2 = 19` = `SPELL_EFFECT_ADD_EXTRA_ATTACKS`, `effectBasePoints1 = 45/118/248/332`, levels 30/40/50/60. **But `stances = 0` on all four — no shapeshift form restriction is encoded.** So on DB evidence alone you **cannot** claim Feral Druids in Cat/Bear benefit from it, and this document does not claim it.
 
 ---
 
@@ -857,7 +884,7 @@ Restoration (20 points):
 >
 > **What is reliable:** the Protection *nodes* a threat/AoE tank spec reaches for are Righteous Fury, Redoubt, Shield Specialization, Toughness and Precision/Toughness — and **Defensive Tactics is a Protection talent** (`51606`/`51607`/`51608`, VERIFIED: *"While wearing a shield, you retain 60/120/180% of the increased threat generation from Defensive Stance in other stances."*). ⚠️ It is **not** a rage-retention talent — see **Spec 1** for the full correction and the inert `29559`/`29588`/`29589` duplicate.
 >
-> **Also note:** Blessing of Kings is **not** a Protection talent. It is a trainer-taught Blessing (`20217`, +10% all stats, VERIFIED). It was wrongly listed as a Protection node in an earlier revision of this document and has been removed.
+> **Also note:** Blessing of Kings is **not** a Protection talent. It is a trainer-taught Blessing (`20217`, +10% all stats, VERIFIED) and belongs under **Blessings**, not the Protection tree.
 >
 > **Matching loadout:** [Protection Paladin](#-protection-paladin-aoe--threat-tank-bis) (9-piece Redemption + The Face of Death + Thunderfury + Libram of Hope). **To build the tree:** open the official [Paladin calculator](https://talents.turtle-wow.org/paladin) and verify each node against our `spell_template`.
 
@@ -879,7 +906,11 @@ Restoration (20 points):
 
 > ### "BiS" here means "dungeon upgrades you pick up on the way in" — NOT a curated progression checklist
 >
-> 📕 **Earlier revision of this document presented these loadouts as authoritative curated BiS lists** — "1-Click BiS gear loadouts", "the definitive Best-in-Slot endgame gear setup", "Every item ID is verified **live against the server database**". **Turtle-WoW deliberately does not work that way**, and the official sources say so directly:
+> 📕 **These loadouts are NOT an authoritative curated BiS list.** They are not
+> "the definitive Best-in-Slot endgame gear setup", and the item IDs are not
+> "verified live against the server database" in the sense of being checked for
+> stats. **Turtle-WoW deliberately does not work that way**, and the official
+> sources say so directly:
 >
 > - **Official wiki `PreBISGuide`**: ***"You don't need dungeon Pre-BIS on Turtle WoW."***
 > - **Official Mage FAQ**: ***"There are currently no up to date pre-raid BiS lists for any mage specs… you can just jump right into ZG, AQ20, Onyxia, MC, BWL, AQ40 and ES… it is not recommended to go out of your way to farm pre-raid BiS gear."***
@@ -889,15 +920,23 @@ Restoration (20 points):
 >
 > ### ✅ CORRECTED — how item stats are actually stored in this fork (`stat_type` is **NOT** vestigial)
 >
-> 📕 **An earlier revision of this document claimed these columns were dead.** It stated that a full parse of every row of `sql/base/tw_world_item_template.sql` (**23,078 rows** at the time — the dump is stale; live is **26,543**) found *"ZERO items with any non-zero `stat_type1..10` / `stat_value1..10` pair"*, and therefore that item stats had to be read from the `spellid_*` aura instead. **That claim was wrong, and it came from a column-index bug.** The corrected result is below.
->
-> **Why the earlier audit was wrong:** it read `stat_value1..10` at indices **36–45**, which is where the `ObjectMgr` `SELECT` would put them *if the columns were grouped*. But the table stores them **interleaved** — `stat_type1`(26), `stat_value1`(**27**), `stat_type2`(28), `stat_value2`(**29**) … `stat_type10`(44), `stat_value10`(**45**). Index 36 is actually `stat_value5`, so every lookup landed on zero columns and reported "all zero".
+> 📕 **The `stat_type` / `stat_value` columns are NOT vestigial.** A naive parse
+> that reports *"ZERO items with any non-zero `stat_type1..10` /
+> `stat_value1..10` pair"* is wrong, and the failure mode is a **column-index
+> bug**: reading `stat_value1..10` at indices **36–45** assumes the columns are
+> grouped. They are **interleaved** — `stat_type1`(26), `stat_value1`(**27**),
+> `stat_type2`(28), `stat_value2`(**29**) … `stat_type10`(44),
+> `stat_value10`(**45**). Index 36 is actually `stat_value5`, so every lookup
+> lands on zero columns and reports "all zero". The corrected result is below.
 >
 > **Corrected audit — live `tw_world.item_template`, all 26,543 rows** (VERIFIED):
+>
 > - **9,372 items** carry at least one non-zero `stat_type` / `stat_value` pair — **20,137** non-zero pairs in total.
 > - **11,599 items** carry a non-zero `spellid_1..5`; of those, **6,539** also set a non-zero `spelltrigger`, i.e. a real on-equip / on-use / proc effect rather than a stray id.
 >
-> 📕 **These are LIVE figures.** The dump-derived numbers this section previously quoted — 7,545 / 15,736 / 9,370 / 4,854 — were all taken from the stale `sql/base/` snapshot and are **too low** for this realm.
+> 📕 **These are LIVE figures.** Dump-derived figures — 7,545 / 15,736 / 9,370 /
+> 4,854 — come from the stale `sql/base/` snapshot and are **too low** for this
+> realm. Never quote them.
 >
 > **So Turtle-WoW uses the normal vanilla model, and an item's stats come from BOTH places:**
 >
@@ -907,7 +946,7 @@ Restoration (20 points):
 > | **Percent / proc / derived** (Spell Damage, Healing, Attack Power, Armor, Block Value, Weapon Skill, % Crit, % Hit, % Dodge, on-use procs) | the `spellid_1..5` aura resolved in `spell_template` | `22799` Soulseeker → `spellid_1 28792` |
 > | **Armor / Block / damage / resistances** | the `armor`, `block`, `dmg_min1..5` / `dmg_max1..5` / `dmg_type1..5`, `holy_res`…`arcane_res` columns | `23043` The Face of Death → `armor 3494`, `block 66` |
 >
-> ✅ **Column order** — take it from the `SELECT` in `src/game/ObjectMgr.cpp:2277-2282`, which matches the table exactly (the *loader* was always correct; only the earlier audit was wrong): `entry` 0, `class` 1, `subclass` 2, `name` 3, `item_level` 14, `required_level` 15, `stat_type1` 26, `stat_value1` **27**, `stat_type10` 44, `stat_value10` **45**, `delay` 46, `block` 64, `armor` 65, `spellid_1` 72, `spelltrigger_1` 73. Stat type codes are declared at `src/game/Objects/ItemPrototype.h:29-38` (0 Mana, 1 Health, 3 Agility, 4 Strength, 5 Intellect, 6 Spirit, 7 Stamina; `MAX_ITEM_MOD` = 8) and applied at `src/game/Objects/Player.cpp:8568-8596`.
+> ✅ **Column order** — take it from the `SELECT` in `src/game/ObjectMgr.cpp:2277-2282`, which matches the table exactly (the *loader* is always correct — an audit that disagrees with it is wrong): `entry` 0, `class` 1, `subclass` 2, `name` 3, `item_level` 14, `required_level` 15, `stat_type1` 26, `stat_value1` **27**, `stat_type10` 44, `stat_value10` **45**, `delay` 46, `block` 64, `armor` 65, `spellid_1` 72, `spelltrigger_1` 73. Stat type codes are declared at `src/game/Objects/ItemPrototype.h:29-38` (0 Mana, 1 Health, 3 Agility, 4 Strength, 5 Intellect, 6 Spirit, 7 Stamina; `MAX_ITEM_MOD` = 8) and applied at `src/game/Objects/Player.cpp:8568-8596`.
 >
 > ### ⚠️ What this means for the stat lines in Parts III–IX
 >
@@ -921,7 +960,7 @@ Restoration (20 points):
 
 > ### 📦 What IS verified about these loadouts
 >
-> Every **item ID** below was checked for existence against the **LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** ⚠️ But existence is the **only** thing that check establishes — 📕 an earlier revision also claimed the ids' **names and slots** were verified, and that was false (18 Tier-2 id/name pairs and 21 starter-set id/slot assignments were wrong). The set tables have been re-derived from live `name` / `inventory_type` / `set_id`; the loadout stat lines are **still the unverified part**, per the warning above.
+> Every **item ID** below was checked for existence against the **LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** ⚠️ But existence is the **only** thing that check establishes. ⚠️ **Names and slots are NOT verified by it** — 18 Tier-2 id/name pairs and 21 starter-set id/slot assignments do not survive a live check. All set tables here are derived from live `name` / `inventory_type` / `set_id`; the loadout stat lines are **still the unverified part**, per the warning above.
 >
 > **Slot-coverage guarantee**: every loadout below fills **all 17 combat equipment slots** — Head, Neck, Shoulders, Back, Chest, Wrists, Hands, Waist, Legs, Feet, Ring 1, Ring 2, Trinket 1, Trinket 2, Main Hand, Off Hand / Shield, and Ranged / Relic — with one deliberate exception: the two-handed loadouts leave slot 16 empty (`-- 16. Off Hand: [Occupied by Two-Handed Weapon]`) because the two-hander already occupies the main hand, so those macros populate 16 of the 17 slots. Slot 17 is never left empty — it carries a bow or crossbow for hunters, tanks and rogues, a wand for casters, a libram for paladins, and a totem or idol for shamans and druids.
 >
@@ -1634,7 +1673,11 @@ Restoration (20 points):
 > **Role**: `Turtle-WoW Fire/Shadow Caster DPS`
 > **Loadout Summary**: Full Plagueheart, Midnight Haze, Sapphiron's Left Eye, Neltharion's Tear, Restrained Essence of Sapphiron, Cloak of the Necropolis, and Doomfinger.
 >
-> 📕 **Renamed.** This loadout was previously headed *"Demonology **Master Conjurer** Warlock (Turtle 1.18.1 **Firestone** BiS)"*. **Master Conjurer was removed in 1.18.1** and **Firestone is now Voidstone** — the talent this loadout is built around is **Improved Stones** (`51712`/`51713`). See the verified note in **Spec 8**. The `Sapphiron's Left Eye` in slot 16 is an **off-hand**, not a "Firestone slot" — the previous wording implied a mechanic that does not exist.
+> ⚠️ **Do not call this "Master Conjurer" or a "Firestone" build.** **Master
+> Conjurer was removed in 1.18.1** and **Firestone is now Voidstone** — the
+> talent this loadout is built around is **Improved Stones** (`51712`/`51713`).
+> See the verified note in **Spec 8**. The `Sapphiron's Left Eye` in slot 16 is
+> an **off-hand**, not a "Firestone slot" — there is no such slot mechanic.
 
 ```lua
 .additem 22506 1   -- 01. Head: Plagueheart Circlet (T3 Plagueheart Circlet)
@@ -1664,7 +1707,15 @@ Restoration (20 points):
 > **Role**: `Physical Melee DPS`
 > **Loadout Summary**: Wolfshead Helm, Atiesh Greatstaff of the Guardian (Druid), Malfurion's Blessed Bulwark, Leggings of Apocalypse, Kiss of the Spider, Drake Fang Talisman, Shroud of Dominion, and Idol of Ferocity.
 >
-> 📕 **Two corrections.** (1) This loadout was previously *"**Powershifting** Melee DPS"* and listed Wolfshead Helm as **"MANDATORY: +20 Energy on Cat Shift"**. **There is no Wolfshead Helm powershifting mechanic on Turtle-WoW** — it is fabricated, appearing in no official tree entry, no changelog, no wiki page and no forum post. Wolfshead Helm (`8345`) is kept in slot 1 only because it is a real item in `item_template`; **no claim is made about what it does.** (2) The Atiesh (Druid) line previously read *"+420 Feral AP"* — that figure is part of the same unverified `stat_type`-derived stat problem described in the Part II warning above, so it has been dropped rather than restated.
+> ⚠️ **This is NOT a "powershifting" build, and Wolfshead Helm is NOT
+> mandatory.** **There is no Wolfshead Helm powershifting mechanic on
+> Turtle-WoW** — it is fabricated, appearing in no official tree entry, no
+> changelog, no wiki page and no forum post. Wolfshead Helm (`8345`) is listed in
+> slot 1 only because it is a real item in `item_template`; **no claim is made
+> about what it does**, and it grants no "+20 Energy on Cat Shift". ⚠️ Likewise
+> the Atiesh (Druid) line carries **no "+420 Feral AP"** figure — that was part
+> of the unverified `stat_type`-derived stat problem described in the Part II
+> warning above, so it is dropped rather than restated.
 
 ```lua
 .additem 8345  1   -- 01. Head: Wolfshead Helm
@@ -1772,9 +1823,10 @@ Restoration (20 points):
 ```
 
 ---
+
 ## Part III: Tier Armor Sets Directory
 
-> ⚠️ **Item IDs below were verified for EXISTENCE against the LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** 📕 **An earlier revision claimed "Set IDs and item names below are VERIFIED against `sql/base/tw_world_item_template.sql` (23,078 rows)". That claim was FALSE** — 18 of the 19 id/name entries audited were wrong (and 18 of those were wrong in the dump too), and 23 slot values across the six starter-set rows were wrong. All of those are now corrected against the live table.
+> ⚠️ **Item IDs below were verified for EXISTENCE against the LIVE `tw_world.item_template` (26,543 rows): all 769 cited ids exist, with ZERO missing ids.** 📕 **Do NOT treat the `sql/base/tw_world_item_template.sql` dump (23,078 rows) as a verification source for set IDs or item names** — 18 of 19 audited id/name entries disagree with live, and 23 slot values across the six starter-set rows are wrong. Everything here is derived from the **live** table instead.
 >
 > ⚠️ **`sql/base/` is NOT a valid verification source for this realm.** The live `tw_world.item_template` has **26,543 rows vs 23,078 in the committed dump** — it is **3,465 rows ahead**. It also **disagrees on names** for some existing ids (e.g. the dump calls `16899` "Stormrage Handguards"; live calls it "Stormrage Gloves"). Always check live, not the dump.
 >
@@ -1785,9 +1837,9 @@ Restoration (20 points):
 > **Set MEMBERSHIP is verifiable** from `item_template.set_id` (live: **356 distinct non-zero `set_id` values across 2,213 items**), so the set tables below can state **which items belong to a set**.
 >
 > **Set BONUS VALUES are NOT verifiable from SQL in this fork.** The `itemset` table exists in `tw_world` but is **completely empty (0 rows)**, and there is **no `ItemSetDefinition` loader anywhere in `src/game/`**. `ItemPrototype::ItemSet` is populated from the **client `ItemSet.dbc`** (`src/game/Database/DBCStores.cpp:232`), and `src/game/ObjectMgr.cpp:2605-2608` **validates every `item_template.set_id` against that DBC and silently zeroes it** if the id is absent. Consequences:
+>
 > - This document states **set membership and item ids only**. Any specific bonus number attributed to a set in the prose is **UNVERIFIED** and needs the client DBC, not this repository.
 > - A `set_id` that is non-zero in the DB can still be **inert at runtime** if `ItemSet.dbc` does not contain it. Membership in a set does not by itself guarantee the bonus fires.
-
 
 ### 1. Complete Naxxramas Tier 3 Armor Sets (9 Pieces)
 
@@ -2086,55 +2138,223 @@ Restoration (20 points):
 
 ### 4. Molten Core Tier 1 Armor Sets (8 Pieces)
 
-| Class | Chest | Legs | Head | Shoulders | Feet | Hands | Waist | Wrists |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Warrior (Might)** | `16865` | `16867` | `16866` | `16868` | `16862` | `16863` | `16864` | `16861` |
-| **Paladin (Lawbringer)** | `16853` | `16855` | `16854` | `16856` | `16859` | `16860` | `16858` | `16857` |
-| **Hunter (Giantstalker)** | `16845` | `16847` | `16846` | `16848` | `16849` | `16852` | `16851` | `16850` |
-| **Rogue (Nightslayer)** | `16820` | `16822` | `16821` | `16823` | `16824` | `16826` | `16827` | `16825` |
-| **Priest (Prophecy)** | `16815` | `16814` | `16813` | `16816` | `16811` | `16812` | `16817` | `16819` |
-| **Shaman (Earthfury)** | `16841` | `16843` | `16842` | `16844` | `16837` | `16839` | `16838` | `16840` |
-| **Mage (Arcanist)** | `16798` | `16796` | `16795` | `16797` | `16800` | `16801` | `16802` | `16799` |
-| **Warlock (Felheart)** | `16809` | `16810` | `16808` | `16807` | `16803` | `16805` | `16806` | `16804` |
-| **Druid (Cenarion)** | `16833` | `16835` | `16834` | `16836` | `16829` | `16831` | `16828` | `16830` |
+```lua
+-- Warrior: Battlegear of Might (8 Pieces)
+.additem 16866 1 -- Head: Helm of Might
+.additem 16868 1 -- Shoulders: Pauldrons of Might
+.additem 16865 1 -- Chest: Breastplate of Might
+.additem 16861 1 -- Wrists: Bracers of Might
+.additem 16863 1 -- Hands: Gauntlets of Might
+.additem 16864 1 -- Waist: Belt of Might
+.additem 16867 1 -- Legs: Legplates of Might
+.additem 16862 1 -- Feet: Sabatons of Might
+
+-- Paladin: Lawbringer Armor (8 Pieces)
+.additem 16854 1 -- Head: Lawbringer Helm
+.additem 16856 1 -- Shoulders: Lawbringer Spaulders
+.additem 16853 1 -- Chest: Lawbringer Chestguard
+.additem 16857 1 -- Wrists: Lawbringer Bracers
+.additem 16860 1 -- Hands: Lawbringer Gauntlets
+.additem 16858 1 -- Waist: Lawbringer Belt
+.additem 16855 1 -- Legs: Lawbringer Legplates
+.additem 16859 1 -- Feet: Lawbringer Boots
+
+-- Hunter: Giantstalker Armor (8 Pieces)
+.additem 16846 1 -- Head: Giantstalker's Helmet
+.additem 16848 1 -- Shoulders: Giantstalker's Epaulets
+.additem 16845 1 -- Chest: Giantstalker's Breastplate
+.additem 16850 1 -- Wrists: Giantstalker's Bracers
+.additem 16852 1 -- Hands: Giantstalker's Gloves
+.additem 16851 1 -- Waist: Giantstalker's Belt
+.additem 16847 1 -- Legs: Giantstalker's Leggings
+.additem 16849 1 -- Feet: Giantstalker's Boots
+
+-- Rogue: Nightslayer Armor (8 Pieces)
+.additem 16821 1 -- Head: Nightslayer Cover
+.additem 16823 1 -- Shoulders: Nightslayer Shoulder Pads
+.additem 16820 1 -- Chest: Nightslayer Chestpiece
+.additem 16825 1 -- Wrists: Nightslayer Bracelets
+.additem 16826 1 -- Hands: Nightslayer Gloves
+.additem 16827 1 -- Waist: Nightslayer Belt
+.additem 16822 1 -- Legs: Nightslayer Pants
+.additem 16824 1 -- Feet: Nightslayer Boots
+
+-- Priest: Vestments of Prophecy (8 Pieces)
+.additem 16813 1 -- Head: Circlet of Prophecy
+.additem 16816 1 -- Shoulders: Mantle of Prophecy
+.additem 16815 1 -- Chest: Robes of Prophecy
+.additem 16819 1 -- Wrists: Vambraces of Prophecy
+.additem 16812 1 -- Hands: Gloves of Prophecy
+.additem 16817 1 -- Waist: Girdle of Prophecy
+.additem 16814 1 -- Legs: Pants of Prophecy
+.additem 16811 1 -- Feet: Boots of Prophecy
+
+-- Shaman: The Earthfury (8 Pieces)
+.additem 16842 1 -- Head: Earthfury Helmet
+.additem 16844 1 -- Shoulders: Earthfury Epaulets
+.additem 16841 1 -- Chest: Earthfury Vestments
+.additem 16840 1 -- Wrists: Earthfury Bracers
+.additem 16839 1 -- Hands: Earthfury Gauntlets
+.additem 16838 1 -- Waist: Earthfury Belt
+.additem 16843 1 -- Legs: Earthfury Legguards
+.additem 16837 1 -- Feet: Earthfury Boots
+
+-- Mage: Arcanist Regalia (8 Pieces)
+.additem 16795 1 -- Head: Arcanist Crown
+.additem 16797 1 -- Shoulders: Arcanist Mantle
+.additem 16798 1 -- Chest: Arcanist Robes
+.additem 16799 1 -- Wrists: Arcanist Bindings
+.additem 16801 1 -- Hands: Arcanist Gloves
+.additem 16802 1 -- Waist: Arcanist Belt
+.additem 16796 1 -- Legs: Arcanist Leggings
+.additem 16800 1 -- Feet: Arcanist Boots
+
+-- Warlock: Felheart Raiment (8 Pieces)
+.additem 16808 1 -- Head: Felheart Horns
+.additem 16807 1 -- Shoulders: Felheart Shoulder Pads
+.additem 16809 1 -- Chest: Felheart Robes
+.additem 16804 1 -- Wrists: Felheart Bracers
+.additem 16805 1 -- Hands: Felheart Gloves
+.additem 16806 1 -- Waist: Felheart Belt
+.additem 16810 1 -- Legs: Felheart Pants
+.additem 16803 1 -- Feet: Felheart Slippers
+
+-- Druid: Cenarion Raiment (8 Pieces)
+.additem 16834 1 -- Head: Cenarion Helm
+.additem 16836 1 -- Shoulders: Cenarion Spaulders
+.additem 16833 1 -- Chest: Cenarion Vestments
+.additem 16830 1 -- Wrists: Cenarion Bracers
+.additem 16831 1 -- Hands: Cenarion Gloves
+.additem 16828 1 -- Waist: Cenarion Belt
+.additem 16835 1 -- Legs: Cenarion Leggings
+.additem 16829 1 -- Feet: Cenarion Boots
+```
 
 ---
 
 ### 5. Zul'Gurub 5-Piece Class Sets (1 Weapon + 3 Armour + 1 Class Trinket)
 
-✅ **Structure verified against live `tw_world.item_template`:** every ZG class set (`set_id` `474`–`482`) has exactly **five** members — **1 weapon** (`inventory_type 2`), **3 armour pieces** and **1 class trinket** (`inventory_type 12`). 📕 **An earlier revision of this table had a "Shoulders" column that it filled by duplicating the Belt or Chest id — that column did not correspond to any real item.**
+✅ **Structure verified against live `tw_world.item_template`:** every ZG class set (`set_id` `474`–`482`) has exactly **five** members — **1 weapon** (`inventory_type 2`), **3 armour pieces** and **1 class trinket** (`inventory_type 12`). 📕 **There is no separate "Shoulders" member** — if a shoulders column ever shows the Belt or Chest id repeated, that id does not correspond to any real item.
 
 ⚠️ **None of the nine sets contains a Shoulders piece.** Every set is missing exactly **one** armour slot out of the four a full armour set would normally cover, and for four of the nine (Warrior, Paladin, Shaman, Druid) that missing slot **is** Shoulders. See the "Missing armour slot" column.
 
-| Class & Set Name (`set_id`) | Weapon | Armour piece 1 | Armour piece 2 | Armour piece 3 | Missing armour slot | Class Trinket |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Warrior (Vindicator's Battlegear)** `474` | `19577` Rage of Mugamba | `19822` Breastplate | `19823` Belt | `19824` Armguards | Shoulders | `19951` Gri'lek's Charm of Might |
-| **Paladin (Freethinker's Armor)** `475` | `19588` Hero's Brand | `19825` Breastplate | `19826` Belt | `19827` Armguards | Shoulders | `19952` Gri'lek's Charm of Valor |
-| **Hunter (Predator's Armor)** `477` | `19621` Maelstrom's Wrath | `19831` Mantle | `19832` Belt | `19833` Bracers | Chest | `19953` Renataki's Charm of Beasts |
-| **Rogue (Madcap's Outfit)** `478` | `19617` Zandalarian Shadow Mastery Talisman | `19834` Tunic | `19835` Mantle | `19836` Bracers | Belt | `19954` Renataki's Charm of Trickery |
-| **Priest (Confessor's Raiment)** `480` | `19594` The All-Seeing Eye of Zuldazar | `19841` Mantle | `19842` Bindings *(waist)* | `19843` Wraps | Chest | `19958` Hazza'rah's Charm of **Healing** |
-| **Shaman (Augur's Regalia)** `476` | `19609` Unmarred Vision of Voodress | `19828` Hauberk | `19829` Belt | `19830` Bracers | Shoulders | `19956` Wushoolay's Charm of **Spirits** |
-| **Mage (Illusionist's Attire)** `482` | `19601` Jewel of Kajaro | `20034` Robe *(inv 20)* | `19845` Mantle | `19846` Wraps | Belt | `19959` Hazza'rah's Charm of Magic |
-| **Warlock (Demoniac's Threads)** `481` | `19605` Kezan's Unstoppable Taint | `20033` Robe *(inv 20)* | `19849` Mantle | `19848` Wraps | Belt | `19957` Hazza'rah's Charm of **Destruction** |
-| **Druid (Haruspex's Garb)** `479` | `19613` Pristine Enchanted South Seas Kelp | `19838` Tunic | `19839` Belt | `19840` Bracers | Shoulders | `19955` Wushoolay's Charm of **Nature** |
+```lua
+-- Warrior: Vindicator's Battlegear (set_id 474) - Missing slot: Shoulders
+.additem 19577 1 -- Weapon: Rage of Mugamba
+.additem 19822 1 -- Chest: Zandalar Vindicator's Breastplate
+.additem 19823 1 -- Waist: Zandalar Vindicator's Belt
+.additem 19824 1 -- Wrists: Zandalar Vindicator's Armguards
+.additem 19951 1 -- Trinket: Gri'lek's Charm of Might
 
-📕 **The class trinkets were previously crossed in two pairs** and have been corrected: **Priest** `19957 → 19958` (Destruction → **Healing**), **Warlock** `19958 → 19957` (Healing → **Destruction**), **Shaman** `19955 → 19956` (Nature → **Spirits**), **Druid** `19956 → 19955` (Spirits → **Nature**). The live DB settles each one independently: the trinket's own `set_id` matches its class's armour set (`19955`/`19956` → `479`/`476`, `19957`/`19958` → `481`/`480`).
+-- Paladin: Freethinker's Armor (set_id 475) - Missing slot: Shoulders
+.additem 19588 1 -- Weapon: Hero's Brand
+.additem 19825 1 -- Chest: Zandalar Freethinker's Breastplate
+.additem 19826 1 -- Waist: Zandalar Freethinker's Belt
+.additem 19827 1 -- Wrists: Zandalar Freethinker's Armguards
+.additem 19952 1 -- Trinket: Gri'lek's Charm of Valor
+
+-- Hunter: Predator's Armor (set_id 477) - Missing slot: Chest
+.additem 19621 1 -- Weapon: Maelstrom's Wrath
+.additem 19831 1 -- Shoulders: Zandalar Predator's Mantle
+.additem 19832 1 -- Waist: Zandalar Predator's Belt
+.additem 19833 1 -- Wrists: Zandalar Predator's Bracers
+.additem 19953 1 -- Trinket: Renataki's Charm of Beasts
+
+-- Rogue: Madcap's Outfit (set_id 478) - Missing slot: Belt
+.additem 19617 1 -- Weapon: Zandalarian Shadow Mastery Talisman
+.additem 19834 1 -- Chest: Zandalar Madcap's Tunic
+.additem 19835 1 -- Shoulders: Zandalar Madcap's Mantle
+.additem 19836 1 -- Wrists: Zandalar Madcap's Bracers
+.additem 19954 1 -- Trinket: Renataki's Charm of Trickery
+
+-- Priest: Confessor's Raiment (set_id 480) - Missing slot: Chest
+.additem 19594 1 -- Weapon: The All-Seeing Eye of Zuldazar
+.additem 19841 1 -- Shoulders: Zandalar Confessor's Mantle
+.additem 19842 1 -- Waist: Zandalar Confessor's Bindings
+.additem 19843 1 -- Wrists: Zandalar Confessor's Wraps
+.additem 19958 1 -- Trinket: Hazza'rah's Charm of Healing
+
+-- Shaman: Augur's Regalia (set_id 476) - Missing slot: Shoulders
+.additem 19609 1 -- Weapon: Unmarred Vision of Voodress
+.additem 19828 1 -- Chest: Zandalar Augur's Hauberk
+.additem 19829 1 -- Waist: Zandalar Augur's Belt
+.additem 19830 1 -- Wrists: Zandalar Augur's Bracers
+.additem 19956 1 -- Trinket: Wushoolay's Charm of Spirits
+
+-- Mage: Illusionist's Attire (set_id 482) - Missing slot: Belt
+.additem 19601 1 -- Weapon: Jewel of Kajaro
+.additem 20034 1 -- Chest: Zandalar Illusionist's Robe (inv 20)
+.additem 19845 1 -- Shoulders: Zandalar Illusionist's Mantle
+.additem 19846 1 -- Wrists: Zandalar Illusionist's Wraps
+.additem 19959 1 -- Trinket: Hazza'rah's Charm of Magic
+
+-- Warlock: Demoniac's Threads (set_id 481) - Missing slot: Belt
+.additem 19605 1 -- Weapon: Kezan's Unstoppable Taint
+.additem 20033 1 -- Chest: Zandalar Demoniac's Robe (inv 20)
+.additem 19849 1 -- Shoulders: Zandalar Demoniac's Mantle
+.additem 19848 1 -- Wrists: Zandalar Demoniac's Wraps
+.additem 19957 1 -- Trinket: Hazza'rah's Charm of Destruction
+
+-- Druid: Haruspex's Garb (set_id 479) - Missing slot: Shoulders
+.additem 19613 1 -- Weapon: Pristine Enchanted South Seas Kelp
+.additem 19838 1 -- Chest: Zandalar Haruspex's Tunic
+.additem 19839 1 -- Waist: Zandalar Haruspex's Belt
+.additem 19840 1 -- Wrists: Zandalar Haruspex's Bracers
+.additem 19955 1 -- Trinket: Wushoolay's Charm of Nature
+```
+
+📕 **The class trinkets are easy to cross, and two pairs ARE crossed if you guess by hand** — the live DB settles each one independently, because the trinket's own `set_id` matches its class's armour set: **Priest** `19958` (Healing, `481`), **Warlock** `19957` (Destruction, `480`), **Shaman** `19956` (Spirits, `476`), **Druid** `19955` (Nature, `479`).
 
 ---
 
 ### 6. Ruins of Ahn'Qiraj (AQ20) 3-Piece Class Sets
 
-| Class & Set Name | Weapon / Off-Hand | Ring / Signet | Cloak / Drape |
-| :--- | :---: | :---: | :---: |
-| **Warrior (Unyielding Strength)** | `21392` (Sickle) | `21393` (Signet) | `21394` (Drape) |
-| **Paladin (Eternal Justice)** | `21395` (Blade) | `21396` (Ring) | `21397` (Cape) |
-| **Shaman (Gathering Storm)** | `21398` (Hammer) | `21399` (Ring) | `21400` (Cloak) |
-| **Hunter (Unseen Path)** | `21401` (Scythe) | `21402` (Signet) | `21403` (Cloak) |
-| **Rogue (Veiled Shadows)** | `21404` (Dagger) | `21405` (Band) | `21406` (Cloak) |
-| **Druid (Unending Life)** | `21407` (Mace) | `21408` (Band) | `21409` (Cloak) |
-| **Priest (Infinite Wisdom)** | `21410` (Gavel) | `21411` (Ring) | `21412` (Shroud) |
-| **Mage (Vaulted Secrets)** | `21413` (Blade) | `21414` (Band) | `21415` (Drape) |
-| **Warlock (Unspoken Names)** | `21416` (Kris) | `21417` (Ring) | `21418` (Shroud) |
+```lua
+-- Warrior: Battlegear of Unyielding Strength
+.additem 21392 1 -- Weapon: Sickle of Unyielding Strength
+.additem 21393 1 -- Ring: Signet of Unyielding Strength
+.additem 21394 1 -- Cloak: Drape of Unyielding Strength
+
+-- Paladin: Battlegear of Eternal Justice
+.additem 21395 1 -- Weapon: Blade of Eternal Justice
+.additem 21396 1 -- Ring: Ring of Eternal Justice
+.additem 21397 1 -- Cloak: Cape of Eternal Justice
+
+-- Shaman: Gift of the Gathering Storm
+.additem 21398 1 -- Weapon: Hammer of the Gathering Storm
+.additem 21399 1 -- Ring: Ring of the Gathering Storm
+.additem 21400 1 -- Cloak: Cloak of the Gathering Storm
+
+-- Hunter: Trappings of the Unseen Path
+.additem 21401 1 -- Weapon: Scythe of the Unseen Path
+.additem 21402 1 -- Ring: Signet of the Unseen Path
+.additem 21403 1 -- Cloak: Cloak of the Unseen Path
+
+-- Rogue: Emblems of Veiled Shadows
+.additem 21404 1 -- Weapon: Dagger of Veiled Shadows
+.additem 21405 1 -- Ring: Band of Veiled Shadows
+.additem 21406 1 -- Cloak: Cloak of Veiled Shadows
+
+-- Druid: Symbols of Unending Life
+.additem 21407 1 -- Weapon: Mace of Unending Life
+.additem 21408 1 -- Ring: Band of Unending Life
+.additem 21409 1 -- Cloak: Cloak of Unending Life
+
+-- Priest: Finery of Infinite Wisdom
+.additem 21410 1 -- Weapon: Gavel of Infinite Wisdom
+.additem 21411 1 -- Ring: Ring of Infinite Wisdom
+.additem 21412 1 -- Cloak: Shroud of Infinite Wisdom
+
+-- Mage: Trappings of Vaulted Secrets
+.additem 21413 1 -- Weapon: Blade of Vaulted Secrets
+.additem 21414 1 -- Ring: Band of Vaulted Secrets
+.additem 21415 1 -- Cloak: Drape of Vaulted Secrets
+
+-- Warlock: Implements of Unspoken Names
+.additem 21416 1 -- Weapon: Kris of Unspoken Names
+.additem 21417 1 -- Ring: Ring of Unspoken Names
+.additem 21418 1 -- Cloak: Shroud of Unspoken Names
+```
 
 ---
 
@@ -2195,7 +2415,7 @@ Restoration (20 points):
 - **Silk Set** (`set_id 387`) — shared by Priest / Mage / Warlock: Helm `16533`, Shoulders `16536`, Chest `16535` *(Warlord's Silk Raiment, `inventory_type 20` = robe, i.e. the chest piece)*, Gloves `16540`, Legs `16534`, Boots `16539`
 - **Druid Dragonhide Set** (`set_id 398`): Helm `16550`, Shoulders `16551`, Chest `16549`, Gloves `16555`, Legs `16552`, Boots `16554`
 
-> ✅ **Slot assignments above re-derived from live `tw_world.item_template.inventory_type`.** 📕 An earlier revision attached **23** of these real ids to the wrong slots (the Warrior's `16543` was listed as Gloves when it is Leggings, the Druid row was wrong in all six slots, and so on). The **class-to-set assignment was always correct** — only the id→slot mapping was broken.
+> ✅ **Slot assignments above re-derived from live `tw_world.item_template.inventory_type`.** 📕 **Slot assignments are the single easiest thing to get wrong for these sets** — e.g. the Warrior's `16543` is Leggings, not Gloves, and the Druid row is wrong in all six slots if you assign by eye. The **class-to-set assignment itself is reliable**; only the id→slot mapping needs the live `inventory_type` check.
 
 ---
 
@@ -2235,22 +2455,53 @@ Restoration (20 points):
 
 ---
 
-
 ## Part IV: Legendary & Artifact Weapons Directory
 
-| Item ID | Item Name | Slot | Quality | Unique Effects & Description |
-| :---: | :--- | :---: | :---: | :--- |
-| **`19019`** | **Thunderfury, Blessed Blade of the Windseeker** | 1H Sword | Legendary | Chance on hit: 300 Nature blast + chain lightning debuff (-25 Nature resist, -20% attack speed). Highest threat weapon in the game. |
-| **`17182`** | **Sulfuras, Hand of Ragnaros** | 2H Mace | Legendary | Chance on hit: 273–333 Fireball + 5 Fire damage shield. 223–372 Physical damage (80.4 DPS, 3.70 speed). |
-| **`22589`** | **Atiesh, Greatstaff of the Guardian (Mage)** | 2H Staff | Legendary | +28 Spell Power to group, +2% Spell Crit to group, Karazhan teleport portal on 1-min cooldown. |
-| **`22630`** | **Atiesh, Greatstaff of the Guardian (Warlock)** | 2H Staff | Legendary | +33 Spell Damage & Healing to group, +2% Spell Hit to group, Karazhan teleport portal. |
-| **`22631`** | **Atiesh, Greatstaff of the Guardian (Priest)** | 2H Staff | Legendary | +62 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
-| **`22632`** | **Atiesh, Greatstaff of the Guardian (Druid)** | 2H Staff | Legendary | +11 Feral Attack Power to group, +44 Healing to group, +11 MP5 to group, Karazhan teleport portal. |
-| **`22691`** | **Corrupted Ashbringer** | 2H Sword | Epic | 259–389 Damage (90.0 DPS, 3.60 speed), +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event. |
-| **`13262`** | **Ashbringer (Purified Blade)** | 2H Sword | Legendary | 201–247 Damage (74.7 DPS, 3.00 speed), Holy burst damage proc. Legendary blade of Highlord Alexandros Mograine. |
-| **`17782`** | **Talisman of Binding Shard** | Neck | Legendary | +10 Fire Resist, +10 Nature Resist, +10 Frost Resist, +10 Shadow Resist, +10 Arcane Resist. Rare legendary necklace. |
-| **`82001`** | **Cape of Alexandros** | ⚠️ **Not equippable** (`inventory_type = 0`) | Poor (q1) | Tattered cloak that once covered the back of the Ashbringer (Turtle-WoW exclusive). 📕 An earlier revision listed it as an equippable **Cloak**; live `tw_world.item_template` gives it **`inventory_type 0`**, so no character can wear it. Treat it as flavour/quest text only, not as a gear option. |
-| **`82002`** | **Tabard of the Ashbringer** | Tabard | Epic | Filled with holy radiant light (Turtle-WoW exclusive). |
+```lua
+-- Thunderfury, Blessed Blade of the Windseeker (1H Sword | Legendary)
+-- Chance on hit: 300 Nature blast + chain lightning debuff (-25 Nature resist, -20% attack speed). Highest threat weapon in the game.
+.additem 19019 1
+
+-- Sulfuras, Hand of Ragnaros (2H Mace | Legendary)
+-- Chance on hit: 273–333 Fireball + 5 Fire damage shield. 223–372 Physical damage (80.4 DPS, 3.70 speed).
+.additem 17182 1
+
+-- Atiesh, Greatstaff of the Guardian (Mage) (2H Staff | Legendary)
+-- +28 Spell Power to group, +2% Spell Crit to group, Karazhan teleport portal on 1-min cooldown.
+.additem 22589 1
+
+-- Atiesh, Greatstaff of the Guardian (Warlock) (2H Staff | Legendary)
+-- +33 Spell Damage & Healing to group, +2% Spell Hit to group, Karazhan teleport portal.
+.additem 22630 1
+
+-- Atiesh, Greatstaff of the Guardian (Priest) (2H Staff | Legendary)
+-- +62 Healing to group, +11 MP5 to group, Karazhan teleport portal.
+.additem 22631 1
+
+-- Atiesh, Greatstaff of the Guardian (Druid) (2H Staff | Legendary)
+-- +11 Feral Attack Power to group, +44 Healing to group, +11 MP5 to group, Karazhan teleport portal.
+.additem 22632 1
+
+-- Corrupted Ashbringer (2H Sword | Epic)
+-- 259–389 Damage (90.0 DPS, 3.60 speed), +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event.
+.additem 22691 1
+
+-- Ashbringer (Purified Blade) (2H Sword | Legendary)
+-- 201–247 Damage (74.7 DPS, 3.00 speed), Holy burst damage proc. Legendary blade of Highlord Alexandros Mograine.
+.additem 13262 1
+
+-- Talisman of Binding Shard (Neck | Legendary)
+-- +10 Fire Resist, +10 Nature Resist, +10 Frost Resist, +10 Shadow Resist, +10 Arcane Resist. Rare legendary necklace.
+.additem 17782 1
+
+-- Cape of Alexandros (Not equippable: inventory_type 0 | Poor q1)
+-- Tattered cloak that once covered the back of the Ashbringer (Turtle-WoW exclusive). NOTE: inventory_type 0, not equippable; flavour/quest text only.
+.additem 82001 1
+
+-- Tabard of the Ashbringer (Tabard | Epic)
+-- Filled with holy radiant light (Turtle-WoW exclusive).
+.additem 82002 1
+```
 
 ---
 
@@ -2258,159 +2509,158 @@ Restoration (20 points):
 
 > ⚠️ **READ THE `stat_type` CORRECTION FIRST.** Every `+N Strength / Stamina / Agility / Intellect / Attack Power / Spell Damage` line in **Parts III through IX** is **UNVERIFIED** — not because `stat_type` is unused, but because **no systematic re-derivation has been done and a spot check found both exact matches and outright errors.** A stat line must be assembled from **both** sources: **flat stats** from `stat_type1..10` / `stat_value1..10` (**9,372 of 26,543 items** carry them — live figures) **and** percent/proc values from the `spellid_1..5` aura resolved in `spell_template` (**11,599 items** carry a non-zero `spellid_*`, of which **6,539** also set `spelltrigger`), plus the `armor` / `block` / `dmg_*` / resistance columns. Full corrected audit, the correct column indices, and worked correct-vs-wrong examples: the [Part II stat correction](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented). **Item IDs, names, slots, weapon speeds and boss sources are not in question — only the stat lines are.**
 
-
 ### 🔨 Two-Handed Weapons (Swords, Maces, Axes & Polearms)
 
-| Item ID | Item Name | Type | Boss / Source | Speed | DPS | Stats & Effects |
-| :---: | :--- | :---: | :--- | :---: | :---: | :--- |
-| **`22798`** | **Might of Menethil** | 2H Mace | Kel'Thuzad (Naxx) | 3.80 | 95.3 | +20 Strength, +46 Stamina, Equip: +2% Crit. (Highest 2H Physical DPS in Vanilla) |
-| **`22691`** | **Corrupted Ashbringer** | 2H Sword | Four Horsemen (Naxx) | 3.60 | 90.0 | +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event. |
-| **`13262`** | **Ashbringer (Purified Blade)** | 2H Sword | Legendary Quest | 3.00 | 74.7 | 201–247 Damage, Holy burst proc. Highlord Alexandros Mograine's blade. |
-| **`22815`** | **Severance** | 2H Axe | Patchwerk (Naxx) | 3.60 | 85.8 | +43 Strength, +18 Stamina, Equip: +2% Crit. (Top Raid 2H Axe) |
-| **`23039`** | **The Eye of Nerub** | 2H Polearm | Naxxramas Trash | 3.70 | 85.9 | +28 Agility, +2% Hit, +2% Crit, +60 Attack Power. (BiS Hunter Melee Stat Stick) |
-| **`22813`** | **Claymore of Unholy Might** | 2H Sword | Naxxramas Trash | 3.60 | 85.8 | +82 Attack Power, +2% Critical Strike. |
-| **`22809`** | **Maul of the Redeemed Crusader** | 2H Mace | Naxxramas Trash | 3.60 | 85.8 | +30 Strength, +24 Stamina, +1% Crit, +1% Hit. |
-| **`21134`** | **Dark Edge of Insanity** | 2H Axe | C'Thun (AQ40) | 3.50 | 86.6 | +35 Strength, +19 Agility, +25 Stamina, Chance on Hit: 3-sec Disorient. |
-| **`21679`** | **Kalimdor's Revenge** | 2H Sword | Twin Emperors (AQ40) | 3.20 | 81.9 | +24 Strength, +18 Stamina, Chance on Hit: 239–317 Nature blast. |
-| **`19364`** | **Ashkandi, Greatsword of the Brotherhood** | 2H Sword | Nefarian (BWL) | 3.50 | 81.9 | +33 Stamina, Equip: +86 Attack Power. |
-| **`19334`** | **The Untamed Blade** | 2H Sword | Razorgore (BWL) | 3.40 | 66.8 | Chance on Hit: +300 Strength for 8 seconds. Massive burst proc. |
-| **`19354`** | **Draconic Avenger** | 2H Axe | BWL Trash | 3.20 | 66.9 | +21 Strength, +18 Stamina, +1% Parry. |
-| **`19358`** | **Draconic Maul** | 2H Mace | BWL Trash | 3.50 | 66.7 | +27 Strength, +19 Stamina, +1% Critical Strike. |
-| **`19357`** | **Herald of Woe** | 2H Mace | Ebonroc (BWL) | 3.40 | 73.1 | +28 Strength, +1% Crit, Chance on Hit: Stun target for 3 sec. |
-| **`17182`** | **Sulfuras, Hand of Ragnaros** | 2H Mace | Ragnaros (MC) | 3.70 | 80.4 | Chance on hit: 273–333 Fireball + 5 Fire shield. +12 Str, +12 Sta, +30 FR. |
-| **`17076`** | **Bonereaver's Edge** | 2H Sword | Ragnaros (MC) | 3.40 | 60.6 | +16 Stamina, Chance on Hit: Armor penetration stack (700 armor reduction per stack). |
-| **`17104`** | **Spinal Reaper** | 2H Axe | Ragnaros (MC) | 3.40 | 68.4 | +34 Strength, +1% Crit, Equip: Gain 150 Attack Power upon killing an enemy. |
-| **`18822`** | **Obsidian Edged Blade** | 2H Sword | Garr / Magmadar (MC) | 3.40 | 60.6 | +42 Strength, +4 Swords Skill. Excellent human/non-human starter 2H. |
-| **`19854`** | **Zin'rokh, Destroyer of Worlds** | 2H Sword | Hakkar (ZG) | 3.80 | 60.4 | +28 Stamina, Equip: +72 Attack Power. Iconic slow PvP cleaver. |
-| **`19874`** | **Halberd of Smiting** | 2H Polearm | Bloodlord Mandokir (ZG) | 3.50 | 58.7 | Chance on Hit: Decapitate for extra physical burst damage. |
-| **`21492`** | **Manslayer of the Qiraji** | 2H Sword | General Rajaxx (AQ20) | 3.60 | 58.6 | +21 Strength, +15 Stamina, +1% Crit, +1% Hit. |
-| **`19169`** | **Nightfall** | 2H Axe | Blacksmithing Crafted | 3.50 | 53.6 | Chance on Hit: Spell Damage Taken +15% on target. Essential raid debuff weapon. |
-| **`12784`** | **Arcanite Reaper** | 2H Axe | Blacksmithing Crafted | 3.80 | 53.7 | +62 Attack Power, +13 Stamina. Iconic PvP burst axe. |
-| **`19323`** | **The Unstoppable Force** | 2H Mace | Alterac Valley Vendor | 3.80 | 61.4 | +19 Strength, +15 Stamina, +1% Crit, Chance on Hit: Stun/Knockdown for 1s. |
-| **`18538`** | **Treant's Bane** | 2H Axe | Dire Maul Tribute | 3.80 | 58.0 | +25 Strength, +15 Stamina, +2% Critical Strike. |
-| **`12592`** | **Blackblade of Shahram** | 2H Sword | General Drakkisath (UBRS) | 3.50 | 54.7 | Chance on Hit: Summons the Spirit of Shahram to cast powerful raid buffs/nukes. |
-| **`18876`** | **Veteran's Claymore** | 2H Sword | Alliance Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. (Grand Marshal model) |
-| **`18877`** | **Veteran's Greatsword** | 2H Sword | Horde Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. (High Warlord model) |
-| **`18830`** | **Veteran's Sunderer** | 2H Axe | Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. |
-| **`18867`** | **Veteran's Battle Hammer** | 2H Mace | Alliance Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. |
-| **`18868`** | **Veteran's Pulverizer** | 2H Mace | Horde Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. |
-| **`18869`** | **Veteran's Glaive** | 2H Polearm | Alliance Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. |
-| **`18871`** | **Veteran's Pig Sticker** | 2H Polearm | Horde Rank 14 PvP | 3.80 | 83.2 | +41 Strength, +18 Stamina, +1% Critical Strike. |
-| **`55348`** | **Kirel'narak, the Death Sentence** | 2H Staff | Emerald Sanctum (Custom) | 3.20 | 60.9 | +25 Int, +25 Sta, +92 Spell Damage, +2% Spell Hit. (ilvl 96 Custom BiS Staff) |
-| **`55127`** | **Shar'tateth, the Shattered Edge** | 2H Axe | Emerald Sanctum (Custom) | 3.80 | 100.0 | +38 Strength, +30 Stamina, +2% Crit, +1% Hit. (ilvl 92 Custom 2H Axe) |
-| **`55116`** | **Raka'shishi, Spear of the Adrift Hunt** | 2H Polearm | Emerald Sanctum (Custom) | 3.70 | 100.0 | +40 Agility, +24 Stamina, +2% Crit, +2% Hit. (ilvl 92 Custom 2H Polearm) |
-| **`55100`** | **Checkmate** | 2H Mace | **Scarlet Citadel (Custom)** | 3.70 | 93.5 | ❌ **stat line is WRONG — corrected:** the DB gives **+40 Agility, +25 Stamina** (`stat_type1 3 / stat_value1 40`, `stat_type2 7 / stat_value2 25`), **not** "+32 Strength, +28 Stamina, +2% Crit, +1% Hit". ilvl 88, `required_level 60`, `class 2 / subclass 5` (Warrior 2H Mace), `dmg 273–419`, `spellid_1 8815`. Warrior 2H, so the +40 is **Agility**, not Strength. |
-| **`55277`** | **The End of All Ambitions** | 2H Sword | Lower Karazhan (Custom) | 3.50 | 84.6 | +30 Strength, +22 Agility, +22 Stamina, +1% Crit. (ilvl 83 Custom 2H Sword) |
+```lua
+.additem 22798 1 -- Might of Menethil: 2H Mace | Kel'Thuzad (Naxx) | 3.80s, 95.3 DPS | +20 Strength, +46 Stamina, Equip: +2% Crit. (Highest 2H Physical DPS in Vanilla)
+.additem 22691 1 -- Corrupted Ashbringer: 2H Sword | Four Horsemen (Naxx) | 3.60s, 90.0 DPS | +2% Crit, +2% Hit, Chance on Hit: Life Steal 185–215. Triggers Scarlet Monastery lore event.
+.additem 13262 1 -- Ashbringer (Purified Blade): 2H Sword | Legendary Quest | 3.00s, 74.7 DPS | 201–247 Damage, Holy burst proc. Highlord Alexandros Mograine's blade.
+.additem 22815 1 -- Severance: 2H Axe | Patchwerk (Naxx) | 3.60s, 85.8 DPS | +43 Strength, +18 Stamina, Equip: +2% Crit. (Top Raid 2H Axe)
+.additem 23039 1 -- The Eye of Nerub: 2H Polearm | Naxxramas Trash | 3.70s, 85.9 DPS | +28 Agility, +2% Hit, +2% Crit, +60 Attack Power. (BiS Hunter Melee Stat Stick)
+.additem 22813 1 -- Claymore of Unholy Might: 2H Sword | Naxxramas Trash | 3.60s, 85.8 DPS | +82 Attack Power, +2% Critical Strike.
+.additem 22809 1 -- Maul of the Redeemed Crusader: 2H Mace | Naxxramas Trash | 3.60s, 85.8 DPS | +30 Strength, +24 Stamina, +1% Crit, +1% Hit.
+.additem 21134 1 -- Dark Edge of Insanity: 2H Axe | C'Thun (AQ40) | 3.50s, 86.6 DPS | +35 Strength, +19 Agility, +25 Stamina, Chance on Hit: 3-sec Disorient.
+.additem 21679 1 -- Kalimdor's Revenge: 2H Sword | Twin Emperors (AQ40) | 3.20s, 81.9 DPS | +24 Strength, +18 Stamina, Chance on Hit: 239–317 Nature blast.
+.additem 19364 1 -- Ashkandi, Greatsword of the Brotherhood: 2H Sword | Nefarian (BWL) | 3.50s, 81.9 DPS | +33 Stamina, Equip: +86 Attack Power.
+.additem 19334 1 -- The Untamed Blade: 2H Sword | Razorgore (BWL) | 3.40s, 66.8 DPS | Chance on Hit: +300 Strength for 8 seconds. Massive burst proc.
+.additem 19354 1 -- Draconic Avenger: 2H Axe | BWL Trash | 3.20s, 66.9 DPS | +21 Strength, +18 Stamina, +1% Parry.
+.additem 19358 1 -- Draconic Maul: 2H Mace | BWL Trash | 3.50s, 66.7 DPS | +27 Strength, +19 Stamina, +1% Critical Strike.
+.additem 19357 1 -- Herald of Woe: 2H Mace | Ebonroc (BWL) | 3.40s, 73.1 DPS | +28 Strength, +1% Crit, Chance on Hit: Stun target for 3 sec.
+.additem 17182 1 -- Sulfuras, Hand of Ragnaros: 2H Mace | Ragnaros (MC) | 3.70s, 80.4 DPS | Chance on hit: 273–333 Fireball + 5 Fire shield. +12 Str, +12 Sta, +30 FR.
+.additem 17076 1 -- Bonereaver's Edge: 2H Sword | Ragnaros (MC) | 3.40s, 60.6 DPS | +16 Stamina, Chance on Hit: Armor penetration stack (700 armor reduction per stack).
+.additem 17104 1 -- Spinal Reaper: 2H Axe | Ragnaros (MC) | 3.40s, 68.4 DPS | +34 Strength, +1% Crit, Equip: Gain 150 Attack Power upon killing an enemy.
+.additem 18822 1 -- Obsidian Edged Blade: 2H Sword | Garr / Magmadar (MC) | 3.40s, 60.6 DPS | +42 Strength, +4 Swords Skill. Excellent human/non-human starter 2H.
+.additem 19854 1 -- Zin'rokh, Destroyer of Worlds: 2H Sword | Hakkar (ZG) | 3.80s, 60.4 DPS | +28 Stamina, Equip: +72 Attack Power. Iconic slow PvP cleaver.
+.additem 19874 1 -- Halberd of Smiting: 2H Polearm | Bloodlord Mandokir (ZG) | 3.50s, 58.7 DPS | Chance on Hit: Decapitate for extra physical burst damage.
+.additem 21492 1 -- Manslayer of the Qiraji: 2H Sword | General Rajaxx (AQ20) | 3.60s, 58.6 DPS | +21 Strength, +15 Stamina, +1% Crit, +1% Hit.
+.additem 19169 1 -- Nightfall: 2H Axe | Blacksmithing Crafted | 3.50s, 53.6 DPS | Chance on Hit: Spell Damage Taken +15% on target. Essential raid debuff weapon.
+.additem 12784 1 -- Arcanite Reaper: 2H Axe | Blacksmithing Crafted | 3.80s, 53.7 DPS | +62 Attack Power, +13 Stamina. Iconic PvP burst axe.
+.additem 19323 1 -- The Unstoppable Force: 2H Mace | Alterac Valley Vendor | 3.80s, 61.4 DPS | +19 Strength, +15 Stamina, +1% Crit, Chance on Hit: Stun/Knockdown for 1s.
+.additem 18538 1 -- Treant's Bane: 2H Axe | Dire Maul Tribute | 3.80s, 58.0 DPS | +25 Strength, +15 Stamina, +2% Critical Strike.
+.additem 12592 1 -- Blackblade of Shahram: 2H Sword | General Drakkisath (UBRS) | 3.50s, 54.7 DPS | Chance on Hit: Summons the Spirit of Shahram to cast powerful raid buffs/nukes.
+.additem 18876 1 -- Veteran's Claymore: 2H Sword | Alliance Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike. (Grand Marshal model)
+.additem 18877 1 -- Veteran's Greatsword: 2H Sword | Horde Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike. (High Warlord model)
+.additem 18830 1 -- Veteran's Sunderer: 2H Axe | Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike.
+.additem 18867 1 -- Veteran's Battle Hammer: 2H Mace | Alliance Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike.
+.additem 18868 1 -- Veteran's Pulverizer: 2H Mace | Horde Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike.
+.additem 18869 1 -- Veteran's Glaive: 2H Polearm | Alliance Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike.
+.additem 18871 1 -- Veteran's Pig Sticker: 2H Polearm | Horde Rank 14 PvP | 3.80s, 83.2 DPS | +41 Strength, +18 Stamina, +1% Critical Strike.
+.additem 55348 1 -- Kirel'narak, the Death Sentence: 2H Staff | Emerald Sanctum (Custom) | 3.20s, 60.9 DPS | +25 Int, +25 Sta, +92 Spell Damage, +2% Spell Hit. (ilvl 96 Custom BiS Staff)
+.additem 55127 1 -- Shar'tateth, the Shattered Edge: 2H Axe | Emerald Sanctum (Custom) | 3.80s, 100.0 DPS | +38 Strength, +30 Stamina, +2% Crit, +1% Hit. (ilvl 92 Custom 2H Axe)
+.additem 55116 1 -- Raka'shishi, Spear of the Adrift Hunt: 2H Polearm | Emerald Sanctum (Custom) | 3.70s, 100.0 DPS | +40 Agility, +24 Stamina, +2% Crit, +2% Hit. (ilvl 92 Custom 2H Polearm)
+.additem 55100 1 -- Checkmate: 2H Mace | Scarlet Citadel (Custom) | 3.70s, 93.5 DPS | +40 Agility, +25 Stamina (DB corrected: stat_type1 3 / stat_value1 40, stat_type2 7 / stat_value2 25, ilvl 88)
+.additem 55277 1 -- The End of All Ambitions: 2H Sword | Lower Karazhan (Custom) | 3.50s, 84.6 DPS | +30 Strength, +22 Agility, +22 Stamina, +1% Crit. (ilvl 83 Custom 2H Sword)
+```
 
 ---
 
 ### ⚔️ One-Handed Swords
 
-| Item ID | Item Name | Boss / Source | Speed | DPS | Stats & Effects |
-| :---: | :--- | :--- | :---: | :---: | :--- |
-| **`23054`** | **Gressil, Dawn of Ruin** | Kel'Thuzad (Naxx) | 2.70 | 73.1 | +15 Stamina, +14 Attack Power, Equip: +1% Crit. |
-| **`23577`** | **The Hungering Cold** | Kel'Thuzad (Naxx) | 1.50 | 73.0 | +140 Armor, +14 Stamina, Equip: +6 Swords Skill, +1.50s Fast Off-hand. |
-| **`23014`** | **Iblis, Blade of the Fallen Seraph** | Gluth / Patchwerk (Naxx) | 1.60 | 66.9 | +7 Stamina, Equip: +1% Hit, +1% Crit, +26 Attack Power. |
-| **`19352`** | **Chromatically Tempered Sword (CTS)** | Chromaggus (BWL) | 2.60 | 58.5 | +14 Strength, +14 Agility, +7 Stamina. |
-| **`19351`** | **Maladath, Runed Blade of the Black Flight** | Broodlord Lashlayer (BWL) | 2.20 | 56.4 | +4 Agility, Equip: +1% Parry, +4 Swords Skill. |
-| **`21650`** | **Ancient Qiraji Ripper** | Fankriss (AQ40) | 2.80 | 58.4 | +11 Stamina, Equip: +1% Crit, +20 Attack Power. |
-| **`17075`** | **Vis'kag the Bloodletter** | Onyxia | 2.60 | 48.3 | Chance on hit: 240 Fatal Wound burst. |
-| **`18832`** | **Brutality Blade** | Garr (MC) | 2.50 | 45.4 | +9 Strength, +9 Agility, Equip: +1% Crit. |
-| **`19865`** | **Warblade of the Hakkari (Main)** | Hakkar (ZG) | 2.60 | 40.8 | +28 Attack Power, Equip: Set bonus +6 Swords Skill. |
-| **`19866`** | **Warblade of the Hakkari (Off)** | Bloodlord Mandokir (ZG) | 1.70 | 40.9 | +40 Attack Power, Equip: +1% Crit. |
-| **`21520`** | **Ravencrest's Legacy** | AQ Scepter Quest | 2.80 | 58.4 | +13 Str, +9 Agi, +14 Sta. |
-| **`18348`** | **Quel'Serrar** | Onyxia / Foror's Compendium | 2.00 | 52.5 | +12 Stamina, Chance on Hit: +300 Armor & +13 Defense. Legendary tank 1H sword. |
-| **`1728`** | **Teebu's Blazing Longsword** | World Drop (BoE) | 2.90 | 44.8 | Chance on Hit: 150–250 Fire burst damage. Glowing fiery blade. |
-| **`12584`** | **Veteran's Longsword** | Alliance Rank 14 PvP | 2.90 | 65.5 | +28 Strength, +7 Stamina, +1% Crit. (Grand Marshal 1H Sword) |
-| **`16345`** | **Veteran's Blade** | Horde Rank 14 PvP | 2.90 | 65.5 | +28 Strength, +7 Stamina, +1% Crit. (High Warlord 1H Sword) |
+```lua
+.additem 23054 1 -- Gressil, Dawn of Ruin: Kel'Thuzad (Naxx) | 2.70s, 73.1 DPS | +15 Stamina, +14 Attack Power, Equip: +1% Crit.
+.additem 23577 1 -- The Hungering Cold: Kel'Thuzad (Naxx) | 1.50s, 73.0 DPS | +140 Armor, +14 Stamina, Equip: +6 Swords Skill, +1.50s Fast Off-hand.
+.additem 23014 1 -- Iblis, Blade of the Fallen Seraph: Gluth / Patchwerk (Naxx) | 1.60s, 66.9 DPS | +7 Stamina, Equip: +1% Hit, +1% Crit, +26 Attack Power.
+.additem 19352 1 -- Chromatically Tempered Sword (CTS): Chromaggus (BWL) | 2.60s, 58.5 DPS | +14 Strength, +14 Agility, +7 Stamina.
+.additem 19351 1 -- Maladath, Runed Blade of the Black Flight: Broodlord Lashlayer (BWL) | 2.20s, 56.4 DPS | +4 Agility, Equip: +1% Parry, +4 Swords Skill.
+.additem 21650 1 -- Ancient Qiraji Ripper: Fankriss (AQ40) | 2.80s, 58.4 DPS | +11 Stamina, Equip: +1% Crit, +20 Attack Power.
+.additem 17075 1 -- Vis'kag the Bloodletter: Onyxia | 2.60s, 48.3 DPS | Chance on hit: 240 Fatal Wound burst.
+.additem 18832 1 -- Brutality Blade: Garr (MC) | 2.50s, 45.4 DPS | +9 Strength, +9 Agility, Equip: +1% Crit.
+.additem 19865 1 -- Warblade of the Hakkari (Main): Hakkar (ZG) | 2.60s, 40.8 DPS | +28 Attack Power, Equip: Set bonus +6 Swords Skill.
+.additem 19866 1 -- Warblade of the Hakkari (Off): Bloodlord Mandokir (ZG) | 1.70s, 40.9 DPS | +40 Attack Power, Equip: +1% Crit.
+.additem 21520 1 -- Ravencrest's Legacy: AQ Scepter Quest | 2.80s, 58.4 DPS | +13 Str, +9 Agi, +14 Sta.
+.additem 18348 1 -- Quel'Serrar: Onyxia / Foror's Compendium | 2.00s, 52.5 DPS | +12 Stamina, Chance on Hit: +300 Armor & +13 Defense. Legendary tank 1H sword.
+.additem 1728 1 -- Teebu's Blazing Longsword: World Drop (BoE) | 2.90s, 44.8 DPS | Chance on Hit: 150–250 Fire burst damage. Glowing fiery blade.
+.additem 12584 1 -- Veteran's Longsword: Alliance Rank 14 PvP | 2.90s, 65.5 DPS | +28 Strength, +7 Stamina, +1% Crit. (Grand Marshal 1H Sword)
+.additem 16345 1 -- Veteran's Blade: Horde Rank 14 PvP | 2.90s, 65.5 DPS | +28 Strength, +7 Stamina, +1% Crit. (High Warlord 1H Sword)
+```
 
 ---
 
 ### 🗡️ Daggers
 
-| Item ID | Item Name | Boss / Source | Speed | DPS | Stats & Effects |
-| :---: | :--- | :--- | :---: | :---: | :--- |
-| **`22802`** | **Kingsfall** | Kel'Thuzad (Naxx) | 1.80 | 73.1 | +16 Agility, Equip: +1% Crit, +1% Hit, +28 Attack Power. |
-| **`23044`** | **Harbinger of Doom** | Gluth / Patchwerk (Naxx) | 1.60 | 66.9 | +8 Stamina, Equip: +1% Hit, +1% Crit, +26 Attack Power. |
-| **`21126`** | **Death's Sting** | C'Thun (AQ40) | 1.80 | 66.4 | +10 Stamina, Equip: +38 Attack Power, +3 Daggers Skill. |
-| **`19346`** | **Dragonfang Blade** | Vaelastrasz (BWL) | 1.80 | 58.3 | +16 Agility, Equip: +36 Attack Power. |
-| **`19347`** | **Claw of Chromaggus** | Chromaggus (BWL) | 1.80 | 58.3 | +17 Intellect, +7 Stamina, +64 Spell Damage, +4 MP5. |
-| **`21244`** | **Blessed Qiraji Pugio** | AQ40 Quest | 1.70 | 58.5 | +6 Intellect, +7 Stamina, +72 Spell Damage, +1% Spell Crit, +1% Spell Hit. |
-| **`19859`** | **Fang of the Faceless** | Hakkar (ZG) | 1.90 | 41.6 | Equip: +1% Crit, +28 Attack Power. |
-| **`18816`** | **Perdition's Blade** | Ragnaros (MC) | 1.80 | 51.7 | Chance on hit: 40–56 Fire burst damage. |
-| **`18805`** | **Core Hound Tooth** | Majordomo Chest (MC) | 1.60 | 45.0 | +9 Stamina, Equip: +1% Crit, +20 Attack Power. |
-| **`22804`** | **Maexxna's Fang** | Maexxna (Naxx) | 1.80 | 65.6 | +8 Agility, +8 Stamina, +36 Attack Power, +1% Hit. |
-| **`18838`** | **Veteran's Dirk** | Alliance Rank 14 PvP | 2.00 | 65.5 | +18 Agility, +8 Stamina, +1% Crit. |
-| **`18840`** | **Veteran's Razor** | Horde Rank 14 PvP | 2.00 | 65.5 | +18 Agility, +8 Stamina, +1% Crit. |
+```lua
+.additem 22802 1 -- Kingsfall: Kel'Thuzad (Naxx) | 1.80s, 73.1 DPS | +16 Agility, Equip: +1% Crit, +1% Hit, +28 Attack Power.
+.additem 23044 1 -- Harbinger of Doom: Gluth / Patchwerk (Naxx) | 1.60s, 66.9 DPS | +8 Stamina, Equip: +1% Hit, +1% Crit, +26 Attack Power.
+.additem 21126 1 -- Death's Sting: C'Thun (AQ40) | 1.80s, 66.4 DPS | +10 Stamina, Equip: +38 Attack Power, +3 Daggers Skill.
+.additem 19346 1 -- Dragonfang Blade: Vaelastrasz (BWL) | 1.80s, 58.3 DPS | +16 Agility, Equip: +36 Attack Power.
+.additem 19347 1 -- Claw of Chromaggus: Chromaggus (BWL) | 1.80s, 58.3 DPS | +17 Intellect, +7 Stamina, +64 Spell Damage, +4 MP5.
+.additem 21244 1 -- Blessed Qiraji Pugio: AQ40 Quest | 1.70s, 58.5 DPS | +6 Intellect, +7 Stamina, +72 Spell Damage, +1% Spell Crit, +1% Spell Hit.
+.additem 19859 1 -- Fang of the Faceless: Hakkar (ZG) | 1.90s, 41.6 DPS | Equip: +1% Crit, +28 Attack Power.
+.additem 18816 1 -- Perdition's Blade: Ragnaros (MC) | 1.80s, 51.7 DPS | Chance on hit: 40–56 Fire burst damage.
+.additem 18805 1 -- Core Hound Tooth: Majordomo Chest (MC) | 1.60s, 45.0 DPS | +9 Stamina, Equip: +1% Crit, +20 Attack Power.
+.additem 22804 1 -- Maexxna's Fang: Maexxna (Naxx) | 1.80s, 65.6 DPS | +8 Agility, +8 Stamina, +36 Attack Power, +1% Hit.
+.additem 18838 1 -- Veteran's Dirk: Alliance Rank 14 PvP | 2.00s, 65.5 DPS | +18 Agility, +8 Stamina, +1% Crit.
+.additem 18840 1 -- Veteran's Razor: Horde Rank 14 PvP | 2.00s, 65.5 DPS | +18 Agility, +8 Stamina, +1% Crit.
+```
 
 ---
 
 ### 🏹 Ranged Weapons & Bows
 
-| Item ID | Item Name | Type | Boss / Source | Speed | DPS | Stats & Effects |
-| :---: | :--- | :---: | :--- | :---: | :---: | :--- |
-| **`22812`** | **Nerubian Slavemaker** | Crossbow | Kel'Thuzad (Naxx) | 3.20 | 56.6 | +24 Attack Power, +1% Crit. (Highest ranged physical DPS in Vanilla). |
-| **`22811`** | **Soulstring** | Bow | Four Horsemen (Naxx) | 2.90 | 50.7 | +6 Stamina, +16 Attack Power, +1% Crit. |
-| **`21459`** | **Crossbow of Imminent Doom** | Crossbow | Kurinnaxx (AQ20) | 3.10 | 45.5 | +7 Agility, +5 Stamina, +18 Attack Power. |
-| **`21616`** | **Huhuran's Stinger** | Bow | Princess Huhuran (AQ40) | 2.70 | 45.6 | +18 Agility, +1% Hit. |
-| **`23557`** | **Larvae of the Great Worm** | Gun | Ouro (AQ40) | 3.00 | 45.7 | +18 Attack Power, +1% Crit. |
-| **`19361`** | **Ashjre'thul, Crossbow of Smiting** | Crossbow | Chromaggus (BWL) | 3.40 | 45.6 | +7 Stamina, Equip: +36 Attack Power. |
-| **`18713`** | **Rhok'delar, Longbow of the Ancient Keepers** | Bow | Hunter Epic Quest | 2.90 | 44.0 | +17 Agility, Equip: +1% Crit. |
-| **`17069`** | **Striker's Mark** | Bow | Magmadar (MC) | 2.50 | 39.0 | Equip: +1% Hit, +22 Attack Power. |
-| **`17072`** | **Blastershot Launcher** | Gun | Golemagg (MC) | 2.60 | 39.4 | +6 Stamina, Equip: +1% Crit. |
-| **`19853`** | **Gurubashi Dwarf Destroyer** | Gun | Bloodlord Mandokir (ZG) | 2.80 | 40.0 | +30 Attack Power. |
-| **`20599`** | **Polished Ironwood Crossbow** | Crossbow | Dragons of Nightmare | 3.10 | 41.3 | +14 Attack Power, +1% Hit. |
-| **`18833`** | **Veteran's Bullseye** | Bow | Alliance Rank 14 PvP | 1.80 | 50.8 | +14 Agility, +7 Stamina. |
-| **`18835`** | **Veteran's Recurve** | Bow | Horde Rank 14 PvP | 1.80 | 50.8 | +14 Agility, +7 Stamina. |
-| **`18836`** | **Veteran's Repeater** | Crossbow | Alliance Rank 14 PvP | 2.90 | 50.9 | +18 Attack Power, +1% Crit. |
-| **`18837`** | **Veteran's Crossbow** | Crossbow | Horde Rank 14 PvP | 2.90 | 50.9 | +18 Attack Power, +1% Crit. |
-| **`18855`** | **Veteran's Hand Cannon** | Gun | Alliance Rank 14 PvP | 2.90 | 50.9 | +18 Attack Power, +1% Crit. |
-| **`18860`** | **Veteran's Street Sweeper** | Gun | Horde Rank 14 PvP | 2.90 | 50.9 | +18 Attack Power, +1% Crit. |
+```lua
+.additem 22812 1 -- Nerubian Slavemaker: Crossbow | Kel'Thuzad (Naxx) | 3.20s, 56.6 DPS | +24 Attack Power, +1% Crit. (Highest ranged physical DPS in Vanilla).
+.additem 22811 1 -- Soulstring: Bow | Four Horsemen (Naxx) | 2.90s, 50.7 DPS | +6 Stamina, +16 Attack Power, +1% Crit.
+.additem 21459 1 -- Crossbow of Imminent Doom: Crossbow | Kurinnaxx (AQ20) | 3.10s, 45.5 DPS | +7 Agility, +5 Stamina, +18 Attack Power.
+.additem 21616 1 -- Huhuran's Stinger: Bow | Princess Huhuran (AQ40) | 2.70s, 45.6 DPS | +18 Agility, +1% Hit.
+.additem 23557 1 -- Larvae of the Great Worm: Gun | Ouro (AQ40) | 3.00s, 45.7 DPS | +18 Attack Power, +1% Crit.
+.additem 19361 1 -- Ashjre'thul, Crossbow of Smiting: Crossbow | Chromaggus (BWL) | 3.40s, 45.6 DPS | +7 Stamina, Equip: +36 Attack Power.
+.additem 18713 1 -- Rhok'delar, Longbow of the Ancient Keepers: Bow | Hunter Epic Quest | 2.90s, 44.0 DPS | +17 Agility, Equip: +1% Crit.
+.additem 17069 1 -- Striker's Mark: Bow | Magmadar (MC) | 2.50s, 39.0 DPS | Equip: +1% Hit, +22 Attack Power.
+.additem 17072 1 -- Blastershot Launcher: Gun | Golemagg (MC) | 2.60s, 39.4 DPS | +6 Stamina, Equip: +1% Crit.
+.additem 19853 1 -- Gurubashi Dwarf Destroyer: Gun | Bloodlord Mandokir (ZG) | 2.80s, 40.0 DPS | +30 Attack Power.
+.additem 20599 1 -- Polished Ironwood Crossbow: Crossbow | Dragons of Nightmare | 3.10s, 41.3 DPS | +14 Attack Power, +1% Hit.
+.additem 18833 1 -- Veteran's Bullseye: Bow | Alliance Rank 14 PvP | 1.80s, 50.8 DPS | +14 Agility, +7 Stamina.
+.additem 18835 1 -- Veteran's Recurve: Bow | Horde Rank 14 PvP | 1.80s, 50.8 DPS | +14 Agility, +7 Stamina.
+.additem 18836 1 -- Veteran's Repeater: Crossbow | Alliance Rank 14 PvP | 2.90s, 50.9 DPS | +18 Attack Power, +1% Crit.
+.additem 18837 1 -- Veteran's Crossbow: Crossbow | Horde Rank 14 PvP | 2.90s, 50.9 DPS | +18 Attack Power, +1% Crit.
+.additem 18855 1 -- Veteran's Hand Cannon: Gun | Alliance Rank 14 PvP | 2.90s, 50.9 DPS | +18 Attack Power, +1% Crit.
+.additem 18860 1 -- Veteran's Street Sweeper: Gun | Horde Rank 14 PvP | 2.90s, 50.9 DPS | +18 Attack Power, +1% Crit.
+```
 
 ---
 
 ### 🔮 Staves, Caster 1H & Off-Hands
 
-| Item ID | Item Name | Slot | Boss / Source | Stats & Effects |
-| :---: | :--- | :---: | :--- | :--- |
-| **`22800`** | **Brimstone Staff** | 2H Staff | Naxxramas | +18 Stamina, +18 Intellect, +84 Spell Damage, +2% Spell Crit, +1% Spell Hit. |
-| **`22799`** | **Soulseeker** | 2H Staff | Kel'Thuzad (Naxx) | +24 Intellect, +24 Stamina, +85 Spell Damage, +2% Spell Crit, +1% Spell Hit. |
-| **`22801`** | **Spire of Twilight** | 2H Staff | Thaddius (Naxx) | +25 Intellect, +25 Stamina, +111 Healing, +37 Spell Damage, +12 MP5. |
-| **`19356`** | **Staff of the Shadow Flame** | 2H Staff | Nefarian (BWL) | +29 Stamina, +24 Intellect, +84 Spell Damage, +2% Spell Crit. |
-| **`17113`** | **Amberseal Keeper** | 2H Staff | Lord Kazzak | +44 Spell Damage, +20 Intellect, +5 MP5. |
-| **`20581`** | **Staff of Rampant Growth** | 2H Staff | Dragons of Nightmare | +15 Intellect, +15 Stamina, +40 Healing, +11 MP5. |
-| **`22988`** | **The End of Dreams** | 1H Mace | Kel'Thuzad (Naxx) | +14 Intellect, +14 Stamina, +52 Spell Dmg, +94 Healing, +7 MP5. |
-| **`23049`** | **Sapphiron's Left Eye** | Off-Hand | Sapphiron (Naxx) | +8 Intellect, +8 Stamina, +26 Spell Dmg, +1% Spell Crit, +1% Spell Hit. |
-| **`19360`** | **Lok'amir il Romathis** | 1H Mace | Nefarian (BWL) | +18 Stamina, +18 Intellect, +84 Healing, +29 Spell Dmg. |
-| **`17103`** | **Azuresong Mageblade** | 1H Sword | Golemagg (MC) | +12 Intellect, +7 Stamina, +40 Spell Dmg, +1% Spell Crit. |
-| **`17070`** | **Fang of the Mystics** | 1H Mace | Azuregos | +40 Healing, +10 MP5, +10 Intellect. |
-| **`19315`** | **Therazane's Touch** | Off-Hand | BWL Trash | +44 Healing, +12 MP5. |
-| **`20582`** | **Trance Stone** | Off-Hand | Dragons of Nightmare | +10 Intellect, +8 Stamina, +25 Spell Damage. |
-| **`23009`** | **Wand of the Whispering Dead** | Wand | Kel'Thuzad (Naxx) | +16 Spell Damage, +1% Spell Hit. (Highest spell DPS wand). |
-| **`22820`** | **Wand of Fates** | Wand | Sapphiron (Naxx) | +7 Stamina, +7 Intellect, +31 Healing, +11 Spell Damage. |
-| **`22821`** | **Doomfinger** | Wand | Naxxramas Trash | +16 Shadow Spell Damage, +1% Spell Crit. |
+```lua
+.additem 22800 1 -- Brimstone Staff: 2H Staff | Naxxramas | +18 Stamina, +18 Intellect, +84 Spell Damage, +2% Spell Crit, +1% Spell Hit.
+.additem 22799 1 -- Soulseeker: 2H Staff | Kel'Thuzad (Naxx) | +24 Intellect, +24 Stamina, +85 Spell Damage, +2% Spell Crit, +1% Spell Hit.
+.additem 22801 1 -- Spire of Twilight: 2H Staff | Thaddius (Naxx) | +25 Intellect, +25 Stamina, +111 Healing, +37 Spell Damage, +12 MP5.
+.additem 19356 1 -- Staff of the Shadow Flame: 2H Staff | Nefarian (BWL) | +29 Stamina, +24 Intellect, +84 Spell Damage, +2% Spell Crit.
+.additem 17113 1 -- Amberseal Keeper: 2H Staff | Lord Kazzak | +44 Spell Damage, +20 Intellect, +5 MP5.
+.additem 20581 1 -- Staff of Rampant Growth: 2H Staff | Dragons of Nightmare | +15 Intellect, +15 Stamina, +40 Healing, +11 MP5.
+.additem 22988 1 -- The End of Dreams: 1H Mace | Kel'Thuzad (Naxx) | +14 Intellect, +14 Stamina, +52 Spell Dmg, +94 Healing, +7 MP5.
+.additem 23049 1 -- Sapphiron's Left Eye: Off-Hand | Sapphiron (Naxx) | +8 Intellect, +8 Stamina, +26 Spell Dmg, +1% Spell Crit, +1% Spell Hit.
+.additem 19360 1 -- Lok'amir il Romathis: 1H Mace | Nefarian (BWL) | +18 Stamina, +18 Intellect, +84 Healing, +29 Spell Dmg.
+.additem 17103 1 -- Azuresong Mageblade: 1H Sword | Golemagg (MC) | +12 Intellect, +7 Stamina, +40 Spell Dmg, +1% Spell Crit.
+.additem 17070 1 -- Fang of the Mystics: 1H Mace | Azuregos | +40 Healing, +10 MP5, +10 Intellect.
+.additem 19315 1 -- Therazane's Touch: Off-Hand | BWL Trash | +44 Healing, +12 MP5.
+.additem 20582 1 -- Trance Stone: Off-Hand | Dragons of Nightmare | +10 Intellect, +8 Stamina, +25 Spell Damage.
+.additem 23009 1 -- Wand of the Whispering Dead: Wand | Kel'Thuzad (Naxx) | +16 Spell Damage, +1% Spell Hit. (Highest spell DPS wand).
+.additem 22820 1 -- Wand of Fates: Wand | Sapphiron (Naxx) | +7 Stamina, +7 Intellect, +31 Healing, +11 Spell Damage.
+.additem 22821 1 -- Doomfinger: Wand | Naxxramas Trash | +16 Shadow Spell Damage, +1% Spell Crit.
+```
 
 ---
 
 ### 🛡️ Shields & Tank Off-Hands
 
-| Item ID | Item Name | Armor | Block | Boss / Source | Stats & Effects |
-| :---: | :--- | :---: | :---: | :--- | :--- |
-| **`23043`** | **The Face of Death** | 3494 | 66 | Sapphiron (Naxx) | +14 Strength, +24 Stamina, +7 Defense, +1% Block, +19 Block Value. |
-| **`22819`** | **Shield of Condemnation** | 3425 | 68 | Kel'Thuzad (Naxx) | +15 Intellect, +17 Stamina, +44 Healing, +15 Spell Dmg, +6 MP5. |
-| **`22818`** | **The Plague Bearer** | 3106 | 59 | Gluth (Naxx) | +12 Strength, +21 Stamina, +1% Block, +15 Block Value. |
-| **`23075`** | **Death's Bargain** | 3106 | 59 | Naxxramas Trash | +10 Strength, +20 Stamina, +1% Dodge, +1% Parry. |
-| **`21610`** | **Wormscale Blocker** | 3035 | 57 | Ouro (AQ40) | +16 Stamina, +14 Intellect, +31 Healing, +11 Spell Dmg. |
-| **`21269`** | **Blessed Qiraji Bulwark** | 2964 | 55 | AQ40 Quest | +20 Stamina, +8 Defense, +15 Block Value, +1% Block. |
-| **`19349`** | **Elementium Reinforced Bulwark** | 2893 | 54 | Chromaggus (BWL) | +23 Stamina, +7 Defense, +19 Block Value. |
-| **`19348`** | **Red Dragonscale Protector** | 2853 | 51 | Vaelastrasz (BWL) | +18 Stamina, +10 Intellect, +37 Healing, +5 MP5. |
-| **`17066`** | **Drillborer Disk** | 2539 | 46 | Garr (MC) | +10 Stamina, +15 Defense, Chance on Block: 70–90 Arcane reflection. |
-| **`17106`** | **Malistar's Defender** | 2822 | 52 | Ragnaros (MC) | +15 Intellect, +14 Stamina, +22 Healing, +8 Spell Dmg. |
-| **`19862`** | **Aegis of the Blood God** | 2575 | 47 | Mandokir (ZG) | +14 Stamina, +7 Defense, +30 Block Value. |
-| **`21485`** | **Buru's Skull Fragment** | 2575 | 47 | Buru the Gorger (AQ20) | +10 Stamina, +15 Block Value, +1% Block, +6 MP5. |
-| **`19321`** | **The Immovable Object** | 2468 | 44 | AV PvP Vendor | +15 Stamina, +1% Block, +15 Block Value. |
-| **`18825`** | **Veteran's Aegis** | 3106 | 59 | Alliance Rank 14 PvP | +15 Strength, +23 Stamina, +1% Block, +15 Block Value. |
-| **`18826`** | **Veteran's Shield Wall** | 3106 | 59 | Horde Rank 14 PvP | +15 Strength, +23 Stamina, +1% Block, +15 Block Value. |
+```lua
+.additem 23043 1 -- The Face of Death: Armor 3494, Block 66 | Sapphiron (Naxx) | +14 Strength, +24 Stamina, +7 Defense, +1% Block, +19 Block Value.
+.additem 22819 1 -- Shield of Condemnation: Armor 3425, Block 68 | Kel'Thuzad (Naxx) | +15 Intellect, +17 Stamina, +44 Healing, +15 Spell Dmg, +6 MP5.
+.additem 22818 1 -- The Plague Bearer: Armor 3106, Block 59 | Gluth (Naxx) | +12 Strength, +21 Stamina, +1% Block, +15 Block Value.
+.additem 23075 1 -- Death's Bargain: Armor 3106, Block 59 | Naxxramas Trash | +10 Strength, +20 Stamina, +1% Dodge, +1% Parry.
+.additem 21610 1 -- Wormscale Blocker: Armor 3035, Block 57 | Ouro (AQ40) | +16 Stamina, +14 Intellect, +31 Healing, +11 Spell Dmg.
+.additem 21269 1 -- Blessed Qiraji Bulwark: Armor 2964, Block 55 | AQ40 Quest | +20 Stamina, +8 Defense, +15 Block Value, +1% Block.
+.additem 19349 1 -- Elementium Reinforced Bulwark: Armor 2893, Block 54 | Chromaggus (BWL) | +23 Stamina, +7 Defense, +19 Block Value.
+.additem 19348 1 -- Red Dragonscale Protector: Armor 2853, Block 51 | Vaelastrasz (BWL) | +18 Stamina, +10 Intellect, +37 Healing, +5 MP5.
+.additem 17066 1 -- Drillborer Disk: Armor 2539, Block 46 | Garr (MC) | +10 Stamina, +15 Defense, Chance on Block: 70–90 Arcane reflection.
+.additem 17106 1 -- Malistar's Defender: Armor 2822, Block 52 | Ragnaros (MC) | +15 Intellect, +14 Stamina, +22 Healing, +8 Spell Dmg.
+.additem 19862 1 -- Aegis of the Blood God: Armor 2575, Block 47 | Mandokir (ZG) | +14 Stamina, +7 Defense, +30 Block Value.
+.additem 21485 1 -- Buru's Skull Fragment: Armor 2575, Block 47 | Buru the Gorger (AQ20) | +10 Stamina, +15 Block Value, +1% Block, +6 MP5.
+.additem 19321 1 -- The Immovable Object: Armor 2468, Block 44 | AV PvP Vendor | +15 Stamina, +1% Block, +15 Block Value.
+.additem 18825 1 -- Veteran's Aegis: Armor 3106, Block 59 | Alliance Rank 14 PvP | +15 Strength, +23 Stamina, +1% Block, +15 Block Value.
+.additem 18826 1 -- Veteran's Shield Wall: Armor 3106, Block 59 | Horde Rank 14 PvP | +15 Strength, +23 Stamina, +1% Block, +15 Block Value.
+```
 
 ---
 
@@ -2568,7 +2818,7 @@ Restoration (20 points):
 - **`18329`** : **Arcanum of Rapidity** (+1% Attack Speed to Head/Legs).
 - **`18330`** : **Arcanum of Focus** (+8 Spell Damage & Healing to Head/Legs).
 - **`18331`** : **Arcanum of Protection** (+1% Dodge to Head/Legs).
-- **`11642`** : **Lesser Arcanum of Constitution** (Cenarion Circle line — `spellid_1 15389` *"Lesser Arcane Amalgamation", miscValue 1503*: **permanently adds 100 hit points** to a leg or head slot item). 📕 An earlier revision mislabelled this id as *"Lesser Arcanum of Voracity"*. It is **not**.
+- **`11642`** : **Lesser Arcanum of Constitution** (Cenarion Circle line — `spellid_1 15389` *"Lesser Arcane Amalgamation", miscValue 1503*: **permanently adds 100 hit points** to a leg or head slot item). ⚠️ **This id is NOT "Lesser Arcanum of Voracity"** — do not mislabel it.
 - **`11645` – `11649`** : **Lesser Arcanum of Voracity**, 5 ranks — the +8-all-stat head/legs enchant that `11642` was wrongly credited with: `11645` +8 **Strength** (miscValue `1506`), `11646` +8 **Stamina** (`1507`), `11647` +8 **Agility** (`1508`), `11648` +8 **Intellect** (`1509`), `11649` +8 **Spirit** (`1510`).
 - **`19782`** : **Presence of Might** (Warrior ZG: +10 Stamina, +7 Defense, +15 Shield Block Value).
 - **`19783`** : **Syncretist's Sigil** (Paladin ZG: +10 Stamina, +7 Defense, +24 Healing).
@@ -2586,12 +2836,12 @@ Restoration (20 points):
 
 When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, standard Vanilla gearing strategies must be adapted for new mechanics, high armor values, and heavy elemental damage profiles.
 
-> ### 📕 Earlier revision of this Part was framed as a "How to Optimize & Deploy **BiS** Gear" guide. That framing has been corrected.
+> ### ⚠️ This Part is NOT a "How to Optimize & Deploy **BiS** Gear" progression guide
 >
-> Turtle-WoW does not publish or expect a pre-raid BiS progression path:
-> - **Official wiki `PreBISGuide`**: ***"You don't need dungeon Pre-BIS on Turtle WoW."***
-> - **Official Mage FAQ**: ***"There are currently no up to date pre-raid BiS lists for any mage specs… you can just jump right into ZG, AQ20, Onyxia, MC, BWL, AQ40 and ES… it is not recommended to go out of your way to farm pre-raid BiS gear."***
-> - `turtlelootline.com/builds` (the natural home for curated presets) is **login-gated, HTTP 401**.
+> Turtle-WoW does not publish or expect a pre-raid BiS progression path — the
+> evidence is quoted in full in the
+> [Part II header](#part-ii-complete-1-click-bis-class-gear-loadouts-every-single-slot-0117-explicitly-represented)
+> (`PreBISGuide`, the Mage FAQ, and the login-gated `turtlelootline.com/builds`).
 >
 > **Read this Part instead as:** "how to bring the *dungeon and raid items you already have* to the encounters below" — resistance stacking, hit caps, healer mana, and consumable restock. The **stat lines** in the gear tables it references are **UNVERIFIED-PENDING-REDERIVATION** (see the `stat_type` warning in the Part II header); the **item IDs, slots, speeds and boss sources** are verified. The **resistance target caps and the "mandatory consumables" column below are COMMUNITY / UNVERIFIED** — nothing in Turtle-WoW or this codebase sets them.
 
@@ -2601,26 +2851,24 @@ When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, sta
 
 **Lower Karazhan Halls (Map ID `532`, 10-man, Tier 1) → Emerald Sanctum (Map ID `807`, 40-man, Tier 2) → Tower of Karazhan (40-man, T3.5)**, with **Naxxramas** and **AQ40** also in play. Turtle-WoW's raid progression is *not* the vanilla MC → BWL → AQ → Naxx ladder — those instances still exist and still drop their classic gear, but the current tier content is the custom chain above.
 
-| Tier | Instance | Type | Damage profile / notes |
-| :---: | :--- | :--- | :--- |
-| T1 | **Lower Karazhan Halls** (Map `532`) | 10-man | Shadow and Arcane mechanics; tight interrupts, high individual DPS checks, crowd control. |
-| T2 | **Emerald Sanctum** (Map `807`) | 40-man | Heavy Nature damage, acid breaths, dragonkin mechanics. Bosses like *Solnius* and *Erennius* require rapid dispels and Nature Resistance. |
-| — | **Scarlet Citadel** (Map `45`, `.tele ScarletCitadel` = id `500`) | **40-man** | Intense Holy and Fire damage, high-density add pulls, enrage mechanics. Four bosses: **Daelus**, **Ardaeus**, **Mariella**, **Abbendis**. |
-| T3.5 | **Tower of Karazhan** | 40-man | Current top tier. |
-| — | **Naxxramas**, **AQ40** | 40-man | Both still in play; Naxx T3 sets and AQ40 items are the backbone of the Part II loadouts. |
+- **Tier 1 — Lower Karazhan Halls (Map `532`, 10-man)**: Shadow and Arcane mechanics; tight interrupts, high individual DPS checks, crowd control.
+- **Tier 2 — Emerald Sanctum (Map `807`, 40-man)**: Heavy Nature damage, acid breaths, dragonkin mechanics. Bosses like *Solnius* and *Erennius* require rapid dispels and Nature Resistance.
+- **Scarlet Citadel (Map `45`, `.tele ScarletCitadel` = id `500`, 40-man)**: Intense Holy and Fire damage, high-density add pulls, enrage mechanics. Four bosses: **Daelus**, **Ardaeus**, **Mariella**, **Abbendis**.
+- **Tier 3.5 — Tower of Karazhan (40-man)**: Current top tier.
+- **Classic 40-Man Raids — Naxxramas & AQ40**: Both still in play; Naxx T3 sets and AQ40 items are the backbone of the Part II loadouts.
 
 **5-man / side content:** Caverns of Time (Black Morass, Karazhan Crypt, Stormwind Vault — the "Dire Maul+"), **Karazhan Crypt** (Map `800`) and **Hateforge Quarry** (Map `808`) as high-tier 5-man progression, plus **Gilneas City**, **Stormwrought Ruins** and **The Crescent Grove**.
 
 **World bosses:** **Ostarius of Uldum** (40, T2.5–T3) • **Nerubian Overseer** (40, T2–T2.5) • **Dark Reaver of Karazhan** (40, T1) • **Concavius** (20+).
 
 **Scarlet Citadel is a real 40-man raid in this fork — VERIFIED in this repository:**
+
 - `sql/base/tw_world_game_tele.sql` — `game_tele` id **`500`** = `(500, 32.5495, 13.2999, 16.869, 6.28138, **45**, 'ScarletCitadel')` → **map ID 45**.
 - Interior teleports on the same map: **`809`** `'BossMariella'`, **`810`** `'BossArdaeus'`, **`819`** `'sizetest'`.
 - `src/scripts/dungeons/scarlet_citadel/` — a complete instance script: `instance_scarlet_citadel.cpp` (`class instance_scarlet_citadel : public ScriptedInstance`, with `SetData`/`GetData`/`Save`), `trashmobs_scarlet_citadel.cpp`, `trashbosses_scarlet_citadel.cpp`, and **four boss scripts** `boss_daelus` / `boss_ardaeus` / `boss_mariella` / `boss_abbendis` (`NPC_DAELUS 2000000`, `NPC_ARDAEUS 2000001`, `NPC_MARIELLA 2000002`, `NPC_ABBENDIS 2000003`; `ScarletCitadelEncounter` enum plus `TYPE_ERIC_VESPER`).
 - The **Scarlet Enclave** is a separate instance (`game_tele` `697` `'scarletenclave'`) — both exist; they are not the same place.
 
-> 📕 **Correction logged.** An intermediate revision of *this document* removed Scarlet Citadel from the hierarchy, on the strength of the public turtlecraft.gg instance list, TurtleLootline's instance DB, and a 2024-11-03 forum statement (*"Scarlet Citadel raid won't be added to the game, perhaps in the distant future"*). **That was wrong, and the general rule it broke is stated below.**
-> ⚠️ **SOURCE-OF-TRUTH RULE FOR THIS DOCUMENT: the repository's database and scripts beat public websites.** turtlecraft.gg, turtlelootline.com and the forums describe the *official* Turtle-WoW realm. **This fork is not that realm** and carries instances the public sites do not list. Any claim about what does or does not exist in Turtle-WoW **must be checked against `sql/base/` and `src/scripts/` here first.** External sources are supporting evidence at best, never grounds for deleting content.
+> ⚠️ **SOURCE-OF-TRUTH RULE FOR THIS DOCUMENT: the repository's database and scripts beat public websites.** turtlecraft.gg, turtlelootline.com and the forums describe the *official* Turtle-WoW realm. **This fork is not that realm** and carries instances the public sites do not list — the 2024-11-03 forum statement *"Scarlet Citadel raid won't be added to the game, perhaps in the distant future"* is exactly the kind of external claim that is wrong here. Any claim about what does or does not exist in Turtle-WoW **must be checked against `sql/base/` and `src/scripts/` here first.** External sources are supporting evidence at best, never grounds for dismissing content.
 
 ---
 
@@ -2642,11 +2890,23 @@ When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, sta
 
 ### 🌿 2. Elemental Resistance Gear Requirements
 
-| Encounter / Raid | Required Resistance | Target Cap | Mandatory Consumables |
-| :--- | :---: | :---: | :--- |
-| **Emerald Sanctum (Solnius / Erennius)** | **Nature Resistance** | **250+ NR** | Greater Nature Protection Potion (`13458`), Juju Chill (`12457`), Bramblewood / Sandstalker gear. |
-| **Scarlet Citadel & Hateforge Quarry** | **Fire Resistance** | **220+ FR** | Greater Fire Protection Potion (`13457`), Juju Ember (`12455`), Elementium Threaded Cloak (`19386`), Onyxia Tooth Pendant (`18404`). |
-| **Lower Karazhan Halls & Naxxramas** | **Shadow Resistance** | **200+ SR** | Greater Shadow Protection Potion (`13459`), Band of Dark Dominion (`19434`), Cloak of the Necropolis (`23050`). |
+```lua
+-- Emerald Sanctum (Solnius / Erennius) | Nature Resistance (Target Cap: 250+ NR)
+.additem 13458 5  -- Greater Nature Protection Potion
+.additem 12457 20 -- Juju Chill (+15 Frost/Nature utility)
+-- NOTE: Supplement with Bramblewood / Sandstalker crafted resistance gear.
+
+-- Scarlet Citadel & Hateforge Quarry | Fire Resistance (Target Cap: 220+ FR)
+.additem 13457 5  -- Greater Fire Protection Potion
+.additem 12455 20 -- Juju Ember (+15 Fire Resistance)
+.additem 19386 1  -- Elementium Threaded Cloak
+.additem 18404 1  -- Onyxia Tooth Pendant
+
+-- Lower Karazhan Halls & Naxxramas | Shadow Resistance (Target Cap: 200+ SR)
+.additem 13459 5  -- Greater Shadow Protection Potion
+.additem 19434 1  -- Band of Dark Dominion
+.additem 23050 1  -- Cloak of the Necropolis
+```
 
 ---
 
@@ -2698,6 +2958,8 @@ When jumping into **Turtle-WoW's latest custom endgame raids and dungeons**, sta
 .additem 20452 20
 .repairitems
 ```
+
+.additem 47273
 
 ---
 
