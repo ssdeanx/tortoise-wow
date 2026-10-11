@@ -1,3 +1,36 @@
+---
+name: Open World Bot Control, Autonomous Strategies & Real-Time Feedback
+description: Operator reference for driving idle and party bots across the open world on Turtle-WoW — the .rndbot simulation and lag-governor commands, bot persistence and .bot create generation, the full co/nc/react/de strategy catalog, tactical inspection whispers, loot-roll feedback, and RTS click-to-move control. Use it when tuning realm-wide bot behaviour, diagnosing a strategy token that is silently ignored, or writing /p and /w bot macros.
+version: 1.0.0
+platform: Turtle-WoW 1.18.1 (Build 7272)
+stack: CMaNGOS + mod-playerbots (ike3 / r-o-sh) + mod-dungeon-clear
+glob:
+  - modules/mod-playerbots/src/playerbot/RandomPlayerbotMgr.cpp
+  - modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp
+  - modules/mod-playerbots/src/playerbot/PlayerbotAI.cpp
+  - modules/mod-playerbots/src/playerbot/ChatFilter.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/StrategyContext.h
+  - modules/mod-playerbots/src/playerbot/strategy/triggers/ChatTriggerContext.h
+  - modules/mod-playerbots/src/playerbot/strategy/actions/ChatActionContext.h
+  - modules/mod-playerbots/src/playerbot/strategy/generic/ChatCommandHandlerStrategy.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/actions/ChangeStrategyAction.cpp
+  - modules/mod-dungeon-clear/src/Ai/Dungeon/DungeonClear/DungeonClearTriggerContext.h
+  - modules/mod-dungeon-clear/src/Ai/Dungeon/DungeonClear/DungeonClearActionContext.h
+  - src/game/Chat/Chat.cpp
+  - run/aiplayerbot.conf
+tags:
+  - open-world
+  - random-bots
+  - strategies
+  - bot-inspection
+  - chat-filters
+  - rts-control
+  - lag-governor
+  - formations
+  - loot-feedback
+  - turtle-wow
+---
+
 # Volume 08: Open World Bot Control, Autonomous Strategies & Real-Time Feedback
 
 > **Target Core**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework + Eluna Engine  
@@ -10,6 +43,9 @@
 1. [Open World Population & Autonomous Simulation Engine](#1-open-world-population--autonomous-simulation-engine)
 2. [Realm Health, Performance & Lag Governor Tuning](#2-realm-health-performance--lag-governor-tuning)
 3. [Bot Persistence & Dynamic World Spawning](#3-bot-persistence--dynamic-world-spawning)
+   - [A. World Persistence (`.bot always`)](#a-world-persistence-bot-always)
+   - [B. Group Assembly (`.bot group`)](#b-group-assembly-bot-group)
+   - [C. Custom Bot Character Generator (`.bot create`)](#c-custom-bot-character-generator-bot-create)
 4. [Master Strategy Engine Catalog (`co` / `nc` / `de` / `react`)](#4-master-strategy-engine-catalog-co--nc--de--react)
    - [Combat Strategies (`co`)](#combat-strategies-co)
    - [Non-Combat Strategies (`nc`)](#non-combat-strategies-nc)
@@ -20,6 +56,8 @@
    - [Loot & Roll Feedback](#loot--roll-feedback)
    - [Tactical RTS Click-to-Move Control (`rtsc`)](#tactical-rts-click-to-move-control-rtsc)
 6. [Master Macro UI Cheat Sheet](#6-master-macro-ui-cheat-sheet)
+   - [🛡️ Macro 1: Tank & Threat Lock](#-macro-1-tank--threat-lock) · [🏃 Macro 2: Panic Disengage & Mass Regroup](#-macro-2-panic-disengage--mass-regroup)
+   - [🗺️ Macro 3: Open World Mob Farming Mode](#-macro-3-open-world-mob-farming-mode) · [🔍 Macro 4: Full Party Status Audit](#-macro-4-full-party-status-audit)
 
 ---
 
@@ -27,15 +65,38 @@
 
 The open-world simulation engine (`RandomPlayerbotMgr.cpp`) governs hundreds of bots exploring, questing, farming, and traveling across Kalimdor and the Eastern Kingdoms:
 
-| Command | Target Scope | Description | Example |
-| :--- | :---: | :--- | :--- |
-| **`.rndbot grind`** | `[name\|%]` | Dispatches idle bots to travel to level-appropriate zones and farm mobs for XP and gold. | `.rndbot grind %` / `.rndbot grind Dunpriest` |
-| **`.rndbot rpg`** | `[name\|%]` | Orders bots to visit inns, cities, vendors, and trainers to live an autonomous RPG lifestyle (crafting, training, chatting). | `.rndbot rpg %` |
-| **`.rndbot teleport`** | `[name\|%]` | Instantly teleports bot(s) to a randomized level-appropriate zone across the world. | `.rndbot teleport %` |
-| **`.rndbot revive`** | `[name\|*]` | Instantly resurrects all dead or ghost bots worldwide at 100% health and mana. | `.rndbot revive *` |
-| **`.rndbot upgrade`** | `[name\|%]` | Scans bots and upgrades equipment and spells matching their current level brackets. | `.rndbot upgrade %` |
-| **`.rndbot refresh`** | `[name\|*]` | Soft-reboots bots, clearing combat deadlocks, pathing loops, and broken AI states. | `.rndbot refresh *` |
-| **`.rndbot change_strategy`** | `[name\|%]` | Rerolls active combat and non-combat strategies across specified bots. | `.rndbot change_strategy %` |
+```lua
+-- Open-World Bot Management Commands (RandomPlayerbotMgr.cpp)
+
+-- .rndbot grind [name|%]
+-- Dispatches idle bots to travel to level-appropriate zones and farm mobs for XP and gold
+.rndbot grind %
+.rndbot grind Dunpriest
+
+-- .rndbot rpg [name|%]
+-- Orders bots to visit inns, cities, vendors, and trainers to live an autonomous RPG lifestyle
+.rndbot rpg %
+
+-- .rndbot teleport [name|%]
+-- Instantly teleports bot(s) to a randomized level-appropriate zone across the world
+.rndbot teleport %
+
+-- .rndbot revive [name|*]
+-- Instantly resurrects all dead or ghost bots worldwide at 100% health and mana
+.rndbot revive *
+
+-- .rndbot upgrade [name|%]
+-- Scans bots and upgrades equipment and spells matching their current level brackets
+.rndbot upgrade %
+
+-- .rndbot refresh [name|*]
+-- Soft-reboots bots, clearing combat deadlocks, pathing loops, and broken AI states
+.rndbot refresh *
+
+-- .rndbot change_strategy [name|%]
+-- Rerolls active combat and non-combat strategies across specified bots
+.rndbot change_strategy %
+```
 
 ---
 
@@ -43,14 +104,34 @@ The open-world simulation engine (`RandomPlayerbotMgr.cpp`) governs hundreds of 
 
 The bot governor dynamically throttles bot activity to maintain smooth tick rates (`RandomPlayerbotMgr.cpp`):
 
-| Command | Sec | Syntax & Arguments | Description | Example |
-| :--- | :---: | :--- | :--- | :--- |
-| **`.rndbot stats`** | 0 | `.rndbot stats` | Spawns a background thread to format complete realm population telemetry: online count, level brackets, race/class breakdown, and roles (Tank/Heal/DPS). | `.rndbot stats` |
-| **`.rndbot diff`** | 0 | `.rndbot diff [p_diff e_diff]` | Displays tick latency metrics: `Avg diff`, `Max diff`, Character DB ping, sessions online, and active bots. Pass arguments to tune target diffs. | `.rndbot diff 100 200` |
-| **`.rndbot pid`** | 0 | `.rndbot pid [p i d]` | Displays or tunes the real-time Proportional-Integral-Derivative (PID) dynamic controller that balances bot activity based on server tick load. | `.rndbot pid 0.05 0.001 0.05` |
-| **`.rndbot update`** | 0 | `.rndbot update` | Forces an immediate AI update tick across the entire realm (`UpdateAIInternal(0)`), evaluating zone population, quests, and login cycles. | `.rndbot update` |
-| **`.rndbot clean map`** | 0 | `.rndbot clean map` | Spawns detached threads to unload unreferenced map geometry and VMaps (`unloadMapAndVMaps`) across all maps, freeing server RAM. | `.rndbot clean map` |
-| **`.rndbot reset`** | 0 | `.rndbot reset` | Wipes persistent random bot records from database (`DELETE FROM ai_playerbot_random_bots WHERE event != 'temporary'`). | `.rndbot reset` |
+```lua
+-- Realm Health, Performance & Lag Governor Tuning (RandomPlayerbotMgr.cpp)
+-- Note: All .rndbot commands run at Security Level 0 (SEC_PLAYER).
+
+-- .rndbot stats
+-- Spawns background thread formatting complete realm telemetry: online count, level brackets, race/class breakdown, roles (Tank/Heal/DPS)
+.rndbot stats
+
+-- .rndbot diff [p_diff e_diff]
+-- Displays tick latency metrics: Avg diff, Max diff, Character DB ping, sessions online, active bots. Pass args to tune target diffs.
+.rndbot diff 100 200
+
+-- .rndbot pid [p i d]
+-- Displays or tunes real-time Proportional-Integral-Derivative (PID) controller balancing bot activity based on server tick load
+.rndbot pid 0.05 0.001 0.05
+
+-- .rndbot update
+-- Forces immediate AI update tick across entire realm (UpdateAIInternal(0)), evaluating zone population, quests, login cycles
+.rndbot update
+
+-- .rndbot clean map
+-- Spawns detached threads unloading unreferenced map geometry and VMaps (unloadMapAndVMaps) across all maps to free RAM
+.rndbot clean map
+
+-- .rndbot reset
+-- CAUTION: Wipes persistent random bot records from database (DELETE FROM ai_playerbot_random_bots WHERE event != 'temporary')
+.rndbot reset
+```
 
 > ⚠️ **Every `.rndbot` sub-command is security level 0 — there are no per-command gates.** `rndbot` is a *single* entry in the core chat table at `SEC_PLAYER` (`src/game/Chat/Chat.cpp:1013`), and `RandomPlayerbotMgr::HandleRandomPlayerbotCommand` (`RandomPlayerbotMgr.cpp:3996-4108`) dispatches straight into the handler map without any further security check. `HandleConsoleReset` (`:5082`), `HandleConsoleUpdate` (`:5122`), `HandleConsolePid` (`:5131`), `HandleConsoleDiff` (`:5150`) and `HandleConsoleCleanMap` (`:5182`) each take only a `std::string param`.
 >
@@ -105,26 +186,61 @@ The Strategy Engine dictates bot decision-making (`StrategyContext.h`). Strategi
 
 Combat strategies activate when the bot enters combat. There is no per-state header: both state variants live in the single pair `strategy/actions/ChangeStrategyAction.{h,cpp}` — `ChangeCombatStrategyAction::Execute` at `ChangeStrategyAction.cpp:8` and `ChangeNonCombatStrategyAction::Execute` at `:46`:
 
-| Strategy Token | Description | Best Used For |
-| :--- | :--- | :--- |
-| **`threat`** | Maximizes high-threat abilities (Taunt, Sunder Armor, Shield Slam, Righteous Fury, Growl). | Main Tanks |
-| **`dps`** | Standard damage rotation prioritizing high-damage cooldowns. | Melee & Ranged DPS |
-| **`aoe`** / **`dps aoe`** | Prioritizes Area of Effect spells (Blizzard, Rain of Fire, Whirlwind, Multi-Shot, Consecration). | Large trash packs |
-| **`heal`** | Prioritizes party health triage, defensive cooldowns, and direct healing. | Primary Healers |
-| **`preheal`** | Pre-casts healing spells on tank before damage lands. | High burst encounters |
-| **`focus heal targets`** | Restricts healing exclusively to designated focus targets. | Tank preservation |
-| **`conserve mana`** / **`save mana`** | Throttles high-cost spells when mana drops below 40%. | Long raid encounters |
-| **`avoid aoe`** | Detects enemy ground spells and immediately strafes out of damaging visual circles. | Boss fights (e.g. Flamestrike, Poison Clouds) |
-| **`kite`** | Maintains maximum range, running and slowing melee attackers. | Hunters / Frost Mages |
-| **`potions`** | Automatically consumes level-appropriate healing and mana potions on cooldown. | All party members |
-| **`racials`** | Automatically activates racial abilities (Blood Fury, Berserking, Stoneform, Will of the Forsaken). | All races |
-| **`cast time`** | Prioritizes instant-cast abilities while moving, casting hard spells only when stationary. | High mobility encounters |
-| **`behind`** | Maneuvers behind the target to avoid parries/blocks and enable Backstab/Shred. | Rogues / Feral Druids |
-| **`close`** | Forces caster/hybrid to close to melee range. | Melee-weaving |
-| **`ranged`** | Forces character to stay at maximum spell/ranged range. | Casters / Hunters |
-| **`dungeon clear on`** / **`dungeon clear off`** | ⚠️ **Not a `+`/`-` strategy token** — this is a toggle. `dungeon clear on` turns autonomous dungeon clearing on, `dungeon clear off` turns it off. Equivalently `.dc on` / `.dc off`. | Autonomous dungeon runs |
+```lua
+-- Combat Strategies (co) - ChangeStrategyAction.cpp:8
 
-The `dungeon clear` row is the **only** row in this catalog that is not a bare token. Its full chain lives in `mod-dungeon-clear`:
+-- threat: Maximizes high-threat abilities (Taunt, Sunder Armor, Shield Slam, Righteous Fury, Growl). Best for Main Tanks.
+/p co +threat
+
+-- dps: Standard damage rotation prioritizing high-damage cooldowns. Best for Melee & Ranged DPS.
+/p co +dps
+
+-- aoe / dps aoe: Prioritizes Area of Effect spells (Blizzard, Rain of Fire, Whirlwind, Multi-Shot, Consecration). Best for large trash packs.
+/p co +aoe
+
+-- heal: Prioritizes party health triage, defensive cooldowns, and direct healing. Best for Primary Healers.
+/p co +heal
+
+-- preheal: Pre-casts healing spells on tank before damage lands. Best for high burst encounters.
+/p co +preheal
+
+-- focus heal targets: Restricts healing exclusively to designated focus targets. Best for tank preservation.
+/p co +focus heal targets
+
+-- conserve mana / save mana: Throttles high-cost spells when mana drops below 40%. Best for long raid encounters.
+/p co +conserve mana
+
+-- avoid aoe: Detects enemy ground spells and immediately strafes out of damaging visual circles. Best for boss fights (Flamestrike, Poison Clouds).
+/p co +avoid aoe
+
+-- kite: Maintains maximum range, running and slowing melee attackers. Best for Hunters / Frost Mages.
+/p co +kite
+
+-- potions: Automatically consumes level-appropriate healing and mana potions on cooldown. Best for all party members.
+/p co +potions
+
+-- racials: Automatically activates racial abilities (Blood Fury, Berserking, Stoneform, Will of the Forsaken). Best for all races.
+/p co +racials
+
+-- cast time: Prioritizes instant-cast abilities while moving, casting hard spells only when stationary. Best for high mobility encounters.
+/p co +cast time
+
+-- behind: Maneuvers behind the target to avoid parries/blocks and enable Backstab/Shred. Best for Rogues / Feral Druids.
+/p co +behind
+
+-- close: Forces caster/hybrid to close to melee range. Best for melee-weaving.
+/p co +close
+
+-- ranged: Forces character to stay at maximum spell/ranged range. Best for Casters / Hunters.
+/p co +ranged
+
+-- dungeon clear on / dungeon clear off: Autonomous dungeon run toggle (equivalently .dc on / .dc off).
+-- NOTE: Not a + / - strategy token! Use the toggle directly:
+dungeon clear on
+dungeon clear off
+```
+
+The `dungeon clear` entry is the **only** entry in this catalog that is not a bare token. Its full chain lives in `mod-dungeon-clear`:
 
 `dungeon clear on` / `dungeon clear off` triggers (`DungeonClearTriggerContext.h:58,60`) → `TriggerNode`s (`Strategy/DungeonClearStrategy.cpp:363,365`) → the `dc on` / `dc off` actions (`DungeonClearActionContext.h:55-56`).
 
@@ -136,20 +252,45 @@ There is no trigger or node named plain `dungeon clear`, so `/p co +dungeon clea
 
 Non-combat strategies govern out-of-combat behavior, recovery, gathering, and social interaction:
 
-| Strategy Token | Description | Best Used For |
-| :--- | :--- | :--- |
-| **`food`** | Automatically sits and eats food/drink when health or mana drops below rest threshold. | Downtime recovery |
-| **`loot`** | Autonomously approaches corpses and loots items. | Trash cleanup |
-| **`gather`** | Detects and gathers nearby herbalism, mining, and skinning nodes. | Open-world farming |
-| **`roll`** | Automatically rolls Need, Greed, or Pass on group loot prompts based on item suitability. | Dungeons & Raids |
-| **`mount`** | Automatically mounts level-appropriate mount when master mounts or travels long distances. | Open-world travel |
-| **`stealth`** | Automatically activates Stealth or Prowl out of combat. | Rogues / Druids |
-| **`rpg`** | Engages in autonomous social behaviors (wandering, sitting, chatting, inspecting items). | City & tavern life |
-| **`travel`** | Follows calculated world travel routes to quest objectives and flight masters. | Open-world questing |
-| **`wbuff`** | Travels to world buff drop locations (Onyxia head, Rend buff, Hakkar buff). | Raid prep |
-| **`fish`** / **`tfish`** | Equips fishing pole and casts fishing line near water. | Fishing automation |
-| **`chat`** | Listens for whispers and chat channels and generates replies. | Social interaction |
-| **`ai chat`** | Routes chat replies through the LLM personality subsystem. | Roleplaying |
+```lua
+-- Non-Combat Strategies (nc) - ChangeStrategyAction.cpp:46
+
+-- food: Automatically sits and eats food/drink when health or mana drops below rest threshold (downtime recovery).
+/p nc +food
+
+-- loot: Autonomously approaches corpses and loots items (trash cleanup).
+/p nc +loot
+
+-- gather: Detects and gathers nearby herbalism, mining, and skinning nodes (open-world farming).
+/p nc +gather
+
+-- roll: Automatically rolls Need, Greed, or Pass on group loot prompts based on item suitability (dungeons & raids).
+/p nc +roll
+
+-- mount: Automatically mounts level-appropriate mount when master mounts or travels long distances (open-world travel).
+/p nc +mount
+
+-- stealth: Automatically activates Stealth or Prowl out of combat (Rogues / Druids).
+/p nc +stealth
+
+-- rpg: Engages in autonomous social behaviors (wandering, sitting, chatting, inspecting items) (city & tavern life).
+/p nc +rpg
+
+-- travel: Follows calculated world travel routes to quest objectives and flight masters (open-world questing).
+/p nc +travel
+
+-- wbuff: Travels to world buff drop locations (Onyxia head, Rend buff, Hakkar buff) (raid prep).
+/p nc +wbuff
+
+-- fish / tfish: Equips fishing pole and casts fishing line near water (fishing automation).
+/p nc +fish
+
+-- chat: Listens for whispers and chat channels and generates replies (social interaction).
+/p nc +chat
+
+-- ai chat: Routes chat replies through the LLM personality subsystem (roleplaying).
+/p nc +ai chat
+```
 
 ---
 
@@ -157,14 +298,27 @@ Non-combat strategies govern out-of-combat behavior, recovery, gathering, and so
 
 Control how bots move in relation to master and enemies:
 
-| Strategy Token | Description |
-| :--- | :--- |
-| **`follow`** | Follows master maintaining standard follow formation (`SetFormationAction`). |
-| **`stay`** | Holds ground at current coordinates until commanded to move. |
-| **`runaway`** / **`flee`** | Sprints away from melee attackers to regroup at safe distance. |
-| **`guard`** | Holds ground at current location and attacks any hostile mob entering aggro radius. |
-| **`free`** | Disables tethering to master; bot wanders and acts autonomously. |
-| **`wander`** | Roams within a localized radius around anchor point. |
+```lua
+-- Movement & Positioning Strategies
+
+-- follow: Follows master maintaining standard follow formation (SetFormationAction).
+/p co +follow
+
+-- stay: Holds ground at current coordinates until commanded to move.
+/p stay
+
+-- runaway / flee: Sprints away from melee attackers to regroup at safe distance.
+/p flee
+
+-- guard: Holds ground at current location and attacks any hostile mob entering aggro radius.
+/p guard
+
+-- free: Disables tethering to master; bot wanders and acts autonomously.
+/p free
+
+-- wander: Roams within a localized radius around anchor point.
+/p wander
+```
 
 ---
 
@@ -188,17 +342,36 @@ Bots provide instantaneous feedback and inspection data via whispers (`ChatActio
 
 ### Tactical Inspection Whispers
 
-| Whisper Query | Action | Description of Feedback Returned |
-| :--- | :--- | :--- |
-| **`/w %t stats`** | `StatsAction` | Reports current Level, Health/Mana, Armor, Attack Power, Spell Power, Defense rating, and primary stats (Strength, Agility, Stamina, Intellect, Spirit). |
-| **`/w %t who`** | `WhoAction` | Reports current bot action, combat target name, health percentage, and active strategy state. |
-| **`/w %t where`** | `GoAction` | Dumps current Map ID, Zone name, Subzone name, and exact XYZ coordinates. |
-| **`/w %t spells`** | `ListSpellsAction` | Whispers complete list of learned spells, ranks, and cooldown timers. |
-| **`/w %t talents`** | `ChangeTalentsAction` | Reports allocated talent points across all three class talent trees. |
-| **`/w %t items`** *(or `c`)* | `TellItemCountAction` | Reports equipped gear, durability percentage, free bag slots, and total gold count. |
-| **`/w %t quests`** *(or `q`)* | `ListQuestsAction` | Dumps active quest log, quest objectives, and completion percentages. |
-| **`/w %t los`** | `TellLosAction` | Confirms whether bot has direct unobstructed Line of Sight (LoS) to target. |
-| **`/w %t reputation`** | `TellReputationAction` | Dumps reputation standings with major factions. |
+```lua
+-- Tactical Inspection Whispers (ChatActionContext.h)
+
+-- Stats: Reports Level, Health/Mana, Armor, Attack Power, Spell Power, Defense rating, and primary stats (Strength, Agility, Stamina, Intellect, Spirit)
+/w %t stats    -- StatsAction
+
+-- Who: Reports current bot action, combat target name, health percentage, and active strategy state
+/w %t who      -- WhoAction
+
+-- Where: Dumps current Map ID, Zone name, Subzone name, and exact XYZ coordinates
+/w %t where    -- GoAction
+
+-- Spells: Whispers complete list of learned spells, ranks, and cooldown timers
+/w %t spells   -- ListSpellsAction
+
+-- Talents: Reports allocated talent points across all three class talent trees
+/w %t talents  -- ChangeTalentsAction
+
+-- Items / Bags: Reports equipped gear, durability percentage, free bag slots, and total gold count (also: /w %t c)
+/w %t items    -- TellItemCountAction
+
+-- Quests: Dumps active quest log, quest objectives, and completion percentages (also: /w %t q)
+/w %t quests   -- ListQuestsAction
+
+-- Line of Sight: Confirms whether bot has direct unobstructed Line of Sight (LoS) to target
+/w %t los      -- TellLosAction
+
+-- Reputation: Dumps reputation standings with major factions
+/w %t reputation -- TellReputationAction
+```
 
 ---
 
