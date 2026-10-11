@@ -1,3 +1,38 @@
+---
+name: Eluna Scripting & Engine Development
+description: Agent-facing reference for authoring Eluna Lua scripts and C++ extensions on this Turtle-WoW CMaNGOS fork — what Eluna can and cannot do, the compiled VMangos method surface, the 16 working event registrars, reload semantics, timing and re-entrancy rules, and eight production blueprints for raids, dungeons, gossip NPCs, loot and playerbot coordination.
+version: 2.0.0
+platform: Turtle-WoW 1.18.1 (Build 7272)
+stack: CMaNGOS + Eluna Lua Engine (Lua 5.2.4) + mod-playerbots + mod-dungeon-clear
+glob:
+  - src/modules/Eluna/**/*.cpp
+  - src/modules/Eluna/**/*.h
+  - src/modules/Eluna/hooks/Hooks.h
+  - src/modules/Eluna/methods/VMangos/*.h
+  - src/modules/Eluna/methods/Methods.cpp
+  - src/modules/Eluna/extensions/*
+  - src/game/Eluna/CustomMethods.h
+  - src/game/ElunaScriptBridge.cpp
+  - src/game/CMakeLists.txt
+  - run/lua_scripts/raid_automation.lua
+  - run/mangosd.conf
+  - CMakeLists.txt
+tags:
+  - eluna
+  - lua
+  - scripting
+  - hooks
+  - events
+  - gameobject
+  - gossip
+  - creature-ai
+  - instances
+  - playerbots
+  - automation
+  - raid
+  - dungeons
+---
+
 # 05. Eluna Scripting & Core Development Engine Handbook
 
 > **Target Platform**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + Eluna Lua Engine
@@ -12,20 +47,24 @@
 ## 📑 Table of Contents
 
 1. [Unified 5-Volume Master Reference Architecture](#unified-5-volume-master-reference-architecture)
-2. [Master Macro UI Cheat Sheet (Lua Developer & Server Ops)](#1-master-macro-ui-cheat-sheet-lua-developer--server-ops)
+2. [Orientation: What Eluna Can and Cannot Do Here](#0-orientation-what-eluna-can-and-cannot-do-here)
+   - [The 16 registrars that actually exist](#16-registrars-actually-exist)
+   - [Eluna vs. EventAI vs. SmartAI vs. C++](#eluna-vs-eventai-vs-smartai-vs-c--pick-the-right-tool)
+   - [Where to start for raid and dungeon work](#where-to-start-for-raid-and-dungeon-work)
+3. [Master Macro UI Cheat Sheet (Lua Developer & Server Ops)](#1-master-macro-ui-cheat-sheet-lua-developer--server-ops)
 3. [Eluna Architecture & Runtime Configuration](#2-eluna-architecture--runtime-configuration)
    - [Engine Lifecycle & Script Discovery](#engine-lifecycle--script-discovery)
    - [Configuration Settings (mangosd.conf)](#configuration-settings-mangosdconf)
    - [In-Game Live Reload & Inspection Commands](#in-game-live-reload--inspection-commands)
 4. [Exhaustive Event Registration Matrix (Hooks.h)](#3-exhaustive-event-registration-matrix-hooksh)
-   - [⚠️ THE `RegisterMapEvent` TRAP — read before writing any hook](#%EF%B8%8F-read-first--registermapevent-is-a-trap)
+   - [⚠️ THE `RegisterMapEvent` TRAP — read before writing any hook](#-the-registermapevent-trap)
    - [Server & World Events (24 events)](#server--world-events-registerserverevent)
    - [Player Lifecycle & Combat Events (40+ IDs)](#player-lifecycle--combat-events-registerplayerevent)
    - [Creature & Boss AI Events (24 events)](#creature--boss-ai-events-registercreatureevent)
    - [GameObject & World Trigger Events (12 events)](#gameobject--world-trigger-events-registergameobjectevent)
-   - [Spell System & Aura Hooks — ⛔ NOT AVAILABLE](#spell-system--aura-hooks-registerspellevent--%E2%9D%B4-not-available-in-this-build)
-   - [Vehicle Events — ⛔ NOT AVAILABLE](#vehicle-events-registervehicleevent--%E2%9D%B4-not-available-in-this-build)
-   - [⛔ Hook Registrars That Do Not Exist At All](#%E2%9D%B4-hook-registrars-that-do-not-exist-at-all)
+   - [Spell System & Aura Hooks — ⛔ NOT AVAILABLE](#spell-system--aura-hooks-registerspellevent---not-available-in-this-build)
+   - [Vehicle Events — ⛔ NOT AVAILABLE](#vehicle-events-registervehicleevent---not-available-in-this-build)
+   - [⛔ Hook Registrars That Do Not Exist At All](#-hook-registrars-that-do-not-exist-at-all)
    - [Item Use & Equipment Events (8 events)](#item-use--equipment-events-registeritemevent)
    - [Gossip Dialog & Menu Interaction Events](#gossip-dialog--menu-interaction-events)
    - [Group, Guild, Battleground & Instance Events](#group-guild-battleground--instance-events)
@@ -43,7 +82,7 @@
    - [WorldPacket Class & Addon Messaging Engine](#worldpacket-class--addon-messaging-engine)
    - [Quest Class (Progression & Flags)](#quest-class-progression--flags)
    - [Database Query Engine (WorldDBQuery & CharDBQuery)](#database-query-engine-worlddbquery--chardbquery)
-   - [Object Variables Session Store — ✅ DEPLOYED (Session-Only)](#object-variables-session-store-objectvariablesext--%E2%9C%85-deployed-session-only)
+   - [Object Variables Session Store — ✅ DEPLOYED (Session-Only)](#object-variables-session-store-objectvariablesext---deployed-session-only)
    - [Turtle-WoW SpellInfo Compatibility Layer](#turtle-wow-spellinfo-compatibility-layer)
 6. [Complete Database Hot-Reload Target Catalog (.reload)](#5-complete-database-hot-reload-target-catalog-reload)
 7. [Engine Pitfalls & Robust Scripting Patterns](#6-engine-pitfalls--robust-scripting-patterns)
@@ -64,13 +103,174 @@
 
 ## Unified 5-Volume Master Reference Architecture
 
-| Volume | Handbook Title | Domain & Core Coverage | Direct Link |
-| :---: | :--- | :--- | :--- |
-| **01** | **[Game Master & World Administration](./01_game_master_handbook.md)** | **100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.** | [Open Volume 01](./01_game_master_handbook.md) |
-| **02** | **[Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)** | **Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.** | [Open Volume 02](./02_playerbot_and_raid_automation.md) |
-| **03** | **[World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)** | **647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements.** | [Open Volume 03](./03_turtle_world_and_teleports.md) |
-| **04** | **[Class Specs & Endgame Gear Directory](./04_class_specs_and_endgame_gear.md)** | **All 9 Classes**: per-class talent skeletons, 30 one-click gear loadout examples, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations (spell IDs + talent rows). Turtle-WoW publishes **no canonical builds**, so doc 04 tags every claim by verification tier rather than asserting optimal spreads. | [Open Volume 04](./04_class_specs_and_endgame_gear.md) |
-| **05** | **Eluna Scripting & Core Development Engine** | **Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.** | **Current File** |
+- **Volume 01: [Game Master & World Administration](./01_game_master_handbook.md)**
+  -- 100% of GM commands, player progression, cheats, security, spawning, moderation, tickets, reloads & diagnostics.
+- **Volume 02: [Playerbot & Raid Automation](./02_playerbot_and_raid_automation.md)**
+  -- Complete .bot & .rndbot control, whisper shortcuts, strategy tokens (co/nc), .dc dungeon clear solver & raid macros.
+- **Volume 03: [World, Dungeons & Teleports Directory](./03_turtle_world_and_teleports.md)**
+  -- 647+ .tele tokens, Turtle-WoW 1.18.1 custom instances (Crescent Grove, Hateforge, Karazhan Crypts, Scarlet Citadel), keys & attunements.
+- **Volume 04: [Class Specs & Endgame Gear Directory](./04_class_specs_and_endgame_gear.md)**
+  -- All 9 Classes: per-class talent skeletons, 30 one-click gear loadout examples, Tier 1/2/3 set IDs, weapons, trinkets, enchants & DB-verified ability citations (spell IDs + talent rows).
+- **Volume 05: Eluna Scripting & Core Development Engine** (Current File)
+  -- Eluna Lua API, live reloads (.reload eluna), Event 42 Custom Command dispatch, SpellInfo layer & C++ hook mechanics.
+
+---
+
+## 0. Orientation: What Eluna Can and Cannot Do Here
+
+Read this before §1. It answers "what is Eluna actually good for?" and — just
+as important — where it will refuse to help.
+
+### The one-paragraph version
+
+Eluna is a **Lua event layer over the live world**. It reacts to things that
+already happened (a player logged in, a creature died, a boss reached 50% HP)
+and lets you run Lua in response. It is excellent for **convenience layers,
+gating, orchestration and presentation**. It is **not** an encounter-state
+machine, not a quest-content editor, and not a way to change what a spell or
+item *is*.
+
+### 16 registrars actually exist
+
+This is the complete set. Anything not in this list does not exist as a Lua
+global — calling it gives `attempt to call a nil value`.
+
+```lua
+-- World start/stop, config load, map lifecycle, weather, auctions, addon messages
+RegisterServerEvent(eventId, function(event, ...) end)
+
+-- Login, level, combat, loot, quest, trade, chat, talents, death/resurrect
+RegisterPlayerEvent(eventId, function(event, player, ...) end)
+
+-- Spawn, death, combat, damage, waypoints, emote, summons, AI update
+RegisterCreatureEvent(entry, eventId, function(event, creature, ...) end)
+
+-- Spawn, use, loot state, destroyed, damaged, dialog
+RegisterGameObjectEvent(entry, eventId, function(event, go, ...) end)
+
+-- Instance scripts (accepts event IDs 1-7, keyed on mapId)
+RegisterMapEvent(mapId, eventId, function(event, instanceData, map, ...) end)
+
+-- Use, equip, unequip, expire, quest accept
+RegisterItemEvent(entry, eventId, function(event, player, item, ...) end)
+
+-- Join, leave, leader change, disband, invite
+RegisterGroupEvent(eventId, function(event, group, ...) end)
+
+-- Create, disband, member add/remove, bank events, MOTD
+RegisterGuildEvent(eventId, function(event, guild, ...) end)
+
+-- Battleground start/end
+RegisterBGEvent(eventId, function(event, bg, ...) end)
+
+-- Raw client<->server packets (send and receive)
+RegisterPacketEvent(opcode, function(event, packet, player) end)
+
+-- Creature gossip menu
+RegisterCreatureGossipEvent(entry, eventId, function(event, player, creature) end)
+
+-- Player-opened gossip menu
+RegisterPlayerGossipEvent(menuId, eventId, function(event, player, target) end)
+
+-- GameObject gossip menu
+RegisterGameObjectGossipEvent(entry, eventId, function(event, player, go) end)
+
+-- Item-triggered gossip
+RegisterItemGossipEvent(entry, eventId, function(event, player, item) end)
+
+-- WARNING: Registers successfully but is NEVER REACHED -- use RegisterMapEvent instead
+RegisterInstanceEvent(instanceId, eventId, function(event, instanceData, map) end)
+
+-- One named creature by GUID
+RegisterUniqueCreatureEvent(guid, instanceId, eventId, function(event, creature, ...) end)
+```
+
+Two more exist in the **AzerothCore and TrinityCore** trees but are **not
+compiled**: `RegisterSpellEvent` and `RegisterVehicleEvent`. Spell and vehicle
+*events* are enumerated in `hooks/Hooks.h` and appear in the Lua `events` table
+— but there is no registrar to bind them, so subscribing is impossible. Do not
+write them; see §3.
+
+### ⚠️ The `RegisterMapEvent` trap
+
+`RegisterInstanceEvent` accepts the call and returns success, but its bindings
+are **never reached**. Use:
+
+```lua
+RegisterMapEvent(<mapId>, <1-7>, function(event, map, diff) ... end)
+```
+
+`RegisterInstanceEvent` registers successfully and then silently does nothing —
+the worst possible failure mode, because it looks like it worked.
+
+### ~915 methods are live, and Player dominates
+
+Method counts taken from the compiled `methods/VMangos/*.h` registration tables:
+
+```lua
+-- Player: 267 methods
+-- Unit: 168 methods
+-- Globals: 91 methods
+-- Creature: 85 methods
+-- Item: 65 methods
+-- WorldObject: 41 methods
+-- Group: 27 methods
+-- WorldPacket: 23 methods
+-- GameObject: 20 methods
+-- Object: 19 methods
+```
+
+`Player` and `Unit` together are the bulk of the surface, which is why most
+useful automation is player- and creature-centric.
+
+### Eluna vs. EventAI vs. SmartAI vs. C++ — pick the right tool
+
+This is the decision that most often gets made wrong.
+
+- **NPC combat behaviour, aggro, spell casts, follow** -> **EventAI / SmartAI**
+  -- Data-driven, per-creature, zero code, already wired to every creature. Eluna's `on_ai_update` is a poor substitute — it fires on a tick and costs Lua time.
+- **Boss phases, adds, doors, wipes** -> **C++ instance script**
+  -- Eluna has no encounter state machine here. `InstanceData::GetBossState` is a read-only stub — there is no `SetBossState`. Writing a boss fight in Eluna means reimplementing state by hand.
+- **Quest / item / spell content** -> **SQL**
+  -- Eluna cannot create them. It reacts to them.
+- **Gossip NPCs, teleporters, healers, vendors** -> **Eluna** (Recommended)
+  -- The sweet spot — presentation and convenience, low risk.
+- **Chat commands, broadcasts, onboarding** -> **Eluna** (Recommended)
+  -- Pure convenience layer.
+- **Cross-system orchestration (bots + dc + loot + rewards)** -> **Eluna** (Recommended)
+  -- What `raid_automation.lua` is.
+- **Loot tables, spawn placement, vendor inventories** -> **SQL**
+  -- Data belongs in data.
+
+The rule: **Eluna reacts, data defines, code simulates.** If you are reaching
+for Eluna to *simulate* a boss, you want C++.
+
+### What it genuinely cannot do
+
+- **No encounter state machine.** No `SetBossState`, no `LoadObjectData`, no
+  `UpdateCriteria`. All 35 instance scripts use the 1.12
+  `SetData`/`GetData`/`Save`/`Load` pattern.
+- **No spell or vehicle event subscription** (see registrars above).
+- **No server-wide creature death hook.** `CreatureHooks.cpp` has no wildcard
+  dispatch. Per-creature only.
+- **No content authoring.** Quests, items, spells and loot tables are SQL.
+- **No cross-thread work.** Lua runs on the world thread; never yield across an
+  Eluna boundary (§7).
+
+### Where to start for raid and dungeon work
+
+Since raids and dungeons are the main interest, the realistic split is:
+
+- **Encounter mechanics → C++** under `src/scripts/`, using `SetData`/`GetData`.
+  See [Turtle WoW dungeon coverage](docs/core-audit/COVERAGE.md) for what
+  already exists per map.
+- **Bot orchestration and encounter helpers → Eluna.** Blueprint 7 in §8 is a
+  working playerbot coordinator; `run/lua_scripts/raid_automation.lua` is a
+  3,700-line production example of exactly this shape.
+- **Roster, movement, pulling and wipe recovery → mod-dungeon-clear**, not
+  Eluna. It already has a boss roster (`data/dc_roster.txt`), hazard grids,
+  camp logic and a pull planner. Rebuilding those in Eluna would be strictly
+  worse. See [Volume 02](./02_playerbot_and_raid_automation.md).
 
 ---
 
@@ -147,19 +347,40 @@ Every Eluna configuration key is registered in exactly one place: `src/modules/E
 
 Defaults below are the **code** defaults from `ElunaConfig::Initialize`, which are not always what `run/mangosd.conf` actually sets.
 
-| Key | Type | Code default | What it does |
-| :--- | :---: | :--- | :--- |
-| `Eluna.Enabled` | bool | `true` | Master switch. When false no map ever gets a Lua state. |
-| `Eluna.TraceBack` | bool | `false` | Installs a C traceback handler as the `lua_pcall` message handler (`LuaEngine.cpp:326`, `:329-333`). **Capital B.** |
-| `Eluna.ReloadCommand` | bool | `true` | Gates the `.reload eluna` interceptor (`PlayerHooks.cpp:78`). |
-| `Eluna.UseUnsafeMethods` | bool | `true` | When false, every method flagged `METHOD_FLAG_UNSAFE` is replaced by an error closure (`ElunaTemplate.h:336-341`). Currently affects `WorldDBQuery`, `CharDBQuery`, `AuthDBQuery` (`GlobalMethods.h:2990`, `:2992`, `:2994`). |
-| `Eluna.UseDeprecatedMethods` | bool | `true` | Same mechanism for `METHOD_FLAG_DEPRECATED` (`ElunaTemplate.h:346-351`). |
-| `Eluna.ScriptReloader` | bool | `false` | **DEAD KEY — does nothing.** See below. |
-| `Eluna.ScriptPath` | string | `"lua_scripts"` | Root directory scanned for scripts. Resolved **relative to the process working directory**, not to the config file's directory. `mangosd` is launched from `run/`, so the effective value is `./lua_scripts`. |
-| `Eluna.OnlyOnMaps` | string | `""` | Comma-separated map ids; empty means **all maps**. Parsed by `TokenizeAllowedMaps` (`ElunaConfig.cpp:100-125`), which logs an error per unparseable token. **Tested against the RAW map id at map-construction time** (`ShouldMapLoadEluna`, `ElunaConfig.cpp:90-98`, called with `GetId()` at `Map.cpp:230`) — *before* the per-instance key is built. **You cannot filter by instance id here**, only by map id. |
-| `Eluna.RequirePaths` | string | `""` | Extra `package.path` entries (`ElunaLoader.cpp`). |
-| `Eluna.RequireCPaths` | string | `""` | Extra `package.cpath` entries. |
-| `Eluna.ReloadSecurityLevel` | int | `3` | Minimum `GetSecurity()` for `.reload eluna`. Compare with `SEC_MODERATOR`=1 / `SEC_GAMEMASTER`=2 / `SEC_ADMINISTRATOR`=3. |
+```ini
+# Master switch. When false no map ever gets a Lua state (bool, default: true)
+Eluna.Enabled = 1
+
+# Installs a C traceback handler as the lua_pcall message handler (bool, default: false). Capital B.
+Eluna.TraceBack = true
+
+# Gates the .reload eluna interceptor in PlayerHooks.cpp (bool, default: true)
+Eluna.ReloadCommand = true
+
+# When false, replaces METHOD_FLAG_UNSAFE methods (WorldDBQuery, CharDBQuery, AuthDBQuery) with error closures (bool, default: true)
+Eluna.UseUnsafeMethods = true
+
+# Replaces METHOD_FLAG_DEPRECATED methods with error closures (bool, default: true, production: false)
+Eluna.UseDeprecatedMethods = false
+
+# DEAD KEY -- does nothing, no consumer exists in source (bool, default: false)
+Eluna.ScriptReloader = false
+
+# Root directory scanned for scripts relative to process working directory (string, default: "lua_scripts")
+Eluna.ScriptPath = "./lua_scripts"
+
+# Comma-separated map ids; empty means all maps. Tested against raw map id at map construction time (string, default: "")
+Eluna.OnlyOnMaps = ""
+
+# Extra package.path entries for Lua require (string, default: "")
+Eluna.RequirePaths = ""
+
+# Extra package.cpath entries for native shared objects (string, default: "")
+Eluna.RequireCPaths = ""
+
+# Minimum GetSecurity() required for .reload eluna: 1=Mod, 2=GM, 3=Admin (int, default: 3)
+Eluna.ReloadSecurityLevel = 3
+```
 
 #### Dead and adjacent keys
 
@@ -198,12 +419,21 @@ Three keys were corrected from unsafe values on 2026-10-01. They are recorded he
 
 ### In-Game Live Reload & Inspection Commands
 
-| Command | Gate | Syntax & Arguments | Description |
-| :--- | :--- | :--- | :--- |
-| `.reload eluna` | `Eluna.ReloadSecurityLevel` | `.reload eluna [map_id]` | Flushes Lua state, unbinds all existing hooks, and re-executes all scripts. |
-| `.notify <text>` | **3 — Administrator** | `.notify <text>` | Broadcasts a centered server-wide notice. Registered at `SEC_ADMINISTRATOR` (`Chat.cpp:885`); ordinary players silently get an access-denied reply. |
-| `.reload config` | 3 | `.reload config` | Re-reads `mangosd.conf`. **Does not re-run `ElunaConfig::Initialize`**, so Eluna keys are *not* updated by it — see the note below. |
-| `PrintInfo(...)` / `PrintError(...)` / `PrintDebug(...)` | — | Lua global functions | The only "inspection" Eluna offers. All three write to the **server log**, never to a chat channel. |
+```lua
+-- Flush Lua state, unbind all existing hooks, and re-execute all scripts (Gate: Eluna.ReloadSecurityLevel)
+.reload eluna [map_id]
+
+-- Broadcast a centered server-wide notice (Gate: SEC_ADMINISTRATOR = 3)
+.notify <text>
+
+-- Re-read mangosd.conf (Gate: SEC_ADMINISTRATOR = 3; Note: does not re-apply Eluna.* keys)
+.reload config
+
+-- Lua global log inspection functions (writes to server log file, never to chat window)
+PrintInfo("Server log informational message")
+PrintError("Server log error message")
+PrintDebug("Server log debug message")
+```
 
 > ❌ **There is no `.eluna` chat command in this build.** Earlier revisions of this handbook listed one. It does not exist: there is no Eluna entry in the core chat command tables under `src/game/Chat/`, and `grep -rn '"eluna"' src/game/` returns nothing. Do not tell an operator to type it.
 
@@ -260,42 +490,109 @@ Verified directly against `src/modules/Eluna/hooks/Hooks.h`.
 >
 > The three registration helper families, for reference: `RegisterEventHelper` serves `RegisterServerEvent` (`:608`), `RegisterPlayerEvent` (`:687`), `RegisterGuildEvent` (`:724`), `RegisterGroupEvent` (`:756`), `RegisterBGEvent` (`:784`). `RegisterEntryHelper` serves the id-keyed ones: `RegisterPacketEvent`, `RegisterCreatureEvent`, `RegisterGameObjectEvent`, `RegisterItemEvent`, `RegisterMapEvent`, `RegisterInstanceEvent`, and the three gossip registrars. Third family, `RegisterUniqueHelper` (`:519`), serves `RegisterUniqueCreatureEvent` (keyed on `(event, ObjectGuid, instanceId)` — all three must match).
 
-| ID | Event Name | Trigger Condition & Hook Signature |
-| :---: | :--- | :--- |
-| **1** | `SERVER_EVENT_ON_NETWORK_START` | World socket network listener initialized. |
-| **2** | `SERVER_EVENT_ON_NETWORK_STOP` | Network listener stopped. |
-| **3** | `SERVER_EVENT_ON_SOCKET_OPEN` | Client TCP socket opened: `(event, socket)`. |
-| **4** | `SERVER_EVENT_ON_SOCKET_CLOSE` | Client socket closed: `(event, socket)`. |
-| **5** | `SERVER_EVENT_ON_PACKET_RECEIVE` | Raw packet received from client: `(event, packet, player)`. |
-| **6** | `SERVER_EVENT_ON_PACKET_RECEIVE_UNKNOWN` | Unhandled packet opcode received: `(event, packet, socket)`. |
-| **7** | `SERVER_EVENT_ON_PACKET_SEND` | Packet dispatched to client: `(event, packet, player)`. |
-| **8** | `WORLD_EVENT_ON_OPEN_STATE_CHANGE` | Realm open state altered: `(event, openState)`. |
-| **9** | `WORLD_EVENT_ON_CONFIG_LOAD` | Configuration file reloaded: `(event, reloadBool)`. |
-| **11** | `WORLD_EVENT_ON_SHUTDOWN_INIT` | Clean server shutdown initiated: `(event, code, mask)`. |
-| **12** | `WORLD_EVENT_ON_SHUTDOWN_CANCEL` | Server shutdown cancelled. |
-| **13** | `WORLD_EVENT_ON_UPDATE` | 🪦 **DEAD RAISER — NEVER FIRES.** Declared at `LuaEngine.h:422` and defined at `hooks/ServerHooks.cpp:291`, but **it has no call site anywhere in `src/`.** Registering it succeeds without error and the handler is never invoked. Earlier revisions of this handbook described it as "World update tick fired"; that is wrong. Use **23** instead. |
-| **14** | `WORLD_EVENT_ON_STARTUP` | World server finished initial boot sequence. |
-| **15** | `WORLD_EVENT_ON_SHUTDOWN` | World server process terminating. |
-| **16** | `ELUNA_EVENT_ON_LUA_STATE_CLOSE` | Lua state is tearing down. |
-| **17** | `MAP_EVENT_ON_CREATE` | Map loaded into memory: `(event, map)`. |
-| **18** | `MAP_EVENT_ON_DESTROY` | Map unloaded from memory: `(event, map)`. |
-| **19** | `MAP_EVENT_ON_GRID_LOAD` | Map grid cell loaded: `(event, map, gridX, gridY)`. |
-| **20** | `MAP_EVENT_ON_GRID_UNLOAD` | Map grid cell purged: `(event, map, gridX, gridY)`. |
-| **21** | `MAP_EVENT_ON_PLAYER_ENTER` | Player entered map: `(event, map, player)`. |
-| **22** | `MAP_EVENT_ON_PLAYER_LEAVE` | Player departed map: `(event, map, player)`. |
-| **23** | `MAP_EVENT_ON_UPDATE` | ✅ **LIVE — this is the heartbeat.** `(event, map, diff_ms)`. Dispatched once per map tick from `src/game/Maps/Map.cpp:1729-1733`, roughly every 50 ms per map. See the note immediately below. |
-| **24** | `TRIGGER_EVENT_ON_TRIGGER` | Player stepped into AreaTrigger: `(event, player, triggerId)`. |
-| **25** | `WEATHER_EVENT_ON_CHANGE` | Zone weather altered: `(event, zoneId, weatherState, grade)`. |
-| **26** | `AUCTION_EVENT_ON_ADD` | New auction listed: `(event, auctionId, owner, item)`. |
-| **27** | `AUCTION_EVENT_ON_REMOVE` | Auction cancelled or removed: `(event, auctionId, owner, item)`. |
-| **28** | `AUCTION_EVENT_ON_SUCCESSFUL` | Auction buyout/win processed: `(event, auctionId, owner, buyer)`. |
-| **29** | `AUCTION_EVENT_ON_EXPIRE` | Auction expired without buyer: `(event, auctionId, owner, item)`. |
-| **30** | `ADDON_EVENT_ON_MESSAGE` | Addon message received: `(event, sender, type, prefix, msg, receiver)`. |
-| **31** | `WORLD_EVENT_ON_DELETE_CREATURE` | Creature despawned/purged: `(event, creature)`. |
-| **32** | `WORLD_EVENT_ON_DELETE_GAMEOBJECT` | GameObject despawned/purged: `(event, gameobject)`. |
-| **33** | `ELUNA_EVENT_ON_LUA_STATE_OPEN` | Lua state initialized and ready. |
-| **34** | `GAME_EVENT_START` | Seasonal game event activated: `(event, eventId)`. |
-| **35** | `GAME_EVENT_STOP` | Seasonal game event stopped: `(event, eventId)`. |
+```lua
+-- 1: SERVER_EVENT_ON_NETWORK_START - World socket network listener initialized
+RegisterServerEvent(1, function(event) end)
+
+-- 2: SERVER_EVENT_ON_NETWORK_STOP - Network listener stopped
+RegisterServerEvent(2, function(event) end)
+
+-- 3: SERVER_EVENT_ON_SOCKET_OPEN - Client TCP socket opened: (event, socket)
+RegisterServerEvent(3, function(event, socket) end)
+
+-- 4: SERVER_EVENT_ON_SOCKET_CLOSE - Client socket closed: (event, socket)
+RegisterServerEvent(4, function(event, socket) end)
+
+-- 5: SERVER_EVENT_ON_PACKET_RECEIVE - Raw packet received from client: (event, packet, player)
+RegisterServerEvent(5, function(event, packet, player) end)
+
+-- 6: SERVER_EVENT_ON_PACKET_RECEIVE_UNKNOWN - Unhandled packet opcode received: (event, packet, socket)
+RegisterServerEvent(6, function(event, packet, socket) end)
+
+-- 7: SERVER_EVENT_ON_PACKET_SEND - Packet dispatched to client: (event, packet, player)
+RegisterServerEvent(7, function(event, packet, player) end)
+
+-- 8: WORLD_EVENT_ON_OPEN_STATE_CHANGE - Realm open state altered: (event, openState)
+RegisterServerEvent(8, function(event, openState) end)
+
+-- 9: WORLD_EVENT_ON_CONFIG_LOAD - Configuration file reloaded: (event, reloadBool)
+RegisterServerEvent(9, function(event, reloadBool) end)
+
+-- 11: WORLD_EVENT_ON_SHUTDOWN_INIT - Clean server shutdown initiated: (event, code, mask)
+RegisterServerEvent(11, function(event, code, mask) end)
+
+-- 12: WORLD_EVENT_ON_SHUTDOWN_CANCEL - Server shutdown cancelled
+RegisterServerEvent(12, function(event) end)
+
+-- 13: WORLD_EVENT_ON_UPDATE - DEAD RAISER (never fires, zero call sites; use event 23 instead)
+RegisterServerEvent(13, function(event) end)
+
+-- 14: WORLD_EVENT_ON_STARTUP - World server finished initial boot sequence
+RegisterServerEvent(14, function(event) end)
+
+-- 15: WORLD_EVENT_ON_SHUTDOWN - World server process terminating
+RegisterServerEvent(15, function(event) end)
+
+-- 16: ELUNA_EVENT_ON_LUA_STATE_CLOSE - Lua state is tearing down
+RegisterServerEvent(16, function(event) end)
+
+-- 17: MAP_EVENT_ON_CREATE - Map loaded into memory: (event, map)
+RegisterServerEvent(17, function(event, map) end)
+
+-- 18: MAP_EVENT_ON_DESTROY - Map unloaded from memory: (event, map)
+RegisterServerEvent(18, function(event, map) end)
+
+-- 19: MAP_EVENT_ON_GRID_LOAD - Map grid cell loaded: (event, map, gridX, gridY)
+RegisterServerEvent(19, function(event, map, gridX, gridY) end)
+
+-- 20: MAP_EVENT_ON_GRID_UNLOAD - Map grid cell purged: (event, map, gridX, gridY)
+RegisterServerEvent(20, function(event, map, gridX, gridY) end)
+
+-- 21: MAP_EVENT_ON_PLAYER_ENTER - Player entered map: (event, map, player)
+RegisterServerEvent(21, function(event, map, player) end)
+
+-- 22: MAP_EVENT_ON_PLAYER_LEAVE - Player departed map: (event, map, player)
+RegisterServerEvent(22, function(event, map, player) end)
+
+-- 23: MAP_EVENT_ON_UPDATE - LIVE heartbeat tick (~50 ms per map): (event, map, diff_ms)
+RegisterServerEvent(23, function(event, map, diff_ms) end)
+
+-- 24: TRIGGER_EVENT_ON_TRIGGER - Player stepped into AreaTrigger: (event, player, triggerId)
+RegisterServerEvent(24, function(event, player, triggerId) end)
+
+-- 25: WEATHER_EVENT_ON_CHANGE - Zone weather altered: (event, zoneId, weatherState, grade)
+RegisterServerEvent(25, function(event, zoneId, weatherState, grade) end)
+
+-- 26: AUCTION_EVENT_ON_ADD - New auction listed: (event, auctionId, owner, item)
+RegisterServerEvent(26, function(event, auctionId, owner, item) end)
+
+-- 27: AUCTION_EVENT_ON_REMOVE - Auction cancelled or removed: (event, auctionId, owner, item)
+RegisterServerEvent(27, function(event, auctionId, owner, item) end)
+
+-- 28: AUCTION_EVENT_ON_SUCCESSFUL - Auction buyout/win processed: (event, auctionId, owner, buyer)
+RegisterServerEvent(28, function(event, auctionId, owner, buyer) end)
+
+-- 29: AUCTION_EVENT_ON_EXPIRE - Auction expired without buyer: (event, auctionId, owner, item)
+RegisterServerEvent(29, function(event, auctionId, owner, item) end)
+
+-- 30: ADDON_EVENT_ON_MESSAGE - Addon message received: (event, sender, type, prefix, msg, receiver)
+RegisterServerEvent(30, function(event, sender, type, prefix, msg, receiver) end)
+
+-- 31: WORLD_EVENT_ON_DELETE_CREATURE - Creature despawned/purged: (event, creature)
+RegisterServerEvent(31, function(event, creature) end)
+
+-- 32: WORLD_EVENT_ON_DELETE_GAMEOBJECT - GameObject despawned/purged: (event, gameobject)
+RegisterServerEvent(32, function(event, gameobject) end)
+
+-- 33: ELUNA_EVENT_ON_LUA_STATE_OPEN - Lua state initialized and ready
+RegisterServerEvent(33, function(event) end)
+
+-- 34: GAME_EVENT_START - Seasonal game event activated: (event, eventId)
+RegisterServerEvent(34, function(event, eventId) end)
+
+-- 35: GAME_EVENT_STOP - Seasonal game event stopped: (event, eventId)
+RegisterServerEvent(35, function(event, eventId) end)
+```
 
 #### Why `MAP_EVENT_ON_UPDATE` (23) is the one to build on
 
@@ -330,119 +627,304 @@ So the Lua signature is `(event, sender, type, prefix, msg, receiver)` — note 
 
 ### Player Lifecycle & Combat Events (`RegisterPlayerEvent`)
 
-| ID | Event Name | Hook Arguments & Description |
-| :---: | :--- | :--- |
-| **1** | `PLAYER_EVENT_ON_CHARACTER_CREATE` | Character created: `(event, player)`. |
-| **2** | `PLAYER_EVENT_ON_CHARACTER_DELETE` | Character deleted from realm: `(event, guid)`. |
-| **3** | `PLAYER_EVENT_ON_LOGIN` | Player logged into game world: `(event, player)`. |
-| **4** | `PLAYER_EVENT_ON_LOGOUT` | Player logged out: `(event, player)`. |
-| **5** | `PLAYER_EVENT_ON_SPELL_CAST` | Spell successfully cast: `(event, player, spell, skipCheck)`. |
-| **6** | `PLAYER_EVENT_ON_KILL_PLAYER` | Slain another player (PvP): `(event, killer, victim)`. |
-| **7** | `PLAYER_EVENT_ON_KILL_CREATURE` | Slain an NPC or boss: `(event, killer, victim)`. |
-| **8** | `PLAYER_EVENT_ON_KILLED_BY_CREATURE` | Slain by an NPC: `(event, killer, victim)`. |
-| **9** | `PLAYER_EVENT_ON_DUEL_REQUEST` | Duel challenged: `(event, player, target)`. |
-| **10** | `PLAYER_EVENT_ON_DUEL_START` | Duel started: `(event, player, target)`. |
-| **11** | `PLAYER_EVENT_ON_DUEL_END` | Duel finished: `(event, winner, loser, duelType)`. |
-| **12** | `PLAYER_EVENT_ON_GIVE_XP` | Experience gained: `(event, player, amount, victim)`. |
-| **13** | `PLAYER_EVENT_ON_LEVEL_CHANGE` | Level changed: `(event, player, oldLevel)`. |
-| **14** | `PLAYER_EVENT_ON_MONEY_CHANGE` | Gold/money altered: `(event, player, amount)`. |
-| **15** | `PLAYER_EVENT_ON_REPUTATION_CHANGE` | Reputation gained: `(event, player, factionId, standing, incremental)`. |
-| **16** | `PLAYER_EVENT_ON_TALENTS_CHANGE` | Talent tree modified: `(event, player, points)`. |
-| **17** | `PLAYER_EVENT_ON_TALENTS_RESET` | Talents reset at class trainer: `(event, player, cost)`. |
-| **18** | `PLAYER_EVENT_ON_CHAT` | Public/say chat: `(event, player, msg, type, lang)`. |
-| **19** | `PLAYER_EVENT_ON_WHISPER` | Private whisper: `(event, player, msg, type, lang, receiver)`. |
-| **20** | `PLAYER_EVENT_ON_GROUP_CHAT` | Party chat: `(event, player, msg, type, lang, group)`. |
-| **21** | `PLAYER_EVENT_ON_GUILD_CHAT` | Guild chat: `(event, player, msg, type, lang, guild)`. |
-| **22** | `PLAYER_EVENT_ON_CHANNEL_CHAT` | Custom channel chat: `(event, player, msg, type, lang, channel)`. |
-| **23** | `PLAYER_EVENT_ON_EMOTE` | Visual emote played: `(event, player, emoteId)`. |
-| **24** | `PLAYER_EVENT_ON_TEXT_EMOTE` | Text emote triggered: `(event, player, textEmote, emoteNum, guid)`. |
-| **25** | `PLAYER_EVENT_ON_SAVE` | Character saved to database: `(event, player)`. |
-| **26** | `PLAYER_EVENT_ON_BIND_TO_INSTANCE` | Saved/locked to instance ID: `(event, player, difficulty, mapId, permanent)`. |
-| **27** | `PLAYER_EVENT_ON_UPDATE_ZONE` | Zone boundary crossed: `(event, player, newZone, newArea)`. |
-| **28** | `PLAYER_EVENT_ON_MAP_CHANGE` | Map transition completed: `(event, player)`. |
-| **29** | `PLAYER_EVENT_ON_EQUIP` | Item equipped: `(event, player, item, bag, slot)`. |
-| **30** | `PLAYER_EVENT_ON_FIRST_LOGIN` | Brand new character logged in for the very first time: `(event, player)`. |
-| **31** | `PLAYER_EVENT_ON_CAN_USE_ITEM` | Item validation check: `(event, player, itemEntry)`. |
-| **32** | `PLAYER_EVENT_ON_LOOT_ITEM` | Item picked up: `(event, player, item, count)`. |
-| **33** | `PLAYER_EVENT_ON_ENTER_COMBAT` | Entered combat: `(event, player, enemy)`. |
-| **34** | `PLAYER_EVENT_ON_LEAVE_COMBAT` | Dropped combat: `(event, player)`. |
-| **35** | `PLAYER_EVENT_ON_REPOP` | Released spirit after death: `(event, player)`. |
-| **36** | `PLAYER_EVENT_ON_RESURRECT` | Revived from corpse: `(event, player)`. |
-| **37** | `PLAYER_EVENT_ON_LOOT_MONEY` | Looted coin: `(event, player, amount)`. |
-| **38** | `PLAYER_EVENT_ON_QUEST_ABANDON` | Quest abandoned: `(event, player, questId)`. |
-| **39** | `PLAYER_EVENT_ON_LEARN_TALENTS` | Learned talent rank: `(event, player, talentId, talentRank)`. |
-| **40** | `PLAYER_EVENT_ON_ENVIRONMENTAL_DEATH` | Died to falling/drowning/lava: `(event, player, envType)`. |
-| **41** | `PLAYER_EVENT_ON_TRADE_ACCEPT` | Trade finalized: `(event, player, target)`. |
-| **42** | `PLAYER_EVENT_ON_COMMAND` | Custom chat command hook: `(event, player, command)`. Return `false` to suppress core error. |
-| **43** | `PLAYER_EVENT_ON_SKILL_CHANGE` | Skill level advanced: `(event, player, skillId, skillValue)`. |
-| **44** | `PLAYER_EVENT_ON_LEARN_SPELL` | Spell learned: `(event, player, spellId)`. |
-| **45** | `PLAYER_EVENT_ON_ACHIEVEMENT_COMPLETE` | Achievement earned: `(event, player, achievementId)`. (`Hooks.h:184`; fires at `PlayerHooks.cpp:487-493`.) |
-| **46** | `PLAYER_EVENT_ON_DISCOVER_AREA` | Area discovered: `(event, player, areaId)`. |
-| **47** | `PLAYER_EVENT_ON_UPDATE_AREA` | Sub-area changed: `(event, player, oldArea, newArea)`. |
-| **48** | `PLAYER_EVENT_ON_TRADE_INIT` | Trade window opened: `(event, player, target)`. |
-| **49** | `PLAYER_EVENT_ON_SEND_MAIL` | Mail sent: `(event, player, recipientGuid)`. |
-| **54** | `PLAYER_EVENT_ON_QUEST_STATUS_CHANGED` | Quest state updated: `(event, player, questId, status)`. |
+```lua
+-- 1: PLAYER_EVENT_ON_CHARACTER_CREATE - Character created: (event, player)
+RegisterPlayerEvent(1, function(event, player) end)
+
+-- 2: PLAYER_EVENT_ON_CHARACTER_DELETE - Character deleted from realm: (event, guid)
+RegisterPlayerEvent(2, function(event, guid) end)
+
+-- 3: PLAYER_EVENT_ON_LOGIN - Player logged into game world: (event, player)
+RegisterPlayerEvent(3, function(event, player) end)
+
+-- 4: PLAYER_EVENT_ON_LOGOUT - Player logged out: (event, player)
+RegisterPlayerEvent(4, function(event, player) end)
+
+-- 5: PLAYER_EVENT_ON_SPELL_CAST - Spell successfully cast: (event, player, spell, skipCheck)
+RegisterPlayerEvent(5, function(event, player, spell, skipCheck) end)
+
+-- 6: PLAYER_EVENT_ON_KILL_PLAYER - Slain another player (PvP): (event, killer, victim)
+RegisterPlayerEvent(6, function(event, killer, victim) end)
+
+-- 7: PLAYER_EVENT_ON_KILL_CREATURE - Slain an NPC or boss: (event, killer, victim)
+RegisterPlayerEvent(7, function(event, killer, victim) end)
+
+-- 8: PLAYER_EVENT_ON_KILLED_BY_CREATURE - Slain by an NPC: (event, killer, victim)
+RegisterPlayerEvent(8, function(event, killer, victim) end)
+
+-- 9: PLAYER_EVENT_ON_DUEL_REQUEST - Duel challenged: (event, player, target)
+RegisterPlayerEvent(9, function(event, player, target) end)
+
+-- 10: PLAYER_EVENT_ON_DUEL_START - Duel started: (event, player, target)
+RegisterPlayerEvent(10, function(event, player, target) end)
+
+-- 11: PLAYER_EVENT_ON_DUEL_END - Duel finished: (event, winner, loser, duelType)
+RegisterPlayerEvent(11, function(event, winner, loser, duelType) end)
+
+-- 12: PLAYER_EVENT_ON_GIVE_XP - Experience gained: (event, player, amount, victim)
+RegisterPlayerEvent(12, function(event, player, amount, victim) end)
+
+-- 13: PLAYER_EVENT_ON_LEVEL_CHANGE - Level changed: (event, player, oldLevel)
+RegisterPlayerEvent(13, function(event, player, oldLevel) end)
+
+-- 14: PLAYER_EVENT_ON_MONEY_CHANGE - Gold/money altered: (event, player, amount)
+RegisterPlayerEvent(14, function(event, player, amount) end)
+
+-- 15: PLAYER_EVENT_ON_REPUTATION_CHANGE - Reputation gained: (event, player, factionId, standing, incremental)
+RegisterPlayerEvent(15, function(event, player, factionId, standing, incremental) end)
+
+-- 16: PLAYER_EVENT_ON_TALENTS_CHANGE - Talent tree modified: (event, player, points)
+RegisterPlayerEvent(16, function(event, player, points) end)
+
+-- 17: PLAYER_EVENT_ON_TALENTS_RESET - Talents reset at class trainer: (event, player, cost)
+RegisterPlayerEvent(17, function(event, player, cost) end)
+
+-- 18: PLAYER_EVENT_ON_CHAT - Public/say chat: (event, player, msg, type, lang)
+RegisterPlayerEvent(18, function(event, player, msg, type, lang) end)
+
+-- 19: PLAYER_EVENT_ON_WHISPER - Private whisper: (event, player, msg, type, lang, receiver)
+RegisterPlayerEvent(19, function(event, player, msg, type, lang, receiver) end)
+
+-- 20: PLAYER_EVENT_ON_GROUP_CHAT - Party chat: (event, player, msg, type, lang, group)
+RegisterPlayerEvent(20, function(event, player, msg, type, lang, group) end)
+
+-- 21: PLAYER_EVENT_ON_GUILD_CHAT - Guild chat: (event, player, msg, type, lang, guild)
+RegisterPlayerEvent(21, function(event, player, msg, type, lang, guild) end)
+
+-- 22: PLAYER_EVENT_ON_CHANNEL_CHAT - Custom channel chat: (event, player, msg, type, lang, channel)
+RegisterPlayerEvent(22, function(event, player, msg, type, lang, channel) end)
+
+-- 23: PLAYER_EVENT_ON_EMOTE - Visual emote played: (event, player, emoteId)
+RegisterPlayerEvent(23, function(event, player, emoteId) end)
+
+-- 24: PLAYER_EVENT_ON_TEXT_EMOTE - Text emote triggered: (event, player, textEmote, emoteNum, guid)
+RegisterPlayerEvent(24, function(event, player, textEmote, emoteNum, guid) end)
+
+-- 25: PLAYER_EVENT_ON_SAVE - Character saved to database: (event, player)
+RegisterPlayerEvent(25, function(event, player) end)
+
+-- 26: PLAYER_EVENT_ON_BIND_TO_INSTANCE - Saved/locked to instance ID: (event, player, difficulty, mapId, permanent)
+RegisterPlayerEvent(26, function(event, player, difficulty, mapId, permanent) end)
+
+-- 27: PLAYER_EVENT_ON_UPDATE_ZONE - Zone boundary crossed: (event, player, newZone, newArea)
+RegisterPlayerEvent(27, function(event, player, newZone, newArea) end)
+
+-- 28: PLAYER_EVENT_ON_MAP_CHANGE - Map transition completed: (event, player)
+RegisterPlayerEvent(28, function(event, player) end)
+
+-- 29: PLAYER_EVENT_ON_EQUIP - Item equipped: (event, player, item, bag, slot)
+RegisterPlayerEvent(29, function(event, player, item, bag, slot) end)
+
+-- 30: PLAYER_EVENT_ON_FIRST_LOGIN - Brand new character logged in for the very first time: (event, player)
+RegisterPlayerEvent(30, function(event, player) end)
+
+-- 31: PLAYER_EVENT_ON_CAN_USE_ITEM - Item validation check: (event, player, itemEntry)
+RegisterPlayerEvent(31, function(event, player, itemEntry) end)
+
+-- 32: PLAYER_EVENT_ON_LOOT_ITEM - Item picked up: (event, player, item, count)
+RegisterPlayerEvent(32, function(event, player, item, count) end)
+
+-- 33: PLAYER_EVENT_ON_ENTER_COMBAT - Entered combat: (event, player, enemy)
+RegisterPlayerEvent(33, function(event, player, enemy) end)
+
+-- 34: PLAYER_EVENT_ON_LEAVE_COMBAT - Dropped combat: (event, player)
+RegisterPlayerEvent(34, function(event, player) end)
+
+-- 35: PLAYER_EVENT_ON_REPOP - Released spirit after death: (event, player)
+RegisterPlayerEvent(35, function(event, player) end)
+
+-- 36: PLAYER_EVENT_ON_RESURRECT - Revived from corpse: (event, player)
+RegisterPlayerEvent(36, function(event, player) end)
+
+-- 37: PLAYER_EVENT_ON_LOOT_MONEY - Looted coin: (event, player, amount)
+RegisterPlayerEvent(37, function(event, player, amount) end)
+
+-- 38: PLAYER_EVENT_ON_QUEST_ABANDON - Quest abandoned: (event, player, questId)
+RegisterPlayerEvent(38, function(event, player, questId) end)
+
+-- 39: PLAYER_EVENT_ON_LEARN_TALENTS - Learned talent rank: (event, player, talentId, talentRank)
+RegisterPlayerEvent(39, function(event, player, talentId, talentRank) end)
+
+-- 40: PLAYER_EVENT_ON_ENVIRONMENTAL_DEATH - Died to falling/drowning/lava: (event, player, envType)
+RegisterPlayerEvent(40, function(event, player, envType) end)
+
+-- 41: PLAYER_EVENT_ON_TRADE_ACCEPT - Trade finalized: (event, player, target)
+RegisterPlayerEvent(41, function(event, player, target) end)
+
+-- 42: PLAYER_EVENT_ON_COMMAND - Custom chat command hook: (event, player, command). Return false to suppress core error
+RegisterPlayerEvent(42, function(event, player, command) end)
+
+-- 43: PLAYER_EVENT_ON_SKILL_CHANGE - Skill level advanced: (event, player, skillId, skillValue)
+RegisterPlayerEvent(43, function(event, player, skillId, skillValue) end)
+
+-- 44: PLAYER_EVENT_ON_LEARN_SPELL - Spell learned: (event, player, spellId)
+RegisterPlayerEvent(44, function(event, player, spellId) end)
+
+-- 45: PLAYER_EVENT_ON_ACHIEVEMENT_COMPLETE - Achievement earned: (event, player, achievementId)
+RegisterPlayerEvent(45, function(event, player, achievementId) end)
+
+-- 46: PLAYER_EVENT_ON_DISCOVER_AREA - Area discovered: (event, player, areaId)
+RegisterPlayerEvent(46, function(event, player, areaId) end)
+
+-- 47: PLAYER_EVENT_ON_UPDATE_AREA - Sub-area changed: (event, player, oldArea, newArea)
+RegisterPlayerEvent(47, function(event, player, oldArea, newArea) end)
+
+-- 48: PLAYER_EVENT_ON_TRADE_INIT - Trade window opened: (event, player, target)
+RegisterPlayerEvent(48, function(event, player, target) end)
+
+-- 49: PLAYER_EVENT_ON_SEND_MAIL - Mail sent: (event, player, recipientGuid)
+RegisterPlayerEvent(49, function(event, player, recipientGuid) end)
+
+-- 54: PLAYER_EVENT_ON_QUEST_STATUS_CHANGED - Quest state updated: (event, player, questId, status)
+RegisterPlayerEvent(54, function(event, player, questId, status) end)
+```
 
 ---
 
 ### Creature & Boss AI Events (`RegisterCreatureEvent`)
 
-| ID | Event Name | Hook Arguments & Description |
-| :---: | :--- | :--- |
-| **1** | `CREATURE_EVENT_ON_ENTER_COMBAT` | Engaged enemy target: `(event, creature, target)`. |
-| **2** | `CREATURE_EVENT_ON_LEAVE_COMBAT` | Evaded or all enemies defeated: `(event, creature)`. |
-| **3** | `CREATURE_EVENT_ON_TARGET_DIED` | Slain player or enemy: `(event, creature, victim)`. |
-| **4** | `CREATURE_EVENT_ON_DIED` | Boss or mob slain: `(event, creature, killer)`. |
-| **5** | `CREATURE_EVENT_ON_SPAWN` | Spawned into world: `(event, creature)`. |
-| **6** | `CREATURE_EVENT_ON_REACH_WP` | Reached waypoint index: `(event, creature, type, id)`. |
-| **7** | `CREATURE_EVENT_ON_AIUPDATE` | Creature AI tick: `(event, creature, diff_ms)`. ⚠️ Enum name has **no underscore** before `UPDATE`. |
-| **8** | `CREATURE_EVENT_ON_RECEIVE_EMOTE` | Received player emote: `(event, creature, player, emoteId)`. |
-| **9** | `CREATURE_EVENT_ON_DAMAGE_TAKEN` | Took damage: `(event, creature, attacker, damage)`. |
-| **10** | `CREATURE_EVENT_ON_PRE_COMBAT` | Threat calculated before aggro: `(event, creature, target)`. |
-| **11** | *(unused)* | No enum member. |
-| **12** | `CREATURE_EVENT_ON_OWNER_ATTACKED` | Minion's master was hit: `(event, creature, target)`. ⚠️ id **12**, not 13. |
-| **13** | `CREATURE_EVENT_ON_OWNER_ATTACKED_AT` | Minion's master attacked this creature: `(event, creature, target)`. ⚠️ id 13 is `_AT`, a different event. |
-| **14** | `CREATURE_EVENT_ON_HIT_BY_SPELL` | Hit by spell: `(event, creature, caster, spellId)`. ⚠️ **14 is this event. There is no `CREATURE_EVENT_ON_SPELL_HIT`.** |
-| **15** | `CREATURE_EVENT_ON_SPELL_HIT_TARGET` | Successfully cast spell on target: `(event, creature, target, spellId)`. ⚠️ id **15**, not 24. |
-| **16–18** | *(unused)* | No enum members. |
-| **19** | `CREATURE_EVENT_ON_JUST_SUMMONED_CREATURE` | Creature spawned something: `(event, creature, victim, summon)`. |
-| **20** | `CREATURE_EVENT_ON_SUMMONED_CREATURE_DESPAWN` | Its summon despawned: `(event, creature, victim, summon)`. |
-| **21** | `CREATURE_EVENT_ON_SUMMONED_CREATURE_DIED` | Its summon died: `(event, creature, victim, summon)`. |
-| **22** | `CREATURE_EVENT_ON_SUMMONED` | Spawned as minion/pet: `(event, creature, summoner)`. ⚠️ id **22**, not 26. |
-| **23** | `CREATURE_EVENT_ON_RESET` | Boss reset and evading back to home: `(event, creature)`. ⚠️ **Reset is 23, not 16.** |
-| **24** | `CREATURE_EVENT_ON_REACH_HOME` | Returned to spawn point: `(event, creature)`. ⚠️ 24 is reach-home, not spell-hit-target. |
-| **25** | *(unused)* | No enum member. |
-| **26** | `CREATURE_EVENT_ON_CORPSE_REMOVED` | Corpse cleaned from map: `(event, creature)`. ⚠️ 26 is corpse removal, not `ON_SUMMONED`. |
-| **27** | `CREATURE_EVENT_ON_MOVE_IN_LOS` | Moved into line of sight: `(event, creature)`. ⚠️ **There is no `CREATURE_EVENT_ON_DESPAWN`** — use `WORLD_EVENT_ON_DELETE_CREATURE` (31). |
-| **28–29** | *(unused)* | No enum members. |
-| **30** | `CREATURE_EVENT_ON_DUMMY_EFFECT` | Scripted dummy effect: `(event, creature, spellId, effIndex, target)`. |
-| **31** | `CREATURE_EVENT_ON_QUEST_ACCEPT` | Quest started via this creature: `(event, creature, player, quest)`. |
-| **32–33** | *(unused)* | No enum members. |
-| **34** | `CREATURE_EVENT_ON_QUEST_REWARD` | Quest finished via this creature: `(event, creature, player, quest)`. |
-| **35** | `CREATURE_EVENT_ON_DIALOG_STATUS` | Gossip dialog window state: `(event, creature, player, status)`. |
-| **36** | `CREATURE_EVENT_ON_ADD` | Added to the world map: `(event, creature)`. |
-| **37** | `CREATURE_EVENT_ON_REMOVE` | Removed from the world map: `(event, creature)`. |
+```lua
+-- 1: CREATURE_EVENT_ON_ENTER_COMBAT - Engaged enemy target: (event, creature, target)
+RegisterCreatureEvent(entry, 1, function(event, creature, target) end)
+
+-- 2: CREATURE_EVENT_ON_LEAVE_COMBAT - Evaded or all enemies defeated: (event, creature)
+RegisterCreatureEvent(entry, 2, function(event, creature) end)
+
+-- 3: CREATURE_EVENT_ON_TARGET_DIED - Slain player or enemy: (event, creature, victim)
+RegisterCreatureEvent(entry, 3, function(event, creature, victim) end)
+
+-- 4: CREATURE_EVENT_ON_DIED - Boss or mob slain: (event, creature, killer)
+RegisterCreatureEvent(entry, 4, function(event, creature, killer) end)
+
+-- 5: CREATURE_EVENT_ON_SPAWN - Spawned into world: (event, creature)
+RegisterCreatureEvent(entry, 5, function(event, creature) end)
+
+-- 6: CREATURE_EVENT_ON_REACH_WP - Reached waypoint index: (event, creature, type, id)
+RegisterCreatureEvent(entry, 6, function(event, creature, type, id) end)
+
+-- 7: CREATURE_EVENT_ON_AIUPDATE - Creature AI tick (no underscore before UPDATE): (event, creature, diff_ms)
+RegisterCreatureEvent(entry, 7, function(event, creature, diff_ms) end)
+
+-- 8: CREATURE_EVENT_ON_RECEIVE_EMOTE - Received player emote: (event, creature, player, emoteId)
+RegisterCreatureEvent(entry, 8, function(event, creature, player, emoteId) end)
+
+-- 9: CREATURE_EVENT_ON_DAMAGE_TAKEN - Took damage: (event, creature, attacker, damage)
+RegisterCreatureEvent(entry, 9, function(event, creature, attacker, damage) end)
+
+-- 10: CREATURE_EVENT_ON_PRE_COMBAT - Threat calculated before aggro: (event, creature, target)
+RegisterCreatureEvent(entry, 10, function(event, creature, target) end)
+
+-- 11: (unused - no enum member)
+
+-- 12: CREATURE_EVENT_ON_OWNER_ATTACKED - Minion's master was hit: (event, creature, target)
+RegisterCreatureEvent(entry, 12, function(event, creature, target) end)
+
+-- 13: CREATURE_EVENT_ON_OWNER_ATTACKED_AT - Minion's master attacked this creature: (event, creature, target)
+RegisterCreatureEvent(entry, 13, function(event, creature, target) end)
+
+-- 14: CREATURE_EVENT_ON_HIT_BY_SPELL - Hit by spell: (event, creature, caster, spellId)
+RegisterCreatureEvent(entry, 14, function(event, creature, caster, spellId) end)
+
+-- 15: CREATURE_EVENT_ON_SPELL_HIT_TARGET - Successfully cast spell on target: (event, creature, target, spellId)
+RegisterCreatureEvent(entry, 15, function(event, creature, target, spellId) end)
+
+-- 16-18: (unused - no enum members)
+
+-- 19: CREATURE_EVENT_ON_JUST_SUMMONED_CREATURE - Creature spawned something: (event, creature, victim, summon)
+RegisterCreatureEvent(entry, 19, function(event, creature, victim, summon) end)
+
+-- 20: CREATURE_EVENT_ON_SUMMONED_CREATURE_DESPAWN - Its summon despawned: (event, creature, victim, summon)
+RegisterCreatureEvent(entry, 20, function(event, creature, victim, summon) end)
+
+-- 21: CREATURE_EVENT_ON_SUMMONED_CREATURE_DIED - Its summon died: (event, creature, victim, summon)
+RegisterCreatureEvent(entry, 21, function(event, creature, victim, summon) end)
+
+-- 22: CREATURE_EVENT_ON_SUMMONED - Spawned as minion/pet: (event, creature, summoner)
+RegisterCreatureEvent(entry, 22, function(event, creature, summoner) end)
+
+-- 23: CREATURE_EVENT_ON_RESET - Boss reset and evading back to home: (event, creature)
+RegisterCreatureEvent(entry, 23, function(event, creature) end)
+
+-- 24: CREATURE_EVENT_ON_REACH_HOME - Returned to spawn point: (event, creature)
+RegisterCreatureEvent(entry, 24, function(event, creature) end)
+
+-- 25: (unused - no enum member)
+
+-- 26: CREATURE_EVENT_ON_CORPSE_REMOVED - Corpse cleaned from map: (event, creature)
+RegisterCreatureEvent(entry, 26, function(event, creature) end)
+
+-- 27: CREATURE_EVENT_ON_MOVE_IN_LOS - Moved into line of sight: (event, creature)
+RegisterCreatureEvent(entry, 27, function(event, creature) end)
+
+-- 28-29: (unused - no enum members)
+
+-- 30: CREATURE_EVENT_ON_DUMMY_EFFECT - Scripted dummy effect: (event, creature, spellId, effIndex, target)
+RegisterCreatureEvent(entry, 30, function(event, creature, spellId, effIndex, target) end)
+
+-- 31: CREATURE_EVENT_ON_QUEST_ACCEPT - Quest started via this creature: (event, creature, player, quest)
+RegisterCreatureEvent(entry, 31, function(event, creature, player, quest) end)
+
+-- 32-33: (unused - no enum members)
+
+-- 34: CREATURE_EVENT_ON_QUEST_REWARD - Quest finished via this creature: (event, creature, player, quest)
+RegisterCreatureEvent(entry, 34, function(event, creature, player, quest) end)
+
+-- 35: CREATURE_EVENT_ON_DIALOG_STATUS - Gossip dialog window state: (event, creature, player, status)
+RegisterCreatureEvent(entry, 35, function(event, creature, player, status) end)
+
+-- 36: CREATURE_EVENT_ON_ADD - Added to the world map: (event, creature)
+RegisterCreatureEvent(entry, 36, function(event, creature) end)
+
+-- 37: CREATURE_EVENT_ON_REMOVE - Removed from the world map: (event, creature)
+RegisterCreatureEvent(entry, 37, function(event, creature) end)
+```
 
 ---
 
 ### GameObject & World Trigger Events (`RegisterGameObjectEvent`)
 
-| ID | Event Name | Hook Arguments & Description |
-| :---: | :--- | :--- |
-| **1** | `GAMEOBJECT_EVENT_ON_AIUPDATE` | AI update tick: `(event, go, diff_ms)`. ⚠️ Enum name has **no underscore** before `UPDATE`. |
-| **2** | `GAMEOBJECT_EVENT_ON_SPAWN` | Spawned into map: `(event, go)`. |
-| **3** | `GAMEOBJECT_EVENT_ON_DUMMY_EFFECT` | Scripted dummy effect: `(event, go, spellId, effIndex)`. ⚠️ 3 is dummy effect, **not** `ON_ADD`. |
-| **4** | `GAMEOBJECT_EVENT_ON_QUEST_ACCEPT` | Quest started via this GO: `(event, go, player, quest)`. ⚠️ 4 is quest accept, **not** `ON_REMOVE`. |
-| **5** | `GAMEOBJECT_EVENT_ON_QUEST_REWARD` | Quest finished via this GO: `(event, go, player, quest)`. ⚠️ 5 is quest reward, **not** `ON_USE`. |
-| **6** | `GAMEOBJECT_EVENT_ON_DIALOG_STATUS` | Gossip dialog window state: `(event, go, player, status)`. ⚠️ **There is no `GAMEOBJECT_EVENT_ON_RESET`.** |
-| **7** | `GAMEOBJECT_EVENT_ON_DESTROYED` | Destructible GameObject destroyed: `(event, go, player)`. |
-| **8** | `GAMEOBJECT_EVENT_ON_DAMAGED` | Destructible GameObject damaged: `(event, go, player)`. |
-| **9** | `GAMEOBJECT_EVENT_ON_LOOT_STATE_CHANGE` | Loot state shifted: `(event, go, state)`. |
-| **10** | `GAMEOBJECT_EVENT_ON_GO_STATE_CHANGED` | State altered (0=Active, 1=Ready): `(event, go, state)`. ⚠️ Name is `_CHANGED`, not `_CHANGE`. |
-| **11** | *(unused)* | No enum member. |
-| **12** | `GAMEOBJECT_EVENT_ON_ADD` | Added to world map: `(event, go)`. ⚠️ id **12**, not 3. |
-| **13** | `GAMEOBJECT_EVENT_ON_REMOVE` | Removed from world map: `(event, go)`. ⚠️ id **13**, not 4. |
-| **14** | `GAMEOBJECT_EVENT_ON_USE` | Player clicked/opened chest or door: `(event, go, player)`. ⚠️ id **14**, not 5. |
+```lua
+-- 1: GAMEOBJECT_EVENT_ON_AIUPDATE - AI update tick (no underscore before UPDATE): (event, go, diff_ms)
+RegisterGameObjectEvent(entry, 1, function(event, go, diff_ms) end)
+
+-- 2: GAMEOBJECT_EVENT_ON_SPAWN - Spawned into map: (event, go)
+RegisterGameObjectEvent(entry, 2, function(event, go) end)
+
+-- 3: GAMEOBJECT_EVENT_ON_DUMMY_EFFECT - Scripted dummy effect: (event, go, spellId, effIndex)
+RegisterGameObjectEvent(entry, 3, function(event, go, spellId, effIndex) end)
+
+-- 4: GAMEOBJECT_EVENT_ON_QUEST_ACCEPT - Quest started via this GO: (event, go, player, quest)
+RegisterGameObjectEvent(entry, 4, function(event, go, player, quest) end)
+
+-- 5: GAMEOBJECT_EVENT_ON_QUEST_REWARD - Quest finished via this GO: (event, go, player, quest)
+RegisterGameObjectEvent(entry, 5, function(event, go, player, quest) end)
+
+-- 6: GAMEOBJECT_EVENT_ON_DIALOG_STATUS - Gossip dialog window state: (event, go, player, status)
+RegisterGameObjectEvent(entry, 6, function(event, go, player, status) end)
+
+-- 7: GAMEOBJECT_EVENT_ON_DESTROYED - Destructible GameObject destroyed: (event, go, player)
+RegisterGameObjectEvent(entry, 7, function(event, go, player) end)
+
+-- 8: GAMEOBJECT_EVENT_ON_DAMAGED - Destructible GameObject damaged: (event, go, player)
+RegisterGameObjectEvent(entry, 8, function(event, go, player) end)
+
+-- 9: GAMEOBJECT_EVENT_ON_LOOT_STATE_CHANGE - Loot state shifted: (event, go, state)
+RegisterGameObjectEvent(entry, 9, function(event, go, state) end)
+
+-- 10: GAMEOBJECT_EVENT_ON_GO_STATE_CHANGED - State altered (0=Active, 1=Ready): (event, go, state)
+RegisterGameObjectEvent(entry, 10, function(event, go, state) end)
+
+-- 11: (unused - no enum member)
+
+-- 12: GAMEOBJECT_EVENT_ON_ADD - Added to world map: (event, go)
+RegisterGameObjectEvent(entry, 12, function(event, go) end)
+
+-- 13: GAMEOBJECT_EVENT_ON_REMOVE - Removed from world map: (event, go)
+RegisterGameObjectEvent(entry, 13, function(event, go) end)
+
+-- 14: GAMEOBJECT_EVENT_ON_USE - Player clicked/opened chest or door: (event, go, player)
+RegisterGameObjectEvent(entry, 14, function(event, go, player) end)
+```
 
 ---
 
@@ -464,30 +946,31 @@ So the Lua signature is `(event, sender, type, prefix, msg, receiver)` — note 
 >
 > **`PLAYER_EVENT_ON_SPELL_CAST` (5) is the one source that pushes a real `Spell*`** (`PlayerHooks.cpp:408-414`), signature `(event, player, spell, skipCheck)`. If a live spell *object* is required, that is the only hook that provides one.
 
-| ID | Event Name | Hook Arguments & Description | Status |
-| :---: | :--- | :--- | :--- |
-| **1** | `SPELL_EVENT_ON_CAST` | Spell initiated: `(event, spell, skipCheck)`. | ⛔ no registrar |
-| **2** | `SPELL_EVENT_ON_AURA_APPLICATION` | Aura applied: `(event, spell, ...)`. | ⛔ no registrar |
-| **3** | `SPELL_EVENT_ON_DISPEL` | Aura dispelled: `(event, spell, ...)`. | ⛔ no registrar |
-| **4** | `SPELL_EVENT_ON_PERIODIC_TICK` | Periodic tick fired: `(event, spell, ...)`. | ⛔ no registrar |
-| **5** | `SPELL_EVENT_ON_PERIODIC_UPDATE` | Periodic timer updated: `(event, spell, ...)`. | ⛔ no registrar |
-| **6** | `SPELL_EVENT_ON_AURA_CALC_AMOUNT` | Aura amount being calculated: `(event, spell, ...)`. | ⛔ no registrar |
-| **7** | `SPELL_EVENT_ON_CALC_PERIODIC` | Periodic interval being calculated: `(event, spell, ...)`. | ⛔ no registrar |
-| **8–9** | *(invalid)* | Not valid for VMaNGOS. | — |
-| **10** | `SPELL_EVENT_ON_CHECK_CAST` | Pre-cast validation: `(event, spell)`. | ⛔ no registrar |
-| **11** | `SPELL_EVENT_ON_BEFORE_CAST` | Immediately before the cast executes: `(event, spell)`. | ⛔ no registrar |
-| **12** | `SPELL_EVENT_ON_AFTER_CAST` | After the cast executes: `(event, spell)`. | ⛔ no registrar |
-| **13** | `SPELL_EVENT_ON_OBJECT_AREA_TARGET` | Area-target set built: `(event, spell, ...)`. | ⛔ no registrar |
-| **14** | `SPELL_EVENT_ON_OBJECT_TARGET` | Object-target set built: `(event, spell, ...)`. | ⛔ no registrar |
-| **15** | *(invalid)* | Not valid for VMaNGOS. | — |
-| **16** | `SPELL_EVENT_ON_EFFECT_LAUNCH` | Effect launched at caster: `(event, spell, ...)`. | ⛔ no registrar |
-| **17** | `SPELL_EVENT_ON_EFFECT_LAUNCH_TARGET` | Effect launched at target: `(event, spell, ...)`. | ⛔ no registrar |
-| **18** | *(invalid)* | Not valid for VMaNGOS. | — |
-| **19** | `SPELL_EVENT_ON_EFFECT_HIT` | Effect damage/heal computed: `(event, spell, ...)`. | ⛔ no registrar |
-| **20** | `SPELL_EVENT_ON_BEFORE_HIT` | Immediately before the hit lands: `(event, spell, ...)`. | ⛔ no registrar |
-| **21** | `SPELL_EVENT_ON_EFFECT_HIT_TARGET` | Effect hit on target: `(event, spell, ...)`. | ⛔ no registrar |
-| **22** | `SPELL_EVENT_ON_HIT` | Hit applied: `(event, spell, ...)`. | ⛔ no registrar |
-| **23** | `SPELL_EVENT_ON_AFTER_HIT` | Hit finished: `(event, spell, ...)`. | ⛔ no registrar |
+```lua
+-- ⛔ NOTE: RegisterSpellEvent does not exist in this build. These enums document what would be called if registrar existed.
+-- 1: SPELL_EVENT_ON_CAST - Spell initiated: (event, spell, skipCheck) [Status: no registrar]
+-- 2: SPELL_EVENT_ON_AURA_APPLICATION - Aura applied: (event, spell, ...) [Status: no registrar]
+-- 3: SPELL_EVENT_ON_DISPEL - Aura dispelled: (event, spell, ...) [Status: no registrar]
+-- 4: SPELL_EVENT_ON_PERIODIC_TICK - Periodic tick fired: (event, spell, ...) [Status: no registrar]
+-- 5: SPELL_EVENT_ON_PERIODIC_UPDATE - Periodic timer updated: (event, spell, ...) [Status: no registrar]
+-- 6: SPELL_EVENT_ON_AURA_CALC_AMOUNT - Aura amount being calculated: (event, spell, ...) [Status: no registrar]
+-- 7: SPELL_EVENT_ON_CALC_PERIODIC - Periodic interval being calculated: (event, spell, ...) [Status: no registrar]
+-- 8-9: (invalid - Not valid for VMaNGOS)
+-- 10: SPELL_EVENT_ON_CHECK_CAST - Pre-cast validation: (event, spell) [Status: no registrar]
+-- 11: SPELL_EVENT_ON_BEFORE_CAST - Immediately before the cast executes: (event, spell) [Status: no registrar]
+-- 12: SPELL_EVENT_ON_AFTER_CAST - After the cast executes: (event, spell) [Status: no registrar]
+-- 13: SPELL_EVENT_ON_OBJECT_AREA_TARGET - Area-target set built: (event, spell, ...) [Status: no registrar]
+-- 14: SPELL_EVENT_ON_OBJECT_TARGET - Object-target set built: (event, spell, ...) [Status: no registrar]
+-- 15: (invalid - Not valid for VMaNGOS)
+-- 16: SPELL_EVENT_ON_EFFECT_LAUNCH - Effect launched at caster: (event, spell, ...) [Status: no registrar]
+-- 17: SPELL_EVENT_ON_EFFECT_LAUNCH_TARGET - Effect launched at target: (event, spell, ...) [Status: no registrar]
+-- 18: (invalid - Not valid for VMaNGOS)
+-- 19: SPELL_EVENT_ON_EFFECT_HIT - Effect damage/heal computed: (event, spell, ...) [Status: no registrar]
+-- 20: SPELL_EVENT_ON_BEFORE_HIT - Immediately before the hit lands: (event, spell, ...) [Status: no registrar]
+-- 21: SPELL_EVENT_ON_EFFECT_HIT_TARGET - Effect hit on target: (event, spell, ...) [Status: no registrar]
+-- 22: SPELL_EVENT_ON_HIT - Hit applied: (event, spell, ...) [Status: no registrar]
+-- 23: SPELL_EVENT_ON_AFTER_HIT - Hit finished: (event, spell, ...) [Status: no registrar]
+```
 
 ### Vehicle Events (`RegisterVehicleEvent`) — ⛔ NOT AVAILABLE IN THIS BUILD
 
@@ -499,28 +982,25 @@ So the Lua signature is `(event, sender, type, prefix, msg, receiver)` — note 
 
 Verified by enumerating the complete `GlobalMethods[]` table at `methods/VMangos/GlobalMethods.h:2905-2923`, which is the exhaustive list of hook registrars this build exposes:
 
-| Registrar | Status |
-| :--- | :--- |
-| `RegisterPacketEvent` | ✅ available (`RegisterEventHelper`) |
-| `RegisterServerEvent` | ✅ available — **use this for all map/world/server hooks** |
-| `RegisterPlayerEvent` | ✅ available |
-| `RegisterGuildEvent` | ✅ available |
-| `RegisterGroupEvent` | ✅ available |
-| `RegisterBGEvent` | ✅ available |
-| `RegisterCreatureEvent` | ✅ available |
-| `RegisterUniqueCreatureEvent` | ✅ available (`RegisterUniqueHelper`) |
-| `RegisterGameObjectEvent` | ✅ available |
-| `RegisterItemEvent` | ✅ available |
-| `RegisterCreatureGossipEvent` | ✅ available |
-| `RegisterGameObjectGossipEvent` | ✅ available |
-| `RegisterItemGossipEvent` | ✅ available |
-| `RegisterPlayerGossipEvent` | ✅ available |
-| `RegisterInstanceEvent` | ✅ available |
-| `RegisterMapEvent` | ✅ available — but it is the **INSTANCE** registrar keyed on map id, accepting only event ids **1-7** (`LuaEngine.cpp:875-877`). See the box above. |
-| `RegisterInstanceEvent` | ⚠️ registered but **effectively unreachable** — the AI-creation probe uses the map id, not the instance id. See the box above. |
-| `RegisterSpellEvent` | ⛔ **does not exist** |
-| `RegisterVehicleEvent` | ⛔ **does not exist** |
-| `RegisterMapGossipEvent` | ⛔ **does not exist** |
+- `RegisterPacketEvent` -- Available (`RegisterEventHelper`)
+- `RegisterServerEvent` -- Available (use this for all map/world/server hooks)
+- `RegisterPlayerEvent` -- Available
+- `RegisterGuildEvent` -- Available
+- `RegisterGroupEvent` -- Available
+- `RegisterBGEvent` -- Available
+- `RegisterCreatureEvent` -- Available
+- `RegisterUniqueCreatureEvent` -- Available (`RegisterUniqueHelper`)
+- `RegisterGameObjectEvent` -- Available
+- `RegisterItemEvent` -- Available
+- `RegisterCreatureGossipEvent` -- Available
+- `RegisterGameObjectGossipEvent` -- Available
+- `RegisterItemGossipEvent` -- Available
+- `RegisterPlayerGossipEvent` -- Available
+- `RegisterInstanceEvent` -- Available (registered but effectively unreachable; AI-creation probe uses map ID, not instance ID)
+- `RegisterMapEvent` -- Available (INSTANCE registrar keyed on map ID, accepting only event IDs 1-7)
+- `RegisterSpellEvent` -- Does not exist (calling raises nil error)
+- `RegisterVehicleEvent` -- Does not exist (calling raises nil error)
+- `RegisterMapGossipEvent` -- Does not exist (calling raises nil error)
 
 Each `Register*Event` also has a matching `Clear*Events` counterpart in the same table (`:2924-2941`).
 
@@ -528,16 +1008,31 @@ Each `Register*Event` also has a matching `Clear*Events` counterpart in the same
 
 ### Item Use & Equipment Events (`RegisterItemEvent`)
 
-| ID | Event Name | Hook Arguments & Description |
-| :---: | :--- | :--- |
-| **1** | `ITEM_EVENT_ON_DUMMY_EFFECT` | Scripted dummy effect triggered: `(event, player, spellId, effIndex, item)`. |
-| **2** | `ITEM_EVENT_ON_USE` | Item right-clicked: `(event, player, item, target)`. |
-| **3** | `ITEM_EVENT_ON_QUEST_ACCEPT` | Quest starter item clicked: `(event, player, item, quest)`. |
-| **4** | `ITEM_EVENT_ON_EXPIRE` | Temporary item duration expired: `(event, player, itemEntry)`. |
-| **5** | `ITEM_EVENT_ON_REMOVE` | Item removed from a slot or destroyed: `(event, player, item, slot)`. |
-| **6** | `ITEM_EVENT_ON_ADD` | Item added to an inventory slot: `(event, player, item, slot)`. |
-| **7** | `ITEM_EVENT_ON_EQUIP` | Item placed into character equipment slot: `(event, player, item, slot)`. |
-| **8** | `ITEM_EVENT_ON_UNEQUIP` | Item removed from equipment slot: `(event, player, item, slot)`. |
+```lua
+-- 1: ITEM_EVENT_ON_DUMMY_EFFECT - Scripted dummy effect triggered: (event, player, spellId, effIndex, item)
+RegisterItemEvent(entry, 1, function(event, player, spellId, effIndex, item) end)
+
+-- 2: ITEM_EVENT_ON_USE - Item right-clicked: (event, player, item, target)
+RegisterItemEvent(entry, 2, function(event, player, item, target) end)
+
+-- 3: ITEM_EVENT_ON_QUEST_ACCEPT - Quest starter item clicked: (event, player, item, quest)
+RegisterItemEvent(entry, 3, function(event, player, item, quest) end)
+
+-- 4: ITEM_EVENT_ON_EXPIRE - Temporary item duration expired: (event, player, itemEntry)
+RegisterItemEvent(entry, 4, function(event, player, itemEntry) end)
+
+-- 5: ITEM_EVENT_ON_REMOVE - Item removed from a slot or destroyed: (event, player, item, slot)
+RegisterItemEvent(entry, 5, function(event, player, item, slot) end)
+
+-- 6: ITEM_EVENT_ON_ADD - Item added to an inventory slot: (event, player, item, slot)
+RegisterItemEvent(entry, 6, function(event, player, item, slot) end)
+
+-- 7: ITEM_EVENT_ON_EQUIP - Item placed into character equipment slot: (event, player, item, slot)
+RegisterItemEvent(entry, 7, function(event, player, item, slot) end)
+
+-- 8: ITEM_EVENT_ON_UNEQUIP - Item removed from equipment slot: (event, player, item, slot)
+RegisterItemEvent(entry, 8, function(event, player, item, slot) end)
+```
 
 ---
 
@@ -1137,14 +1632,12 @@ local stateTable = player:GetData()
 
 Real semantics, from the extension source:
 
-| Property | Behaviour |
-| :--- | :--- |
-| Storage | A **Lua table**, not persistent storage. Lost on reload, logout, or process restart. |
-| Supported types | `Map`, `Player`, `Creature`, `GameObject` only — the loop covers exactly those four. |
-| Keying | `Player` is keyed by `GetGUIDLow()`. All other types are keyed `map → instance → guid`. `Map` is keyed by the constant `1`. |
-| Cleanup | Cleared on player logout (event 4), creature delete (31), GameObject delete (32), and map create/destroy (17/18). |
-| Prerequisite | Requires `GetObjectType()`, which is installed on the shared object metatable at `ElunaTemplate.h:287`. |
-| Global namespace | Assigned onto the **shared global table**, so it is another reason the `local`-everything convention matters (pitfall #8). |
+- **Storage**: A **Lua table**, not persistent storage. Lost on reload, logout, or process restart.
+- **Supported types**: `Map`, `Player`, `Creature`, `GameObject` only — the loop covers exactly those four.
+- **Keying**: `Player` is keyed by `GetGUIDLow()`. All other types are keyed `map → instance → guid`. `Map` is keyed by the constant `1`.
+- **Cleanup**: Cleared on player logout (event 4), creature delete (31), GameObject delete (32), and map create/destroy (17/18).
+- **Prerequisite**: Requires `GetObjectType()`, which is installed on the shared object metatable at `ElunaTemplate.h:287`.
+- **Global namespace**: Assigned onto the **shared global table**, so it is another reason the `local`-everything convention matters (pitfall #8).
 
 **If you need state that outlives a reload, do not use this** — keep it in a database table, or re-derive it on `ELUNA_EVENT_ON_LUA_STATE_OPEN` (33).
 
@@ -1299,23 +1792,65 @@ Everything in this section was verified by reading the source named in each row.
 
 ### Engine Pitfalls: Consolidated Reference Table
 
-| # | Pitfall | Verified behaviour | Source |
-| :---: | :--- | :--- | :--- |
-| 1 | **`RegisterMapEvent` never fires** | Takes `(mapId, event, fn, shots)` via `RegisterEntryHelper`; `RegisterServerEvent` takes `(event, fn, shots)` via `RegisterEventHelper`. Passing `(23, fn)` fails with `bad argument #2 to 'RegisterMapEvent' (number expected, got function)`. Even with correct arity it dispatches out of `REGTYPE_SERVER`, never `REGTYPE_MAP`. **Always use `RegisterServerEvent`.** | `GlobalMethods.h:488,504` · `ServerHooks.cpp:17-19` |
-| 2 | **`WORLD_EVENT_ON_UPDATE` (13) is dead** | Declared and defined; **zero call sites**. Registers fine, never invoked. Use `MAP_EVENT_ON_UPDATE` (23). | `LuaEngine.h:422` · `ServerHooks.cpp:291` |
-| 3 | **114 method names are error stubs** | Registered with `METHOD_REG_NONE`, which pushes a closure that raises on call. **The name still resolves**, so `if player.HasTalent then` passes. Message: `attempt to call method 'X' that is not implemented for this emulator`. Only the server log records it. (There are **116** `METHOD_REG_NONE` *registration lines*, but `IsFlying` and `SetFFA` are each registered twice — on `Unit` and on `Player` — so **114 distinct names**.) | `ElunaTemplate.h:327-332,520` |
-| 4 | **No LFG binding at all** | `Group:IsLFGGroup`, `Group:ConvertToLFG`, `Unit:IsUsingLfg`, `Unit:InRandomLfgDungeon` are all `METHOD_REG_NONE` stubs. There is no queue join/leave/status API in any form. | `GroupMethods.h:386,388` |
-| 5 | **No sandbox whatsoever** | `luaL_openlibs(L)` opens `os`, `io`, `debug`, `package`/`require`. `package.cpath` is seeded with `?.dll;?.so;` and the script directory, so `require()` can load **native shared objects** from the script tree. There is no filesystem or process restriction. | `LuaEngine.cpp:124` · `ElunaLoader.cpp:189-192` |
-| 6 | **No VM guards — infinite loop = hung world** | `grep -rn -e lua_sethook -e lua_setallocf src/modules/Eluna/` returns **zero hits**. No instruction-count hook, therefore no CPU budget; no custom allocator, therefore no memory cap. The state is created with plain `luaL_newstate()`. **Every loop in every script needs a hard, explicit bound.** | `LuaEngine.cpp:116` |
-| 7 | **`.reload eluna` is all-or-nothing, and per-(map, instance)** | `_ReloadEluna` erases **all** timed events (`SetAllEventStates(LUAEVENT_STATE_ERASE)`), closes the whole `lua_State`, reopens it, and re-runs every script. There is **no single-script reload**. ⚠️ An earlier version named this pitfall `.eluna reload`, which is **not a command in this build** — there is no `.eluna` chat command at all (see the note above). The command is `.reload eluna`. | `LuaEngine.cpp:32-52` |
-| 8 | **One shared global table per map** | `SetMethods` pushes global methods straight onto `lua_getglobaltable(L)`. Every script `require`s into the **same** global environment, so a global you define in one file is visible in all of them. **This build has no `AIO` table** — it is a post-AIO fork using bare globals and colon-method style, so the convention is `local` for everything. Duplicate basenames are rejected with an error and the second file is skipped. | `ElunaTemplate.h:293-294,306` · `LuaEngine.cpp:238-242` |
-| 9 | **Script discovery is map-scoped by folder name** | `ReadFiles` recurses `ScriptPath`, skips dotfiles, and parses the immediate **subfolder** name as an integer map id, defaulting to `-1` = all maps. `lua_scripts/foo.lua` loads everywhere; `lua_scripts/533/foo.lua` loads only on map 533. Filtering is by **map**, not by instance. | `ElunaLoader.cpp:174-238` |
-| 10 | **Error visibility is zero by default** | `ExecuteCall` is the single funnel: it `lua_pcall`s, logs via `ELUNA_LOG_ERROR`, pushes `nil` for each expected result, and returns `false`. `RunScripts` wraps each file in its own `ExecuteCall` and **continues on failure**, so one bad file does not abort the others — it just silently doesn't load. Nothing ever reaches a player's chat. | `LuaEngine.cpp:311-365,212-265` |
-| 11 | **`Player:RunCommand` — was a stub, now real** | Was `METHOD_REG_NONE` until this project's fix; it is now implemented as `ChatHandler(player->GetSession()).ParseCommands(cmd.c_str())`, prepending `.` when absent (or leaving `!`). Uses **public** `ParseCommands`, not `ExecuteCommand` — the latter is `protected:` in this fork's `Chat.h`, so upstream Eluna's version does not compile here. The **global** `RunCommand(text)` is a different function and is unsuitable: it queues a `CliCommandHolder(0, SEC_CONSOLE, nullptr, ...)` with no player attached, breaking every command needing a player context. | `PlayerMethods.h:3381-3396` · `GlobalMethods.h:1189-1195` · `Chat.h:118,165,186` |
-| 12 | **`RemoveEventById` misreads its second argument** | `bool all_Events = E->CHECKVAL<bool>(1, false);` reads stack index **1** (the event id) where index **2** is intended. Passing a second argument therefore never has any effect, and `CHECKVAL<bool>(1,...)` on an integer is truthy-dependent. This is an upstream Eluna defect reproduced here. Prefer `WorldObject:RemoveEventById`, which reads index 2 correctly. | `GlobalMethods.h:1405-1416` · `WorldObjectMethods.h:757,759` |
-| 13 | **Config-gated methods are also error stubs** | `METHOD_FLAG_UNSAFE` and `METHOD_FLAG_DEPRECATED` methods become raising closures when their config key is off, with messages `attempt to call method 'X' that is flagged as unsafe!…` and `…flagged as deprecated!…`. **The name still resolves.** With the live `run/mangosd.conf` (`UseUnsafeMethods=false`), `WorldDBQuery` / `CharDBQuery` / `AuthDBQuery` are in this category. | `ElunaTemplate.h:336-351,521-522` |
-| 14 | **Map/world-scoped methods resolve but refuse to call** | `METHOD_REG_MAP` and `METHOD_REG_WORLD` methods are installed with a closure that raises `attempt to call method 'X' that does not exist for state: N` if the bound map id does not match. Affects methods flagged map-only used from world state. | `ElunaTemplate.h:354-366,519` |
-| 15 | **`.reload config` does not re-apply Eluna keys** | `ElunaConfig::Initialize()` runs at world startup, not from the `.reload config` handler. Editing `Eluna.*` in `mangosd.conf` requires a **server restart**. | `ElunaConfig.cpp:32-53` |
+1. **`RegisterMapEvent` never fires**
+   -- **Verified behaviour**: Takes `(mapId, event, fn, shots)` via `RegisterEntryHelper`; `RegisterServerEvent` takes `(event, fn, shots)` via `RegisterEventHelper`. Passing `(23, fn)` fails with `bad argument #2 to 'RegisterMapEvent' (number expected, got function)`. Even with correct arity it dispatches out of `REGTYPE_SERVER`, never `REGTYPE_MAP`. **Always use `RegisterServerEvent`.**
+   -- **Source**: `GlobalMethods.h:488,504` · `ServerHooks.cpp:17-19`
+
+2. **`WORLD_EVENT_ON_UPDATE` (13) is dead**
+   -- **Verified behaviour**: Declared and defined; **zero call sites**. Registers fine, never invoked. Use `MAP_EVENT_ON_UPDATE` (23).
+   -- **Source**: `LuaEngine.h:422` · `ServerHooks.cpp:291`
+
+3. **114 method names are error stubs**
+   -- **Verified behaviour**: Registered with `METHOD_REG_NONE`, which pushes a closure that raises on call. **The name still resolves**, so `if player.HasTalent then` passes. Message: `attempt to call method 'X' that is not implemented for this emulator`. Only the server log records it. (There are **116** `METHOD_REG_NONE` *registration lines*, but `IsFlying` and `SetFFA` are each registered twice — on `Unit` and on `Player` — so **114 distinct names**.)
+   -- **Source**: `ElunaTemplate.h:327-332,520`
+
+4. **No LFG binding at all**
+   -- **Verified behaviour**: `Group:IsLFGGroup`, `Group:ConvertToLFG`, `Unit:IsUsingLfg`, `Unit:InRandomLfgDungeon` are all `METHOD_REG_NONE` stubs. There is no queue join/leave/status API in any form.
+   -- **Source**: `GroupMethods.h:386,388`
+
+5. **No sandbox whatsoever**
+   -- **Verified behaviour**: `luaL_openlibs(L)` opens `os`, `io`, `debug`, `package`/`require`. `package.cpath` is seeded with `?.dll;?.so;` and the script directory, so `require()` can load **native shared objects** from the script tree. There is no filesystem or process restriction.
+   -- **Source**: `LuaEngine.cpp:124` · `ElunaLoader.cpp:189-192`
+
+6. **No VM guards — infinite loop = hung world**
+   -- **Verified behaviour**: `grep -rn -e lua_sethook -e lua_setallocf src/modules/Eluna/` returns **zero hits**. No instruction-count hook, therefore no CPU budget; no custom allocator, therefore no memory cap. The state is created with plain `luaL_newstate()`. **Every loop in every script needs a hard, explicit bound.**
+   -- **Source**: `LuaEngine.cpp:116`
+
+7. **`.reload eluna` is all-or-nothing, and per-(map, instance)**
+   -- **Verified behaviour**: `_ReloadEluna` erases **all** timed events (`SetAllEventStates(LUAEVENT_STATE_ERASE)`), closes the whole `lua_State`, reopens it, and re-runs every script. There is **no single-script reload**. ⚠️ An earlier version named this pitfall `.eluna reload`, which is **not a command in this build** — there is no `.eluna` chat command at all (see the note above). The command is `.reload eluna`.
+   -- **Source**: `LuaEngine.cpp:32-52`
+
+8. **One shared global table per map**
+   -- **Verified behaviour**: `SetMethods` pushes global methods straight onto `lua_getglobaltable(L)`. Every script `require`s into the **same** global environment, so a global you define in one file is visible in all of them. **This build has no `AIO` table** — it is a post-AIO fork using bare globals and colon-method style, so the convention is `local` for everything. Duplicate basenames are rejected with an error and the second file is skipped.
+   -- **Source**: `ElunaTemplate.h:293-294,306` · `LuaEngine.cpp:238-242`
+
+9. **Script discovery is map-scoped by folder name**
+   -- **Verified behaviour**: `ReadFiles` recurses `ScriptPath`, skips dotfiles, and parses the immediate **subfolder** name as an integer map id, defaulting to `-1` = all maps. `lua_scripts/foo.lua` loads everywhere; `lua_scripts/533/foo.lua` loads only on map 533. Filtering is by **map**, not by instance.
+   -- **Source**: `ElunaLoader.cpp:174-238`
+
+10. **Error visibility is zero by default**
+    -- **Verified behaviour**: `ExecuteCall` is the single funnel: it `lua_pcall`s, logs via `ELUNA_LOG_ERROR`, pushes `nil` for each expected result, and returns `false`. `RunScripts` wraps each file in its own `ExecuteCall` and **continues on failure**, so one bad file does not abort the others — it just silently doesn't load. Nothing ever reaches a player's chat.
+    -- **Source**: `LuaEngine.cpp:311-365,212-265`
+
+11. **`Player:RunCommand` — was a stub, now real**
+    -- **Verified behaviour**: Was `METHOD_REG_NONE` until this project's fix; it is now implemented as `ChatHandler(player->GetSession()).ParseCommands(cmd.c_str())`, prepending `.` when absent (or leaving `!`). Uses **public** `ParseCommands`, not `ExecuteCommand` — the latter is `protected:` in this fork's `Chat.h`, so upstream Eluna's version does not compile here. The **global** `RunCommand(text)` is a different function and is unsuitable: it queues a `CliCommandHolder(0, SEC_CONSOLE, nullptr, ...)` with no player attached, breaking every command needing a player context.
+    -- **Source**: `PlayerMethods.h:3381-3396` · `GlobalMethods.h:1189-1195` · `Chat.h:118,165,186`
+
+12. **`RemoveEventById` misreads its second argument**
+    -- **Verified behaviour**: `bool all_Events = E->CHECKVAL<bool>(1, false);` reads stack index **1** (the event id) where index **2** is intended. Passing a second argument therefore never has any effect, and `CHECKVAL<bool>(1,...)` on an integer is truthy-dependent. This is an upstream Eluna defect reproduced here. Prefer `WorldObject:RemoveEventById`, which reads index 2 correctly.
+    -- **Source**: `GlobalMethods.h:1405-1416` · `WorldObjectMethods.h:757,759`
+
+13. **Config-gated methods are also error stubs**
+    -- **Verified behaviour**: `METHOD_FLAG_UNSAFE` and `METHOD_FLAG_DEPRECATED` methods become raising closures when their config key is off, with messages `attempt to call method 'X' that is flagged as unsafe!…` and `…flagged as deprecated!…`. **The name still resolves.** With the live `run/mangosd.conf` (`UseUnsafeMethods=false`), `WorldDBQuery` / `CharDBQuery` / `AuthDBQuery` are in this category.
+    -- **Source**: `ElunaTemplate.h:336-351,521-522`
+
+14. **Map/world-scoped methods resolve but refuse to call**
+    -- **Verified behaviour**: `METHOD_REG_MAP` and `METHOD_REG_WORLD` methods are installed with a closure that raises `attempt to call method 'X' that does not exist for state: N` if the bound map id does not match. Affects methods flagged map-only used from world state.
+    -- **Source**: `ElunaTemplate.h:354-366,519`
+
+15. **`.reload config` does not re-apply Eluna keys**
+    -- **Verified behaviour**: `ElunaConfig::Initialize()` runs at world startup, not from the `.reload config` handler. Editing `Eluna.*` in `mangosd.conf` requires a **server restart**.
+    -- **Source**: `ElunaConfig.cpp:32-53`
 
 #### The 114 unimplemented method names
 
@@ -1415,13 +1950,21 @@ worldObject:RemoveEvents()
 
 `WorldObjectMethods.h:713-748`, registered at `:1127`. Same argument shape, same callback signature. Differences that matter:
 
-| Property | Global (`CreateLuaEvent`) | Object (`WorldObject:RegisterEvent`) |
-| :--- | :--- | :--- |
-| Scope | Whole map | One object |
-| Lifetime | Until cancelled or reloaded | **Ends when the object leaves the world.** A `Player`'s timers are removed on logout. |
-| Creature/GameObject ticking | Always | **Only while in sight of someone** (documented at `WorldObjectMethods.h:694`) |
-| Cancellation | `RemoveEventById` (**buggy** — see above) | `worldObject:RemoveEventById` (correct) |
-| Returns `nil` when | ref fails | the object has no event processor for the bound map (`:739-743`) |
+- **Scope**:
+  -- Global (`CreateLuaEvent`): Whole map
+  -- Object (`WorldObject:RegisterEvent`): One object
+- **Lifetime**:
+  -- Global: Until cancelled or reloaded
+  -- Object: **Ends when the object leaves the world.** A `Player`'s timers are removed on logout.
+- **Creature/GameObject ticking**:
+  -- Global: Always
+  -- Object: **Only while in sight of someone** (documented at `WorldObjectMethods.h:694`)
+- **Cancellation**:
+  -- Global: `RemoveEventById` (**buggy** — see warning above)
+  -- Object: `worldObject:RemoveEventById` (correct)
+- **Returns `nil` when**:
+  -- Global: ref fails
+  -- Object: the object has no event processor for the bound map (`WorldObjectMethods.h:739-743`)
 
 > ⚠️ **No name collision here — an earlier revision invented one.** It claimed a global `Eluna.RegisterEvent(eventId, fn, shots)` hook registrar shared its name with the object timer method. **No such global exists.** The two real functions are `WorldObject:RegisterEvent` (object-scoped **timer**) and bare `CreateLuaEvent` (global **timer**); the hook registrars are all `Register<Something>Event` (`RegisterServerEvent`, `RegisterCreatureEvent`, …) and none is a bare `RegisterEvent`. The genuine trap is the opposite of what was claimed: writing `RegisterEvent(...)` raises `attempt to call a nil value (global 'RegisterEvent')`.
 
