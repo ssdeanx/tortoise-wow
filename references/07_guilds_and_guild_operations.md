@@ -1,3 +1,37 @@
+---
+name: Guilds, Guild Bots & Autonomous Guild Operations
+description: How Turtle-WoW's guild system works for bots — the .bot guild targeting scope, guild management whispers (invite, promote, kick, leader transfer), the autonomous guild-craft-order and guild-bank actions, charter signing by bots, the realm-wide bot guild formation simulation, and the aiplayerbot.conf keys that govern all of it. Use it when issuing guild-wide bot commands or debugging a guild command that is silently dropped.
+version: 1.0.0
+platform: Turtle-WoW 1.18.1 (Build 7272)
+stack: CMaNGOS + mod-playerbots (ike3 / r-o-sh) + mod-dungeon-clear
+glob:
+  - modules/mod-playerbots/src/playerbot/PlayerbotMgr.cpp
+  - modules/mod-playerbots/src/playerbot/RandomPlayerbotMgr.cpp
+  - modules/mod-playerbots/src/playerbot/PlayerbotAIConfig.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/generic/GuildStrategy.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/generic/ChatCommandHandlerStrategy.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/actions/GuildManagementActions.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/actions/GuildCraftOrderAction.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/actions/GuildBankAction.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/actions/PetitionSignAction.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/values/GuildValues.cpp
+  - modules/mod-playerbots/src/playerbot/strategy/triggers/ChatTriggerContext.h
+  - modules/mod-playerbots/src/playerbot/strategy/actions/ChatActionContext.h
+  - modules/mod-playerbots/src/playerbot/strategy/ExternalEventHelper.h
+  - modules/mod-playerbots/mod-playerbots.cmake
+  - run/aiplayerbot.conf
+tags:
+  - guilds
+  - playerbots
+  - guild-orders
+  - guild-bank
+  - charters
+  - whispers
+  - bot-recruitment
+  - configuration
+  - turtle-wow
+---
+
 # Volume 07: Guilds, Guild Bots & Autonomous Guild Operations
 
 > **Target Core**: Turtle-WoW 1.18.1 (Build 7272) • CMaNGOS + PlayerBots Framework + Eluna Engine  
@@ -9,12 +43,22 @@
 
 1. [Architecture & Engine Realities](#1-architecture--engine-realities)
 2. [Universal Guild Targeting Scope (`guild`)](#2-universal-guild-targeting-scope-guild)
+   - [Supported Guild Operations](#supported-guild-operations)
 3. [Master Guild Macro UI Cheat Sheet](#3-master-guild-macro-ui-cheat-sheet)
+   - [🌟 Macro 1: 1-Click Full Guild Raid Preparation](#-macro-1-1-click-full-guild-raid-preparation)
+   - [⚔️ Macro 2: Equip Best-in-Slot Gear on All Guild Bots](#-macro-2-equip-best-in-slot-gear-on-all-guild-bots)
+   - [📍 Macro 3: Assemble All Guild Bots](#-macro-3-assemble-all-guild-bots) · [💬 Macro 4: Query Guild Roster](#-macro-4-query-guild-roster--metadata)
 4. [Guild Whispers & Bot Management Actions](#4-guild-whispers--bot-management-actions)
+   - [Bot Guild Command Directory](#bot-guild-command-directory)
+   - [Signing Guild Charters](#signing-guild-charters)
 5. [In-Game Guild Chat & Two-Way Bot Communication](#5-in-game-guild-chat--two-way-bot-communication)
+   - [A. Bot Responses in Guild Chat](#a-bot-responses-in-guild-chat)
+   - [B. Forcing Bots to Speak in Guild Chat](#b-forcing-bots-to-speak-in-guild-chat)
 6. [Guild Bank Interaction (`gb`)](#6-guild-bank-interaction-gb)
 7. [Guild Crafting Orders (Autonomous)](#7-guild-crafting-orders-autonomous)
+   - [The Flow](#the-flow)
 8. [Autonomous Realm Bot Guilds Simulation](#8-autonomous-realm-bot-guilds-simulation)
+   - [Key Simulation Mechanics](#key-simulation-mechanics)
 9. [Configuration Parameters (`aiplayerbot.conf`)](#9-configuration-parameters-aiplayerbotconf)
 
 ---
@@ -46,16 +90,38 @@ When executing a `.bot` command **in game**, you can pass **`guild`** as the tar
 
 ### Supported Guild Operations
 
-| Command | Exact Syntax | Description | Example |
-| :--- | :--- | :--- | :--- |
-| **Equip Best Gear** | `.bot gear guild best` | Scans the item database and equips the highest item-level Best-in-Slot (BiS) gear on every target the `guild` selector resolves. | `.bot gear guild best` |
-| **Gear by Quality** | `.bot gear guild <quality>` | Equips complete level-appropriate sets matching `uncommon` (green), `rare` (blue), or `epic` (purple) quality. | `.bot gear guild epic` |
-| **Master 1-Click Prep** | `.bot prep guild` | Restocks consumables and reagents on all guild bots via `PlayerbotFactory::Refresh()`. **Takes no quality argument** — the `epic` parameter is discarded. | `.bot prep guild` |
-| **Level Guild Bots** | `.bot level guild <1–60>` | Sets character level for all guild members in your guild. | `.bot level guild 60` |
-| **Summon Guild Bots** | `.bot summon guild` | Teleports guild bots to your position, refusing any bot in combat, in a battleground or BG queue, or in a different instanceable map — and any bot you do not own. | `.bot summon guild` |
-| **Train Spells** | `.bot train guild` | Forces all guild bots to learn all class spells up to their current level (`learnClassLevelSpells()`). Learn proficiencies separately. | `.bot train guild` |
-| **Enchant Equipment** | `.bot enchants guild` | Applies optimal permanent enchantments to all equipped gear across every resolved guild target. | `.bot enchants guild` |
-| **Restock Consumables** | `.bot consumes guild` | Fills inventory bags with flasks, elixirs, scrolls, food, water, and class reagents. | `.bot consumes guild` |
+```lua
+-- Supported Guild Operations (.bot <command> guild [parameters])
+
+-- Equip Best Gear: Scans item database and equips highest ilvl BiS gear on every resolved guild target
+.bot gear guild best
+
+-- Gear by Quality: Equips complete level-appropriate sets matching uncommon (green), rare (blue), or epic (purple)
+.bot gear guild <quality>
+-- Example:
+.bot gear guild epic
+
+-- Master 1-Click Prep: Restocks consumables and reagents on all guild bots via PlayerbotFactory::Refresh().
+-- NOTE: Takes no quality argument — any 'epic' parameter is discarded.
+.bot prep guild
+
+-- Level Guild Bots: Sets character level for all guild members in your guild (1-60)
+.bot level guild 60
+
+-- Summon Guild Bots: Teleports guild bots to your position.
+-- Refuses bots in combat, in BG/BG queue, on different instanceable map, or bots you do not own.
+.bot summon guild
+
+-- Train Spells: Forces all guild bots to learn all class spells up to current level (learnClassLevelSpells()).
+-- Note: Proficiencies must be learned separately.
+.bot train guild
+
+-- Enchant Equipment: Applies optimal permanent enchantments to all equipped gear across resolved guild targets.
+.bot enchants guild
+
+-- Restock Consumables: Fills inventory bags with flasks, elixirs, scrolls, food, water, and class reagents.
+.bot consumes guild
+```
 
 ---
 
@@ -106,17 +172,49 @@ You can issue direct guild management orders to any bot via whisper (`GuildManag
 
 ### Bot Guild Command Directory
 
-| Whisper Command | Target | Action Executed | Description | Example |
-| :--- | :--- | :--- | :--- | :--- |
-| `/w %t guild invite <player>` | Bot Officer | `GuildInviteAction` | Orders bot officer to invite the specified player or bot to the guild. | `/w %t guild invite Sam` |
-| `/w %t guild join` | Bot Officer | `GuildJoinAction` | Commands bot to request an invitation to join your guild. | `/w %t guild join` |
-| `/w %t guild promote <player>` | Bot Officer | `GuildPromoteAction` | Orders bot with officer permissions to promote the target member. | `/w %t guild promote Dunpriest` |
-| `/w %t guild demote <player>` | Bot Officer | `GuildDemoteAction` | Orders bot with officer permissions to demote the target member. | `/w %t guild demote Dunpriest` |
-| `/w %t guild remove <player>` | Bot Officer | `GuildRemoveAction` | Orders bot to kick the specified member from the guild. | `/w %t guild remove Dunpriest` |
-| `/w %t guild leave` | Any Guild Bot | `GuildLeaveAction` | Commands the bot to leave its current guild. | `/w %t guild leave` |
-| `/w %t guild leader <player>` | Bot Leader | `GuildLeaderAction` | Transfers guild leadership from the bot to the specified player. | `/w %t guild leader Sam` |
-| `/w %t invite guild` | Any Guild Bot | `InviteGuildToGroupAction` | Orders bot to invite all online guild members to the party/raid. | `/w %t invite guild` |
-| `/w %t set value guild size <N>` | Any Bot | `SetValueAction` | Configures the bot's preferred guild size bracket. `N` ∈ `{-1, 0, 30, 50, 70, 120, 250}` — see the note below. | `/w %t set value guild size 70` |
+```lua
+-- Direct Whisper Guild Management Actions (GuildManagementActions.cpp)
+
+-- Invite Player: Orders bot officer to invite specified player or bot to guild (GuildInviteAction)
+/w %t guild invite <player>
+-- Example:
+/w %t guild invite Sam
+
+-- Request Guild Invitation: Commands bot officer to request invitation to join your guild (GuildJoinAction)
+/w %t guild join
+
+-- Promote Member: Orders bot officer to promote target member (GuildPromoteAction)
+/w %t guild promote <player>
+-- Example:
+/w %t guild promote Dunpriest
+
+-- Demote Member: Orders bot officer to demote target member (GuildDemoteAction)
+/w %t guild demote <player>
+-- Example:
+/w %t guild demote Dunpriest
+
+-- Remove/Kick Member: Orders bot officer to kick specified member from guild (GuildRemoveAction)
+/w %t guild remove <player>
+-- Example:
+/w %t guild remove Dunpriest
+
+-- Leave Guild: Commands target bot to leave its current guild (GuildLeaveAction)
+/w %t guild leave
+
+-- Transfer Guild Leadership: Transfers guild leadership from bot leader to specified player (GuildLeaderAction)
+/w %t guild leader <player>
+-- Example:
+/w %t guild leader Sam
+
+-- Invite All Guild to Group: Orders bot to invite all online guild members to party/raid (InviteGuildToGroupAction)
+/w %t invite guild
+
+-- Set Preferred Guild Size Bracket: Configures bot's preferred guild size bracket (SetValueAction)
+-- Values: N in {-1, 0, 30, 50, 70, 120, 250}. (-1 resets to random). Input snaps UP to nearest bracket.
+/w %t set value guild size <N>
+-- Example:
+/w %t set value guild size 70
+```
 
 > ⚠️ **`set value` is a two-word command.** The chat trigger is `set value` (`ChatTriggerContext.h:147`), not `value`. `ExternalEventHelper::ParseChatCommand` (`ExternalEventHelper.h:28-41`) probes the command text right-to-left, trying only the names `value guild size`, `value guild`, and `value` — none of which is a trigger, so `HandleCommand` returns `false` (`ExternalEventHelper.h:84`) and **the line is dropped with no feedback at all**.
 >
