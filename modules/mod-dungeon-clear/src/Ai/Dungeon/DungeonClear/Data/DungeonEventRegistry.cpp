@@ -443,6 +443,10 @@ namespace
             RegisterTowerOfKarazhanEvents(t);
             RegisterTimbermawHoldEvents(t);
             RegisterStormwroughtRuinsEvents(t);
+            RegisterWindhornCanyonEvents(t);
+            RegisterGilneasCityEvents(t);
+            RegisterFrostmaneHollowEvents(t);
+            RegisterCrescentGroveEvents(t);
             RegisterHellfireRampartsEvents(t);
             RegisterBloodFurnaceEvents(t);
             RegisterSlavePensEvents(t);

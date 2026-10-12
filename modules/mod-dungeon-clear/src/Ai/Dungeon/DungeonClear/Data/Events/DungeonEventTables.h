@@ -132,6 +132,15 @@ void RegisterTimbermawHoldRoster(std::vector<BossRosterPatch>& t);
 // Stormwrought Ruins (map 818): custom 20-man raid. See StormwroughtRuinsEvents.cpp.
 void RegisterStormwroughtRuinsEvents(std::vector<DungeonEvent>& out);
 void RegisterStormwroughtRuinsRoster(std::vector<BossRosterPatch>& t);
+// Windhorn Canyon (map 820): custom 5-man dungeon. See WindhornCanyonEvents.cpp.
+void RegisterWindhornCanyonEvents(std::vector<DungeonEvent>& out);
+void RegisterWindhornCanyonRoster(std::vector<BossRosterPatch>& t);
+// Gilneas City (map 815): custom 5-man dungeon. See GilneasCityEvents.cpp.
+void RegisterGilneasCityEvents(std::vector<DungeonEvent>& out);
+// Frostmane Hollow (map 822): custom 5-man dungeon. See FrostmaneHollowEvents.cpp.
+void RegisterFrostmaneHollowEvents(std::vector<DungeonEvent>& out);
+// Crescent Grove (map 802): custom 5-man dungeon. See CrescentGroveEvents.cpp.
+void RegisterCrescentGroveEvents(std::vector<DungeonEvent>& out);
 // Hellfire Ramparts (map 543) final-approach gate — see HellfireRampartsEvents.cpp
 // for the measurements. Exposed so t/TestRampartsLedgeProbe can assert against the
 // real navmesh that the zone-in platform lies outside the gate; the numbers are

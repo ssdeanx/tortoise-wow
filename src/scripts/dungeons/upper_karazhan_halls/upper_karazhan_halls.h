@@ -1,0 +1,56 @@
+#ifndef DEF_UPPER_KARAZHAN_HALLS_H
+#define DEF_UPPER_KARAZHAN_HALLS_H
+
+enum UpperKarazhanEncounters
+{
+    DATA_ANOMALUS             = 1,
+    DATA_ECHO_OF_MEDIVH       = 2,
+    DATA_INCANTAGOS           = 3,
+    DATA_KEEPER_GNARLMOON     = 4,
+    DATA_KINGS_COUNCIL        = 5,
+    DATA_KRUUL                = 6,
+    DATA_SANV_TASDAL          = 7,
+    DATA_RUPTURAN             = 8,
+    DATA_MAX_ENCOUNTER        = 9
+};
+
+enum UpperKarazhanCreatures
+{
+    NPC_RUPTURAN_THE_BROKEN    = 59961,
+    NPC_KARA_KING              = 59967,
+    NPC_KARA_KNIGHT            = 59968,
+    NPC_KARA_ROOK              = 59970,
+    NPC_KARA_BISHOP            = 59971,
+    NPC_SANV_TASDAL            = 59981,
+    NPC_KRUUL                  = 59991,
+    NPC_KEEPER_GNARLMOON       = 61939,
+    NPC_LEY_WATCHER_INCANTAGOS = 61946,
+    NPC_ANOMALUS               = 61951,
+    NPC_ECHO_OF_MEDIVH         = 61958,
+
+    // Trash mobs
+    NPC_MANASCALE_DRAKE        = 61940,
+    NPC_MANASCALE_DRAGON_GUARD = 61942,
+    NPC_MANASCALE_SUPPRESSOR   = 61943,
+    NPC_MANASCALE_MAGEWEAVER   = 61944,
+    NPC_MANASCALE_OVERSEER     = 61945,
+    NPC_LINGERING_MAGUS        = 61954,
+    NPC_LINGERING_ARCANIST     = 61955,
+    NPC_LINGERING_ASTROLOGIST  = 61956,
+    NPC_LINGERING_ENCHANTER    = 61957,
+    NPC_OUTCAST_SOULEATER      = 62020,
+    NPC_DRAENEI_WORSHIPPER     = 62022,
+    NPC_DRAENEI_WATERSEEKER    = 62025,
+    NPC_DRAENEI_TRUTHSEEKER    = 59980,
+    NPC_SHADOWCLAW_WORGEN      = 61937,
+    NPC_SHADOWCLAW_RAGER       = 61938
+};
+
+enum UpperKarazhanGameObjects
+{
+    GO_KARA_DINING_DOORS       = 2008293,
+    GO_KARA_DINING_RUIN_DOOR   = 2008294,
+    GO_PVP_LORDAERON_DOOR      = 3000297
+};
+
+#endif

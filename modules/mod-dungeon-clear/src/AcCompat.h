@@ -412,14 +412,18 @@ namespace Acore
         std::ostringstream os;
         if (spec.size() >= 2 && spec[0] == '.' && spec.back() == 'f')
             os << std::fixed << std::setprecision(std::atoi(spec.c_str() + 1));
+        else if (spec.size() >= 2 && spec[0] == '<')
+            os << std::left << std::setw(std::atoi(spec.c_str() + 1));
+        else if (spec.size() >= 2 && spec[0] == '>')
+            os << std::right << std::setw(std::atoi(spec.c_str() + 1));
         os << a;
         out += os.str();
     }
 
     // Is this brace group a placeholder we own? Deliberately narrow: only an
-    // empty group, or a short ':'-led spec of digits, '.', 'f'/'d'. Without the
-    // guard a stray '{' in a message would swallow everything up to the next
-    // '}' somewhere far away.
+    // empty group, or a short ':'-led spec of digits, '.', 'f'/'d', or '<'/'>'.
+    // Without the guard a stray '{' in a message would swallow everything up to
+    // the next '}' somewhere far away.
     inline bool DcFormatSpec(char const* p, char const* close, std::string& spec)
     {
         std::string const inner(p + 1, close);
@@ -427,7 +431,7 @@ namespace Acore
         if (inner.size() > 8 || inner[0] != ':')
             return false;
         for (char const c : inner)
-            if (c != ':' && c != '.' && c != 'f' && c != 'd' && !(c >= '0' && c <= '9'))
+            if (c != ':' && c != '.' && c != 'f' && c != 'd' && c != '<' && c != '>' && !(c >= '0' && c <= '9'))
                 return false;
         spec = inner.substr(1);
         return true;

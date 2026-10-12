@@ -309,6 +309,7 @@ void AddSC_boss_blackwald_ii();
 void AddSC_boss_clawlord_howlfang();
 void AddSC_boss_grizikil();
 void AddSC_boss_moroes();
+void AddSC_instance_upper_karazhan_halls();
 void AddSC_boss_anomalus();
 void AddSC_boss_echo_of_medivh();
 void AddSC_boss_incantagos();
@@ -316,6 +317,8 @@ void AddSC_boss_keeper_gnarlmoon();
 void AddSC_boss_kings_council();
 void AddSC_boss_kruul();
 void AddSC_boss_sanv_tasdal();
+void AddSC_boss_rupturan();
+void AddSC_upper_karazhan_halls_trash();
 
 void AddSC_random_scripts_0();
 void AddSC_random_scripts_1();
@@ -334,6 +337,7 @@ void AddSC_trash_bosses_scarlet_citadel();
 void AddSC_trash_mobs_scarlet_citadel();
 
 // Hateforge Quarry
+void AddSC_instance_hateforge_quarry();
 void AddSC_boss_bargul_blackhammer();
 void AddSC_boss_engineer_figgles();
 void AddSC_boss_hargesh_doomcaller();
@@ -341,9 +345,18 @@ void AddSC_boss_hatereaver_annhilator();
 void AddSC_trash_mobs_hateforge_quarry();
 
 // Frostmane Hollow
+void AddSC_instance_frostmane_hollow();
 void AddSC_boss_hailar_the_frigid();
 
+// Timbermaw Hold
+void AddSC_instance_timbermaw_hold();
+void AddSC_boss_ursol();
+void AddSC_boss_perotharn();
+void AddSC_bosses_timbermaw_hold();
+void AddSC_timbermaw_hold_trash();
+
 // Windhorn Canyon
+void AddSC_instance_windhorn_canyon();
 void AddSC_boss_bonespeaker_narlgom();
 void AddSC_windhorn_canyon();
 
@@ -670,9 +683,11 @@ void AddScripts()
     AddSC_winterspring();
 
     // Frostmane Hollow
+    AddSC_instance_frostmane_hollow();
     AddSC_boss_hailar_the_frigid();
 
     // Windhorn Canyon
+    AddSC_instance_windhorn_canyon();
     AddSC_boss_bonespeaker_narlgom();
     AddSC_windhorn_canyon();
 
@@ -708,6 +723,7 @@ void AddScripts()
     AddSC_boss_clawlord_howlfang();
     AddSC_boss_grizikil();
     AddSC_boss_moroes();
+    AddSC_instance_upper_karazhan_halls();
     AddSC_boss_anomalus();
     AddSC_boss_echo_of_medivh();
     AddSC_boss_incantagos();
@@ -715,6 +731,8 @@ void AddScripts()
     AddSC_boss_kings_council();
     AddSC_boss_kruul();
     AddSC_boss_sanv_tasdal();
+    AddSC_boss_rupturan();
+    AddSC_upper_karazhan_halls_trash();
     AddSC_boss_ostarius();
     AddSC_CUSTOM_SPELL();
 
@@ -749,11 +767,19 @@ void AddScripts()
     AddSC_trash_mobs_scarlet_citadel();
 
     // Hateforge Quarry
+    AddSC_instance_hateforge_quarry();
     AddSC_boss_bargul_blackhammer();
     AddSC_boss_engineer_figgles();
     AddSC_boss_hargesh_doomcaller();
     AddSC_boss_hatereaver_annhilator();
     AddSC_trash_mobs_hateforge_quarry();
+
+    // Timbermaw Hold
+    AddSC_instance_timbermaw_hold();
+    AddSC_boss_ursol();
+    AddSC_boss_perotharn();
+    AddSC_bosses_timbermaw_hold();
+    AddSC_timbermaw_hold_trash();
 
     // Black Morass
     AddSC_black_morass_trash();

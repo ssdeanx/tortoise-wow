@@ -185,6 +185,7 @@ order 189 3977  11    # High Inquisitor Whitemane      Cathedral
 # (SPELL_SUMMON_ROTAG, see windhorn_canyon.h), so he is an add, not a target.
 # The seven below are the only single-spawn 9.9-15.3k creatures on the map;
 # everything else sits at 5.3k or below with multiple spawns.
+drop 62785            # Champion Rotag - ritual corpse, summoned add is 61410
 order 820 62779 1     # Pathun Duskhide            St 25
 order 820 62778 2     # Ahgk'tos the Pure          St 24
 order 820 62783 3     # Ambassador Vortalus        St 26
@@ -356,17 +357,6 @@ order 35 80854 4      # Damian                     lvl 62  -13,150
 order 35 80853 5      # Aszosh Grimflame           lvl 62  -1,191
 order 35 93107 6      # Arc'tiras                  lvl 62  -100,151 (end boss)
 
-# --- Windhorn Canyon (map 820), entrance -8026,-3510,158 ----------------------
-# On the ladder since the start, 9 starts and never a clear; the auto roster
-# had nothing to go on. Full boss set, walk from the entrance.
-order 820 62778 1     # Ahgk'tos the Pure          lvl 24  -7232,-3503
-order 820 62779 2     # Pathun Duskhide            lvl 25  -7529,-3583
-order 820 62783 3     # Ambassador Vortalus        lvl 26  -7669,-3641
-order 820 62780 4     # Bonespeaker Narlgom        lvl 27  -7643,-3646
-order 820 62785 5     # Champion Rotag             lvl 27  -7640,-3636
-order 820 62784 6     # Walgan Bloodcaller         lvl 27  -7743,-3397
-order 820 62781 7     # Prophet Stormhoof          lvl 28  -7626,-3681
-order 820 62782 8     # Chieftain Shalk Blackwind  lvl 29  -7511,-3798 (end boss)
 
 # --- Blackrock Depths (map 230) ----------------------------------------------
 # The compiled rows gave nine anchors in bit order: Lord Incendius first (deep

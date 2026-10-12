@@ -92,13 +92,17 @@ cmake -B build \
   -DUSE_EXTRACTORS=ON \
   -DBUILD_TESTING=ON \
   -DUSE_TRACY=ON \
+  -DTRACY_ENABLE=ON \
   -DENABLE_LSAN=ON \
-  -DPROFILE_GENERATE=ON          -DPROFILE_USE=ON
+  -DPROFILE_USE=ON
 
 
 
 # 3. Compile across all CPU cores
 cmake --build build -j$(nproc)
+
+# 2. Install binaries and assets to /home/sam/server
+cmake --install build
 
 # 4. Clear rate-limit locks and launch
 systemctl --user reset-failed turtle-mangosd turtle-realmd

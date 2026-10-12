@@ -70,9 +70,11 @@ dungeons/dragonmaw_retreat/dragonmaw_retreat.h
 dungeons/dragonmaw_retreat/instance_dragonmaw_retreat.cpp
 dungeons/frostmane_hollow/boss_hailar_the_frigid.cpp
 dungeons/frostmane_hollow/frostmane_hollow.h
+dungeons/frostmane_hollow/instance_frostmane_hollow.cpp
 dungeons/windhorn_canyon/boss_bonespeaker_narlgom.cpp
 dungeons/windhorn_canyon/windhorn_canyon.cpp
 dungeons/windhorn_canyon/windhorn_canyon.h
+dungeons/windhorn_canyon/instance_windhorn_canyon.cpp
 dungeons/stormwrought_ruins/boss_chieftain_stormsong.cpp
 dungeons/stormwrought_ruins/boss_dagar_the_glutton.cpp
 dungeons/stormwrought_ruins/boss_deathlord_tidebane.cpp
@@ -107,6 +109,8 @@ dungeons/hateforge_quarry/boss_engineer_figgles.cpp
 dungeons/hateforge_quarry/boss_hargesh_doomcaller.cpp
 dungeons/hateforge_quarry/boss_hatereaver_annhilator.cpp
 dungeons/hateforge_quarry/hateforge_quarry_trash.cpp
+dungeons/hateforge_quarry/hateforge_quarry.h
+dungeons/hateforge_quarry/instance_hateforge_quarry.cpp
 dungeons/karazhan_crypt/instance_karazhan_crypt.cpp
 dungeons/lower_karazhan_halls/boss_brood_queen_araxxna.cpp
 dungeons/lower_karazhan_halls/boss_blackwald_ii.cpp
@@ -122,6 +126,10 @@ dungeons/upper_karazhan_halls/boss_keeper_gnarlmoon.cpp
 dungeons/upper_karazhan_halls/boss_kings_council.cpp
 dungeons/upper_karazhan_halls/boss_kruul.cpp
 dungeons/upper_karazhan_halls/boss_sanv_tasdal.cpp
+dungeons/upper_karazhan_halls/boss_rupturan.cpp
+dungeons/upper_karazhan_halls/upper_karazhan_halls_trash.cpp
+dungeons/upper_karazhan_halls/upper_karazhan_halls.h
+dungeons/upper_karazhan_halls/instance_upper_karazhan_halls.cpp
 dungeons/crescent_grove/instance_crescent_grove.cpp
 dungeons/gilneas_city/instance_gilneas_city.h
 dungeons/gilneas_city/instance_gilneas_city.cpp
@@ -262,6 +270,12 @@ dungeons/temple_of_ahnqiraj/boss_viscidus.cpp
 dungeons/temple_of_ahnqiraj/instance_temple_of_ahnqiraj.cpp
 dungeons/temple_of_ahnqiraj/mob_anubisath_sentinel.cpp
 dungeons/temple_of_ahnqiraj/temple_of_ahnqiraj.h
+dungeons/timbermaw_hold/timbermaw_hold.h
+dungeons/timbermaw_hold/instance_timbermaw_hold.cpp
+dungeons/timbermaw_hold/boss_ursol.cpp
+dungeons/timbermaw_hold/boss_perotharn.cpp
+dungeons/timbermaw_hold/bosses_timbermaw_hold.cpp
+dungeons/timbermaw_hold/timbermaw_hold_trash.cpp
 dungeons/uldaman/boss_archaedas.cpp
 dungeons/uldaman/boss_ironaya.cpp
 dungeons/uldaman/instance_uldaman.cpp

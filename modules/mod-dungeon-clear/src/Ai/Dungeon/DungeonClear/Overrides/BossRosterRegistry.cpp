@@ -60,6 +60,7 @@ namespace
             RegisterTowerOfKarazhanRoster(t);
             RegisterTimbermawHoldRoster(t);
             RegisterStormwroughtRuinsRoster(t);
+            RegisterWindhornCanyonRoster(t);
             RegisterHellfireRampartsRoster(t);
             RegisterSlavePensRoster(t);
             RegisterUnderbogRoster(t);
